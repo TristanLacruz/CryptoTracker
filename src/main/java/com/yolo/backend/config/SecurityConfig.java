@@ -59,6 +59,7 @@ public class SecurityConfig {
 
 					    	    // ✅ Criptomonedas (CoinGecko y gestión general)
 					    	    "/cryptos/**",              // todos los GET de CoinGecko están sin prefijo /api
+					    	    "/api/cryptos/**",
 					    	    "/precio/**",
 					    	    "/info/**",
 

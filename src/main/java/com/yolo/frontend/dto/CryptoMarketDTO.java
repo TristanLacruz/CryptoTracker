@@ -7,7 +7,7 @@ public class CryptoMarketDTO {
     private String symbol;
     private String name;
     private String image;
-    
+
     @JsonProperty("current_price")
     private double currentPrice;
 
@@ -20,11 +20,11 @@ public class CryptoMarketDTO {
     @JsonProperty("total_volume")
     private double totalVolume;
 
-    // Getters y setters en camelCase
+    // Getters y setters (mantén los nombres en camelCase)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
-    public String getSymbol() { return symbol; }
+    public String getSymbol() { return symbol.toUpperCase(); }
     public void setSymbol(String symbol) { this.symbol = symbol; }
 
     public String getName() { return name; }
@@ -33,17 +33,43 @@ public class CryptoMarketDTO {
     public String getImage() { return image; }
     public void setImage(String image) { this.image = image; }
 
-    public double getCurrentPrice() { return currentPrice; }
-    public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
-
-    public double getPriceChangePercentage24h() { return priceChangePercentage24h; }
-    public void setPriceChangePercentage24h(double priceChangePercentage24h) { 
-        this.priceChangePercentage24h = priceChangePercentage24h; 
+    // Getters y setters deben coincidir exactamente con las anotaciones
+    public double getCurrentPrice() {
+        return currentPrice;
     }
 
-    public double getMarketCap() { return marketCap; }
-    public void setMarketCap(double marketCap) { this.marketCap = marketCap; }
+    @JsonProperty("current_price")
+    public void setCurrentPrice(double currentPrice) {
+        this.currentPrice = currentPrice;
+    }
 
-    public double getTotalVolume() { return totalVolume; }
-    public void setTotalVolume(double totalVolume) { this.totalVolume = totalVolume; }
+    public double getPriceChangePercentage24h() {
+        return priceChangePercentage24h;
+    }
+
+    @JsonProperty("price_change_percentage_24h")
+    public void setPriceChangePercentage24h(double priceChangePercentage24h) {
+        this.priceChangePercentage24h = priceChangePercentage24h;
+    }
+
+    public double getMarketCap() {
+        return marketCap;
+    }
+
+    @JsonProperty("market_cap")
+    public void setMarketCap(double marketCap) {
+        this.marketCap = marketCap;
+    }
+
+    public double getTotalVolume() {
+        return totalVolume;
+    }
+
+    @JsonProperty("total_volume")
+    public void setTotalVolume(double totalVolume) {
+        this.totalVolume = totalVolume;
+    }
+    
+       
+
 }
