@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Firebase Login</title>
+<script
+	src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+<script
+	src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+</head>
+<body>
+	<h2>Iniciar sesión con Firebase</h2>
+
+	<input type="email" id="email" placeholder="Email">
+	<br>
+	<br>
+	<input type="password" id="password" placeholder="Password">
+	<br>
+	<br>
+	<button onclick="login()">Login</button>
+
+	<h3>ID Token:</h3>
+	<pre id="token"></pre>
+	<h3>Datos del usuario:</h3>
+	<pre id="userData"></pre>
+
+
+	<script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs",
+      authDomain: "cryptotracker-717d2.firebaseapp.com",
+      projectId: "cryptotracker-717d2",
+      storageBucket: "cryptotracker-717d2.appspot.com",
+      messagingSenderId: "122496075810",
+      appId: "1:122496075810:web:3db6bc39ef64a03e75a27b",
+      measurementId: "G-WBT5E5XXGC"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const output = document.getElementById("token");
+
+      try {
+        const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+        const idToken = await userCredential.user.getIdToken();
+        output.textContent = idToken;
+      } catch (error) {
+        output.textContent = "⚠️ Error: " + error.message;
+      }
+    }
+    
+    async function login() {
+	  const email = document.getElementById("email").value;
+	  const password = document.getElementById("password").value;
+	  const tokenOutput = document.getElementById("token");
+	  const userDataOutput = document.getElementById("userData");
+	
+	  try {
+	    const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+	    const idToken = await userCredential.user.getIdToken();
+	    tokenOutput.textContent = idToken;
+	
+	    // Llamada al backend
+	    const response = await fetch("http://localhost:8080/auth/me/details", {
+	      method: "GET",
+	      headers: {
+	        Authorization: "Bearer " + idToken
+	      }
+	    });
+	
+	    if (!response.ok) throw new Error("No se pudo obtener el usuario");
+	
+	    const userData = await response.json();
+	    userDataOutput.textContent = JSON.stringify(userData, null, 2);
+	  } catch (error) {
+	    tokenOutput.textContent = "⚠️ Error: " + error.message;
+	    userDataOutput.textContent = "";
+  }
+}
+    
+  </script>
+</body>
+</html>

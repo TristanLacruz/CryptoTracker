@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Editar Perfil</title>
+</head>
+<body>
+  <h2>Editar Perfil</h2>
+  <!-- Se usa un input hidden para guardar el id del usuario -->
+  <form id="perfilForm">
+    <input type="hidden" id="userId" name="id">
+    
+    <label for="nombreUsuario">Nombre de usuario:</label><br>
+    <input type="text" id="nombreUsuario" name="nombreUsuario" required><br><br>
+    
+    <label for="email">Correo electrónico:</label><br>
+    <input type="email" id="email" name="email"><br><br>
+    
+    <label for="nombre">Nombre:</label><br>
+    <input type="text" id="nombre" name="nombre"><br><br>
+    
+    <label for="apellido">Apellido:</label><br>
+    <input type="text" id="apellido" name="apellido"><br><br>
+    
+    <button type="submit">Actualizar Perfil</button>
+  </form>
+  
+  <h3>Respuesta del servidor:</h3>
+  <pre id="respuesta"></pre>
+  
+  <script>
+    // Se asume que el token se almacena en localStorage después del login
+    async function cargarPerfil() {
+      try {
+        const idToken = localStorage.getItem("idToken");
+        if (!idToken) {
+          document.getElementById("respuesta").textContent = "No se encontró token. Por favor inicia sesión.";
+          return;
+        }
+        const res = await fetch("http://localhost:8080/auth/me/details", {
+          method: "GET",
+          headers: { "Authorization": "Bearer " + idToken }
+        });
+        if (!res.ok) throw new Error("Error al obtener datos: " + res.status);
+        const data = await res.json();
+        document.getElementById("userId").value = data.id;
+        document.getElementById("nombreUsuario").value = data.nombreUsuario || "";
+        document.getElementById("email").value = data.email || "";
+        document.getElementById("nombre").value = data.nombre || "";
+        document.getElementById("apellido").value = data.apellido || "";
+      } catch (err) {
+        document.getElementById("respuesta").textContent = "⚠️ Error al cargar perfil: " + err.message;
+      }
+    }
+    
+    cargarPerfil();
+    
+    document.getElementById("perfilForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      try {
+        const id = document.getElementById("userId").value;
+        const usuario = {
+          nombreUsuario: document.getElementById("nombreUsuario").value,
+          email: document.getElementById("email").value,
+          nombre: document.getElementById("nombre").value,
+          apellido: document.getElementById("apellido").value
+        };
+        const idToken = localStorage.getItem("idToken");
+        const res = await fetch("http://localhost:8080/api/usuarios/" + id, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + idToken
+          },
+          body: JSON.stringify(usuario)
+        });
+        const text = await res.text();
+        if (!res.ok) throw new Error("Error " + res.status + ": " + text);
+        const data = text ? JSON.parse(text) : {};
+        document.getElementById("respuesta").textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        document.getElementById("respuesta").textContent = "⚠️ Error al actualizar perfil: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>

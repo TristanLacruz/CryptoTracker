@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de usuario</title>
+</head>
+<body>
+  <h2>Registro de usuario</h2>
+
+  <form id="registerForm">
+    <label for="nombreUsuario">Nombre de usuario:</label><br>
+    <input type="text" id="nombreUsuario" name="nombreUsuario" required><br><br>
+
+    <label for="email">Correo electrónico:</label><br>
+    <input type="email" id="email" name="email"><br><br>
+
+    <label for="nombre">Nombre:</label><br>
+    <input type="text" id="nombre" name="nombre"><br><br>
+
+    <label for="apellido">Apellido:</label><br>
+    <input type="text" id="apellido" name="apellido"><br><br>
+
+    <label for="password">Contraseña:</label><br>
+    <input type="password" id="password" name="contrasena" required><br><br>
+
+    <button type="submit">Registrarse</button>
+  </form>
+
+  <h3>Respuesta del servidor:</h3>
+  <pre id="respuesta"></pre>
+
+  <script>
+    const form = document.getElementById("registerForm");
+    const respuesta = document.getElementById("respuesta");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const usuario = {
+        nombreUsuario: document.getElementById("nombreUsuario").value,
+        email: document.getElementById("email").value,
+        nombre: document.getElementById("nombre").value,
+        apellido: document.getElementById("apellido").value,
+        contrasena: document.getElementById("password").value,
+        rol: "USER"
+      };
+
+      try {
+  const res = await fetch("http://localhost:8080/api/usuarios", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(usuario)
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    // 👇 esto mostrará el mensaje completo que devuelve el backend
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+
+  const data = text ? JSON.parse(text) : {};
+  respuesta.textContent = JSON.stringify(data, null, 2);
+} catch (err) {
+  respuesta.textContent = "⚠️ Error: " + err.message;
+}
+
+    });
+  </script>
+</body>
+</html>
