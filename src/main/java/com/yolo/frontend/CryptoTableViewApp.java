@@ -22,6 +22,8 @@ import javafx.scene.layout.VBox;
 import javafx.collections.transformation.FilteredList;
 import javafx.stage.Stage;
 import com.yolo.frontend.dto.CryptoMarketDTO;
+import com.yolo.frontend.services.CryptoService;
+
 import javafx.scene.control.TableCell;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -39,7 +41,7 @@ import java.util.List;
 public class CryptoTableViewApp extends Application {
 
 	private final ObservableList<CryptoMarketDTO> cryptoList = FXCollections.observableArrayList();
-	private final String API_URL = "http://localhost:8080/cryptos/market";
+	String url = "http://localhost:8080/api/cryptos/market";
 
 	@Override
 	public void start(Stage primaryStage) {
@@ -79,7 +81,7 @@ public class CryptoTableViewApp extends Application {
 				}
 			}
 		});
-		
+
 		// Columna de precio con formato
 		TableColumn<CryptoMarketDTO, Double> priceCol = new TableColumn<>("Precio (EUR)");
 		priceCol.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
@@ -130,7 +132,7 @@ public class CryptoTableViewApp extends Application {
 			}
 		});
 
-		tableView.getColumns().addAll(nameCol, symbolCol, priceCol, changeCol, volumeCol, marketCapCol);
+		tableView.getColumns().addAll(imageCol, nameCol, symbolCol, priceCol, changeCol, volumeCol, marketCapCol);
 
 		// Buscador
 		TextField buscador = new TextField();
@@ -168,23 +170,21 @@ public class CryptoTableViewApp extends Application {
 	}
 
 	private void fetchCryptoData() {
-		System.out.println("Intentando conectarse a: " + API_URL);
+	    System.out.println("Intentando conectarse a CryptoService...");
 
-		HttpClient client = HttpClient.newHttpClient();
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(API_URL)).build();
-
-		client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(response -> {
-			if (response.statusCode() == 200) {
-				return response.body();
-			} else {
-				throw new RuntimeException("Error en la respuesta: " + response.statusCode());
-			}
-		}).thenAccept(this::parseJson).exceptionally(e -> {
-			System.err.println("Error al obtener datos: " + e.getMessage());
-			e.printStackTrace();
-			return null;
-		});
+	    CryptoService.getMarketData().thenAccept(list -> {
+	        javafx.application.Platform.runLater(() -> {
+	            System.out.println("✅ Datos recibidos: " + list.size() + " criptos.");
+	            cryptoList.clear();
+	            cryptoList.addAll(list);
+	        });
+	    }).exceptionally(e -> {
+	        System.err.println("❌ Error al obtener criptos: " + e.getMessage());
+	        e.printStackTrace();
+	        return null;
+	    });
 	}
+
 
 	private void parseJson(String responseBody) {
 		System.out.println("✅ Entrando a parseJson()");
@@ -218,135 +218,166 @@ public class CryptoTableViewApp extends Application {
 	}
 
 	private void showCryptoDetails(CryptoMarketDTO crypto) {
-		Stage detailStage = new Stage();
-		detailStage.setTitle("Detalles de " + crypto.getName());
+	    Stage detailStage = new Stage();
+	    detailStage.setTitle("Detalles de " + crypto.getName());
 
-		Label nombre = new Label("Nombre: " + crypto.getName());
-		Label simbolo = new Label("Símbolo: " + crypto.getSymbol());
-		Label precio = new Label(String.format("Precio actual: €%,.2f", crypto.getCurrentPrice()));
-		Label cambio = new Label(String.format("Cambio 24h: %.2f%%", crypto.getPriceChangePercentage24h()));
-		Label volumen = new Label(String.format("Volumen 24h: €%,.0f", crypto.getTotalVolume()));
-		Label marketCap = new Label(String.format("Capitalización: €%,.0f", crypto.getMarketCap()));
-		Label rsiLabel = new Label("RSI: Cargando...");
-		new Thread(() -> {
-		    try {
-		        String url = "http://localhost:8080/api/cryptos/" + crypto.getId() + "/rsi";
-		        HttpClient client = HttpClient.newHttpClient();
-		        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-		        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-		        double rsi = Double.parseDouble(response.body());
+	    // Labels
+	    Label nombre = new Label("Nombre: " + crypto.getName());
+	    Label simbolo = new Label("Símbolo: " + crypto.getSymbol());
+	    Label precio = new Label(String.format("Precio actual: €%,.2f", crypto.getCurrentPrice()));
+	    Label cambio = new Label(String.format("Cambio 24h: %.2f%%", crypto.getPriceChangePercentage24h()));
+	    Label volumen = new Label(String.format("Volumen 24h: €%,.0f", crypto.getTotalVolume()));
+	    Label marketCap = new Label(String.format("Capitalización: €%,.0f", crypto.getMarketCap()));
+	    Label rsiLabel = new Label("RSI: Cargando...");
 
-		        javafx.application.Platform.runLater(() -> {
-		            rsiLabel.setText(String.format("RSI (14): %.2f", rsi));
+	    // Gráfico de precios
+	    final NumberAxis xAxisPrice = new NumberAxis();
+	    final NumberAxis yAxisPrice = new NumberAxis();
+	    xAxisPrice.setLabel("Día");
+	    yAxisPrice.setLabel("Precio (EUR)");
+	    final LineChart<Number, Number> priceChart = new LineChart<>(xAxisPrice, yAxisPrice);
+	    priceChart.setTitle("Histórico de Precio (7 días)");
 
-		            if (rsi >= 70) {
-		                rsiLabel.setStyle("-fx-text-fill: green;"); // Sobrecomprado
-		            } else if (rsi <= 30) {
-		                rsiLabel.setStyle("-fx-text-fill: red;"); // Sobrevendido
-		            } else {
-		                rsiLabel.setStyle("-fx-text-fill: gray;"); // Neutro
-		            }
-		        });
-		    } catch (Exception e) {
-		        javafx.application.Platform.runLater(() -> {
-		            rsiLabel.setText("RSI: error al cargar");
-		            rsiLabel.setStyle("-fx-text-fill: orange;");
-		        });
-		    }
-		}).start();
+	    // Gráfico RSI
+	    final NumberAxis xAxisRSI = new NumberAxis();
+	    final NumberAxis yAxisRSI = new NumberAxis(0, 100, 10);
+	    xAxisRSI.setLabel("Día");
+	    yAxisRSI.setLabel("RSI (14)");
+	    final LineChart<Number, Number> rsiChart = new LineChart<>(xAxisRSI, yAxisRSI);
+	    rsiChart.setTitle("Índice RSI (14) - 7 días");
 
-		
-		// Gráfico
-		NumberAxis xAxis = new NumberAxis();
-		NumberAxis yAxis = new NumberAxis();
-		xAxis.setLabel("Día");
-		yAxis.setLabel("Precio (EUR)");
+	    // Layout
+	    VBox vbox = new VBox(10, nombre, simbolo, precio, cambio, volumen, marketCap, rsiLabel, priceChart, rsiChart);
+	    vbox.setPadding(new Insets(10));
 
-		LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
-		lineChart.setTitle("Histórico de 7 días");
+	    // Cargar RSI actual
+	    new Thread(() -> {
+	        try {
+	            String url = "http://localhost:8080/api/cryptos/" + crypto.getId() + "/rsi";
+	            HttpClient client = HttpClient.newHttpClient();
+	            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+	            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+	            double rsi = Double.parseDouble(response.body());
 
-		XYChart.Series<Number, Number> serie = new XYChart.Series<>();
-		serie.setName("Precio");
+	            javafx.application.Platform.runLater(() -> {
+	                rsiLabel.setText(String.format("RSI (14): %.2f", rsi));
+	                if (rsi >= 70) {
+	                    rsiLabel.setStyle("-fx-text-fill: green;");
+	                } else if (rsi <= 30) {
+	                    rsiLabel.setStyle("-fx-text-fill: red;");
+	                } else {
+	                    rsiLabel.setStyle("-fx-text-fill: gray;");
+	                }
+	            });
+	        } catch (Exception e) {
+	            javafx.application.Platform.runLater(() -> {
+	                rsiLabel.setText("RSI: no disponible");
+	                rsiLabel.setStyle("-fx-text-fill: gray;");
+	            });
+	        }
+	    }).start();
 
-		List<Double> precios = getHistoricalPrices(crypto.getId());
+	    // Cargar precios históricos
+	    new Thread(() -> {
+	        List<Double> precios = getHistoricalPrices(crypto.getId());
+	        XYChart.Series<Number, Number> priceSeries = new XYChart.Series<>();
+	        priceSeries.setName("Precio");
 
-		for (int i = 0; i < precios.size(); i++) {
-			serie.getData().add(new XYChart.Data<>(i + 1, precios.get(i)));
-		}
+	        for (int i = 0; i < precios.size(); i++) {
+	            priceSeries.getData().add(new XYChart.Data<>(i + 1, precios.get(i)));
+	        }
 
-		lineChart.getData().add(serie);
-		
-		// Cargar RSI histórico
-		new Thread(() -> {
-		    try {
-		        String rsiUrl = "http://localhost:8080/api/cryptos/" + crypto.getId() + "/rsi/history";
-		        HttpClient client = HttpClient.newHttpClient();
-		        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(rsiUrl)).build();
-		        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+	        // Rango dinámico del eje Y
+	        double minPrice = precios.stream().mapToDouble(Double::doubleValue).min().orElse(0);
+	        double maxPrice = precios.stream().mapToDouble(Double::doubleValue).max().orElse(1);
+	        double margen = (maxPrice - minPrice) * 0.1;
 
-		        ObjectMapper mapper = new ObjectMapper();
-		        List<Double> rsiValues = mapper.readValue(response.body(), new TypeReference<List<Double>>() {});
+	        javafx.application.Platform.runLater(() -> {
+	            yAxisPrice.setAutoRanging(false);
+	            yAxisPrice.setLowerBound(minPrice - margen);
+	            yAxisPrice.setUpperBound(maxPrice + margen);
+	            yAxisPrice.setTickUnit((maxPrice - minPrice) / 10);
+	            priceChart.getData().add(priceSeries);
+	        });
+	    }).start();
 
-		        XYChart.Series<Number, Number> rsiSeries = new XYChart.Series<>();
-		        rsiSeries.setName("RSI (14)");
+	    // Cargar RSI histórico
+	    new Thread(() -> {
+	        try {
+	            String rsiUrl = "http://localhost:8080/api/cryptos/" + crypto.getId() + "/rsi/history";
+	            HttpClient client = HttpClient.newHttpClient();
+	            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(rsiUrl)).build();
+	            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-		        for (int i = 0; i < rsiValues.size(); i++) {
-		            Double rsi = rsiValues.get(i);
-		            if (rsi != null) {
-		                rsiSeries.getData().add(new XYChart.Data<>(i + 1, rsi));
-		            }
-		        }
+	            ObjectMapper mapper = new ObjectMapper();
+	            List<Double> rsiValues = mapper.readValue(response.body(), new TypeReference<List<Double>>() {});
 
-		        javafx.application.Platform.runLater(() -> {
-		            lineChart.getData().add(rsiSeries);
-		        });
+	            XYChart.Series<Number, Number> rsiSeries = new XYChart.Series<>();
+	            rsiSeries.setName("RSI (14)");
 
-		    } catch (Exception e) {
-		        System.err.println("Error al obtener RSI histórico: " + e.getMessage());
-		    }
-		}).start();
+	            for (int i = 0; i < rsiValues.size(); i++) {
+	                Double rsi = rsiValues.get(i);
+	                if (rsi != null) {
+	                    rsiSeries.getData().add(new XYChart.Data<>(i + 1, rsi));
+	                }
+	            }
 
+	            javafx.application.Platform.runLater(() -> {
+	                rsiChart.getData().add(rsiSeries);
+	            });
+	        } catch (Exception e) {
+	            System.err.println("Error al obtener RSI histórico: " + e.getMessage());
+	        }
+	    }).start();
 
-		VBox vbox = new VBox(10, nombre, simbolo, precio, cambio, volumen, marketCap, rsiLabel, lineChart);
-		vbox.setPadding(new Insets(10));
-
-		Scene scene = new Scene(vbox, 600, 500);
-		detailStage.setScene(scene);
-		detailStage.show();
+	    Scene scene = new Scene(vbox, 600, 500);
+	    detailStage.setScene(scene);
+	    detailStage.show();
 	}
 
 	private List<Double> getHistoricalPrices(String cryptoId) {
-	    String url = "https://api.coingecko.com/api/v3/coins/" + cryptoId + "/market_chart?vs_currency=eur&days=7";
-	    
+	    String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/historical";
+
+	    if (cryptoId == null || cryptoId.isBlank()) {
+	        throw new IllegalArgumentException("ID de criptomoneda no puede ser nulo o vacío.");
+	    }
+
+	    System.out.println("🧪 Solicitando históricos desde frontend para ID: " + cryptoId);
+
 	    try {
 	        HttpClient client = HttpClient.newHttpClient();
 	        HttpRequest request = HttpRequest.newBuilder()
 	                .uri(URI.create(url))
-	                .timeout(Duration.ofSeconds(10))
 	                .build();
 
 	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+	        // 🔥 Aquí mapeamos el objeto completo, no solo un array
 	        ObjectMapper mapper = new ObjectMapper();
 	        JsonNode root = mapper.readTree(response.body());
 	        JsonNode prices = root.get("prices");
 
+	        System.out.println("📦 JSON de históricos:\n" + response.body());
+
 	        if (prices == null || !prices.isArray()) {
 	            System.err.println("No se encontraron datos históricos para: " + cryptoId);
-	            // Devuelve datos ficticios para evitar el error
-	            return List.of(100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0);
+	            return List.of(); // vacío
 	        }
 
 	        List<Double> priceList = new ArrayList<>();
 	        for (JsonNode point : prices) {
-	            priceList.add(point.get(1).asDouble());
+	            priceList.add(point.get(1).asDouble()); // solo el precio
 	        }
+
 	        return priceList;
+
 	    } catch (Exception e) {
 	        System.err.println("Error al obtener precios históricos para " + cryptoId + ": " + e.getMessage());
-	        // Devuelve datos ficticios como fallback
-	        return List.of(100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0);
+	        return List.of();
 	    }
 	}
+
+
 
 	public static void main(String[] args) {
 		launch();

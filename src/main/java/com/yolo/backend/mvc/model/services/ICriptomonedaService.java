@@ -24,6 +24,9 @@ public interface ICriptomonedaService {
 
     List<CryptoMarketDTO> getMarketData();
 
-	List<Double> getHistoricalPrices(String cryptoId);
+    List<List<Double>> getHistoricalPrices(String cryptoId);
+	
+	List<Double> getHistoricalRSI(String cryptoId);
+
 
 }
