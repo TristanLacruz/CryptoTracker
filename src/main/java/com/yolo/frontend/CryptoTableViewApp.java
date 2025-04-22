@@ -301,7 +301,7 @@ public class CryptoTableViewApp extends Application {
 	        });
 	    }).start();
 
-	    // Cargar RSI histórico
+	 // Cargar RSI histórico
 	    new Thread(() -> {
 	        try {
 	            String rsiUrl = "http://localhost:8080/api/cryptos/" + crypto.getId() + "/rsi/history";
@@ -311,6 +311,16 @@ public class CryptoTableViewApp extends Application {
 
 	            ObjectMapper mapper = new ObjectMapper();
 	            List<Double> rsiValues = mapper.readValue(response.body(), new TypeReference<List<Double>>() {});
+
+	            System.out.println("📊 RSI histórico recibido: " + rsiValues);
+
+	            if (rsiValues.isEmpty()) {
+	                javafx.application.Platform.runLater(() -> {
+	                    rsiLabel.setText("RSI: no disponible (insuficientes datos)");
+	                    rsiLabel.setStyle("-fx-text-fill: gray;");
+	                });
+	                return;
+	            }
 
 	            XYChart.Series<Number, Number> rsiSeries = new XYChart.Series<>();
 	            rsiSeries.setName("RSI (14)");
@@ -322,13 +332,23 @@ public class CryptoTableViewApp extends Application {
 	                }
 	            }
 
+	            // Calcular rango dinámico del eje Y para RSI
+	            double minRSI = rsiValues.stream().mapToDouble(Double::doubleValue).min().orElse(0);
+	            double maxRSI = rsiValues.stream().mapToDouble(Double::doubleValue).max().orElse(100);
+	            double margenRSI = (maxRSI - minRSI) * 0.1;
+
 	            javafx.application.Platform.runLater(() -> {
+	                yAxisRSI.setAutoRanging(false);
+	                yAxisRSI.setLowerBound(minRSI - margenRSI);
+	                yAxisRSI.setUpperBound(maxRSI + margenRSI);
+	                yAxisRSI.setTickUnit((maxRSI - minRSI) / 10);
 	                rsiChart.getData().add(rsiSeries);
 	            });
 	        } catch (Exception e) {
 	            System.err.println("Error al obtener RSI histórico: " + e.getMessage());
 	        }
 	    }).start();
+
 
 	    Scene scene = new Scene(vbox, 600, 500);
 	    detailStage.setScene(scene);

@@ -184,7 +184,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	@Override
 	public List<List<Double>> getHistoricalPrices(String id) {
 	    try {
-	        String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=7&interval=daily";
+	        String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=30&interval=daily";
 
 	        HttpRequest request = HttpRequest.newBuilder()
 	            .uri(URI.create(url))
@@ -221,7 +221,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	@Cacheable("historicalPrices")
 	public List<Double> getHistoricalRSI(String id) {
 	    try {
-	    	String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=7&interval=daily";
+	    	String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=30&interval=daily";
 
 	        HttpRequest request = HttpRequest.newBuilder()
 	                .uri(URI.create(url))

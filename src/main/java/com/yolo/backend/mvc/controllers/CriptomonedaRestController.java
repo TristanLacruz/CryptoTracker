@@ -78,7 +78,7 @@ public class CriptomonedaRestController {
 	public ResponseEntity<?> getRSI(@PathVariable String id) {
 	    List<Double> precios = criptomonedaService.getHistoricalPrices(id)
 	        .stream()
-	        .map(pair -> pair.get(1))
+	        .map(pair -> pair.get(1)) // el precio, no el timestamp
 	        .collect(Collectors.toList());
 
 	    if (precios.size() < 15) {
@@ -86,10 +86,14 @@ public class CriptomonedaRestController {
 	                .body("No hay suficientes datos para calcular el RSI.");
 	    }
 
-	    double rsi = RSIUtil.calcularRSI(precios.subList(0, 15));
-	    return ResponseEntity.ok(rsi);
+	    List<Double> rsiList = RSIUtil.calculateRSIList(precios, 14);
+	    double rsi = rsiList.get(rsiList.size() - 1); // ✅ último valor
+
+	    return ResponseEntity.ok(rsi); // ahora sí será un número (no una lista)
 	}
 
+
+	
 
 	
 	
