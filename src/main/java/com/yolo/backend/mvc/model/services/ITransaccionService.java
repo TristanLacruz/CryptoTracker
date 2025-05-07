@@ -13,11 +13,11 @@ public List<Transaccion> findAll();
 	public void delete(Transaccion t);
 	public Transaccion update(Transaccion t, String id);
 	
-	/*
-	 * 
-	 */
-	Transaccion comprarCrypto(String usuarioId, String cryptoId, double cantidadUSD);
-	Transaccion venderCrypto(String usuarioId, String cryptoId, double cantidadCrypto);
+	public double getTotalInvertido(String usuarioId);
+	
+	Transaccion comprarCrypto(String uid, String simbolo, String nombreCrypto, double cantidadCrypto, double precioUnitario);
+	Transaccion venderCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto, double precioUnitario);
+
 	List<Transaccion> findByUsuarioId(String usuarioId);
 
 }

@@ -12,7 +12,7 @@ public class Transaccion {
     
     private String usuarioId;
     private String cryptoId;
-    private String tipoTransaccion; // "COMPRAR" or "VENDER"
+    private TransactionType tipoTransaccion; // "BUY" or "SELL"
     private double cantidadCrypto;
     private double precioTransaccion;
     private double valorTotal;
@@ -26,7 +26,7 @@ public class Transaccion {
     	this.id = id;
     }
     
-    public Transaccion(String usuarioId, String cryptoId, String tipoTransaccion, double cantidadCrypto, double precioTransaccion) {
+    public Transaccion(String usuarioId, String cryptoId, TransactionType tipoTransaccion, double cantidadCrypto, double precioTransaccion) {
         this.usuarioId = usuarioId;
         this.cryptoId = cryptoId;
         this.tipoTransaccion = tipoTransaccion;
@@ -60,11 +60,11 @@ public class Transaccion {
 		this.cryptoId = cryptoId;
 	}
 
-	public String getTipoTransaccion() {
+	public TransactionType getTipoTransaccion() {
 		return tipoTransaccion;
 	}
 
-	public void setTipoTransaccion(String tipoTransaccion) {
+	public void setTipoTransaccion(TransactionType tipoTransaccion) {
 		this.tipoTransaccion = tipoTransaccion;
 	}
 

@@ -1,5 +1,6 @@
 package com.yolo.backend.mvc.model.services;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,8 @@ public interface ICriptomonedaService {
 	
 	public Criptomoneda update(Criptomoneda c, String id);
 
+	double obtenerPrecioActual(String simbolo);
+
 	double getPrecioActual(String symbol); // Ej: "bitcoin"
 	
     Map<String, Object> getCryptoInfo(String symbol);
@@ -28,5 +31,6 @@ public interface ICriptomonedaService {
 	
 	List<Double> getHistoricalRSI(String cryptoId);
 
+	double getPrecioEnFecha(String cryptoId, LocalDate fecha);
 
 }

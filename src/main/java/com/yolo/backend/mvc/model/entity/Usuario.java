@@ -28,7 +28,7 @@ public class Usuario implements UserDetails {
 	private String contrasena;
 	private String rol;
 	private String idChatTelegram;
-	private double saldo;
+	private double saldo = 100000.0;
 	private LocalDateTime creadoEl;
 	private LocalDateTime actualizadoEl;
 	private String uid;

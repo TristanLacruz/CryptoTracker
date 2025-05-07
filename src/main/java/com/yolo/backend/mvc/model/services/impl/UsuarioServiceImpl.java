@@ -39,30 +39,49 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	@Override
 	public void save(Usuario u) {
-	    try {
-	        // 1. Crear usuario en Firebase Authentication
-	        UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-	            .setEmail(u.getEmail())
-	            .setPassword(u.getContrasena());
-
-	        UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
-	        u.setUid(userRecord.getUid()); // asignar UID de Firebase
-
-	    } catch (FirebaseAuthException e) {
-	        throw new RuntimeException("Error al crear usuario en Firebase: " + e.getMessage());
+	    // 1. Comprobar si el usuario ya existe en MongoDB por UID
+	    Optional<Usuario> existente = usuarioDAO.findByUid(u.getUid());
+	    if (existente.isPresent()) {
+	        return; // ya está registrado
 	    }
 
-	    // 2. Cifrar la contraseña antes de guardar en MongoDB
-	    u.setContrasena(passwordEncoder.encode(u.getContrasena()));
+	    try {
+	        // 2. Comprobar si existe en Firebase por email (opcional, puede lanzar excepción si no existe)
+	        FirebaseAuth.getInstance().getUserByEmail(u.getEmail());
+	        // Si no lanza excepción, ya existe en Firebase → no lo creamos de nuevo
+	    } catch (FirebaseAuthException ex) {
+	        if ("USER_NOT_FOUND".equals(ex.getErrorCode())) {
+	            // 3. Crear en Firebase si no existe
+	            try {
+	            	UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+	    	                .setEmail(u.getEmail())
+	    	                .setPassword(u.getContrasena());
+	    	            UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
+	    	            u.setUid(userRecord.getUid());
+				} catch (Exception e) {
+					// TODO: handle exception
+				}      		       
+	        } else {
+	            throw new RuntimeException("Error al comprobar usuario en Firebase: " + ex.getMessage());
+	        }
+	    }
 
-	    // 3. Guardar el usuario en MongoDB
+	    // 4. Cifrar y guardar en Mongo
+	    u.setContrasena(passwordEncoder.encode(u.getContrasena()));
 	    usuarioDAO.save(u);
 	}
+
+
 
 	@Override
 	public Usuario findById(String id) {
 		return usuarioDAO.findById(id)
 				.orElseThrow(() -> new UsuarioNoEncontradoException(id));
+	}
+
+	public Usuario findByFirebaseUid(String uid) {
+	    return usuarioDAO.findByUid(uid)
+	        .orElseThrow(() -> new UsuarioNoEncontradoException("Usuario " + uid + " no encontrado"));
 	}
 
 	@Override

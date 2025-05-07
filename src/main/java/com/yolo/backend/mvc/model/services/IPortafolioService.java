@@ -1,6 +1,10 @@
 package com.yolo.backend.mvc.model.services;
 
 import java.util.List;
+
+import com.yolo.backend.mvc.model.dto.EvolucionCompletaDTO;
+import com.yolo.backend.mvc.model.dto.RendimientoDiarioDTO;
+import com.yolo.backend.mvc.model.dto.ValorDiarioDTO;
 import com.yolo.backend.mvc.model.entity.Portafolio;
 
 public interface IPortafolioService {
@@ -16,4 +20,11 @@ public interface IPortafolioService {
     boolean tieneSuficienteCrypto(String usuarioId, String simbolo, double cantidad);
     Portafolio getPortafolioDeUsuarioId(String usuarioId);
 	void updatePortafolioDespuesDeCompra(String usuarioId, String cryptoId, double cantidad);
+	Portafolio findByUsuarioId(String usuarioId);
+
+	List<ValorDiarioDTO> calcularEvolucion(String usuarioId);
+	List<EvolucionCompletaDTO> calcularEvolucionCompleta(String usuarioId);
+
+	List<RendimientoDiarioDTO> calcularRendimiento(String usuarioId);
+
 }

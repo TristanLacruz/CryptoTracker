@@ -12,5 +12,6 @@ public class YoloAppApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(YoloAppApplication.class, args);
+		
 	}
 }

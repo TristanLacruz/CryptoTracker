@@ -1,5 +1,7 @@
 package com.yolo.backend.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +16,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 import com.yolo.backend.security.FirebaseTokenFilter;
 
@@ -34,58 +40,64 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		return http.csrf(csrf -> csrf.disable())
-				.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth
-					    .requestMatchers("/api/admin/**").hasRole("ADMIN")
-					    .requestMatchers(
-					    	    "/", 
-					    	    "/index.html",
-					    	    "/favicon.ico", 
-					    	    "/js/**", "/css/**", "/images/**",
+	    return http
+	            .cors(withDefaults()) // Habilita CORS
+	            .csrf(csrf -> csrf.disable()) // ❌ Desactiva CSRF
+	            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+	            .authorizeHttpRequests(auth -> auth
+	                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+	                .requestMatchers(
+	                	"/auth/me/details",
+	                    "/", 
+	                    "/index.html",
+	                    "/favicon.ico", 
+	                    "/js/**", "/css/**", "/images/**",
 
-					    	    // 🔓 Endpoints públicos para autenticación y frontend
-					    	    "/auth/**",
-					    	    "/firebase-login.html",
-					    	    "/firebase-register.html",
-					    	    "/recover-password.html",
-					    	    "/reset-password.html",
+	                    // 🔓 Endpoints públicos
+	                    "/auth/**",
+	                    "/firebase-login.html",
+	                    "/perfil.html",
+	                    "/firebase-register.html",
+	                    "/recover-password.html",
+	                    "/reset-password.html",
 
-					    	    // ✅ Usuarios
-					    	    "/api/usuarios",
-					    	    "/api/usuarios/me",         // para obtener el perfil actual
-					    	    "/api/recover",             // simulación recuperación contraseña
-					    	    "/api/reset",               // cambio de contraseña simulada
-
-					    	    // ✅ Criptomonedas (CoinGecko y gestión general)
-					    	    "/cryptos/**",              // todos los GET de CoinGecko están sin prefijo /api
-					    	    "/api/cryptos/**",
-					    	    "/precio/**",
-					    	    "/info/**",
-
-					    	    // ✅ Transacciones
-					    	    "/api/transacciones/**",
-
-					    	    // ✅ Portafolio
-					    	    "/api/portafolio/**",
-
-					    	    // ✅ Alertas
-					    	    "/alertas",
-
-					    	    // ✅ Órdenes
-					    	    "/ordenes/**",
-
-					    	    // ✅ Notificaciones
-					    	    "/notifications"
-					    	).permitAll()
-					    .anyRequest().authenticated()
-					)
-
-				.addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class).build();
+	                    // ✅ APIs públicas
+	                    "/api/usuarios",
+	                    "/api/usuarios/me",
+	                    "/api/recover",
+	                    "/api/reset",
+	                    "/cryptos/**",
+	                    "/api/cryptos/**",
+	                    "/precio/**",
+	                    "/info/**",
+	                    "/api/transacciones/**",
+	                    "/api/portafolio/**",
+	                    "/alertas",
+	                    "/ordenes/**",
+	                    "/notifications"
+	                ).permitAll()
+	                .anyRequest().authenticated()
+	            )
+	            .addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
+	            .build();
 	}
+
 
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 		return config.getAuthenticationManager();
 	}
+	
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+	    CorsConfiguration configuration = new CorsConfiguration();
+	    configuration.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:8080"));
+	    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+	    configuration.setAllowCredentials(true);
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", configuration);
+	    return source;
+	}
+
 }

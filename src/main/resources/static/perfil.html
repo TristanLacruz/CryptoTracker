@@ -1,87 +1,134 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Editar Perfil</title>
+  <meta charset="UTF-8" />
+  <title>Perfil - CryptoTracker</title>
 </head>
 <body>
   <h2>Editar Perfil</h2>
-  <!-- Se usa un input hidden para guardar el id del usuario -->
   <form id="perfilForm">
-    <input type="hidden" id="userId" name="id">
-    
-    <label for="nombreUsuario">Nombre de usuario:</label><br>
-    <input type="text" id="nombreUsuario" name="nombreUsuario" required><br><br>
-    
-    <label for="email">Correo electrónico:</label><br>
-    <input type="email" id="email" name="email"><br><br>
-    
-    <label for="nombre">Nombre:</label><br>
-    <input type="text" id="nombre" name="nombre"><br><br>
-    
-    <label for="apellido">Apellido:</label><br>
-    <input type="text" id="apellido" name="apellido"><br><br>
-    
+    <input type="hidden" id="userId" name="id" />
+    <label for="nombreUsuario">Nombre de usuario:</label><br />
+    <input type="text" id="nombreUsuario" name="nombreUsuario" required /><br /><br />
+    <label for="email">Correo electrónico:</label><br />
+    <input type="email" id="email" name="email" /><br /><br />
+    <label for="nombre">Nombre:</label><br />
+    <input type="text" id="nombre" name="nombre" /><br /><br />
+    <label for="apellido">Apellido:</label><br />
+    <input type="text" id="apellido" name="apellido" /><br /><br />
     <button type="submit">Actualizar Perfil</button>
   </form>
-  
+
+  <h2>Simulación de Compra</h2>
+  <label for="input-simbolo">Símbolo de la Criptomoneda:</label><br />
+  <input type="text" id="input-simbolo" placeholder="Ej: ripple" required /><br /><br />
+  <label for="input-cantidad">Cantidad de crypto:</label><br />
+  <input type="number" id="input-cantidad" placeholder="Ej: 100" required /><br /><br />
+  <button id="btn-comprar">Comprar</button>
+
   <h3>Respuesta del servidor:</h3>
   <pre id="respuesta"></pre>
-  
+
+<!-- SCRIPTS DE FIREBASE -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+
   <script>
-    // Se asume que el token se almacena en localStorage después del login
-    async function cargarPerfil() {
-      try {
-        const idToken = localStorage.getItem("idToken");
-        if (!idToken) {
-          document.getElementById("respuesta").textContent = "No se encontró token. Por favor inicia sesión.";
-          return;
-        }
-        const res = await fetch("http://localhost:8080/auth/me/details", {
-          method: "GET",
-          headers: { "Authorization": "Bearer " + idToken }
-        });
-        if (!res.ok) throw new Error("Error al obtener datos: " + res.status);
-        const data = await res.json();
-        document.getElementById("userId").value = data.id;
-        document.getElementById("nombreUsuario").value = data.nombreUsuario || "";
-        document.getElementById("email").value = data.email || "";
-        document.getElementById("nombre").value = data.nombre || "";
-        document.getElementById("apellido").value = data.apellido || "";
-      } catch (err) {
-        document.getElementById("respuesta").textContent = "⚠️ Error al cargar perfil: " + err.message;
-      }
+  const firebaseConfig = {
+    apiKey: "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs",
+    authDomain: "cryptotracker-717d2.firebaseapp.com",
+    projectId: "cryptotracker-717d2",
+    storageBucket: "cryptotracker-717d2.appspot.com",
+    messagingSenderId: "122496075810",
+    appId: "1:122496075810:web:3db6bc39ef64a03e75a27b"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+
+  async function obtenerPrecioActual(simbolo) {
+  try {
+    const response = await fetch(`http://localhost:8080/api/cryptos/precio/${simbolo}`);
+    if (!response.ok) throw new Error("No se pudo obtener el precio");
+    const data = await response.json();
+    console.log("📦 Respuesta de precio:", data); // 👈 Útil para depurar
+    return data; // 👈 Este campo debe existir
+  } catch (error) {
+    console.error("❌ Error en obtenerPrecioActual:", error.message);
+    return 0;
+  }
+}
+
+
+
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      alert("No has iniciado sesión.");
+      window.location.href = "firebase-login.html";
+      return;
     }
-    
-    cargarPerfil();
-    
-    document.getElementById("perfilForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+
+    const token = await user.getIdToken();
+
+    document.getElementById("btn-comprar").addEventListener("click", async () => {
+      const simbolo = document.getElementById("input-simbolo").value.toLowerCase();
+      const cantidadCrypto = parseFloat(document.getElementById("input-cantidad").value);
+
+      if (isNaN(cantidadCrypto) || cantidadCrypto <= 0) {
+        alert("Cantidad inválida");
+        return;
+      }
+
+   let precio = 0;
+try {
+  precio = await obtenerPrecioActual(simbolo);
+  console.log("💰 Precio recibido:", precio); // 👈 Lo verás en consola
+  if (!precio || isNaN(precio)) {
+    throw new Error("Precio inválido");
+  }
+} catch (e) {
+  alert("Error al obtener el precio: " + e.message);
+  return;
+}
+
+
+
+      const nombreCrypto = simbolo.charAt(0).toUpperCase() + simbolo.slice(1);
+
+      const compraRequest = {
+        usuarioId: user.uid,
+        simbolo,
+        nombreCrypto,
+        cantidadCrypto,
+        precio
+      };
+
+      console.log("📤 Enviando compra:", compraRequest);
+
       try {
-        const id = document.getElementById("userId").value;
-        const usuario = {
-          nombreUsuario: document.getElementById("nombreUsuario").value,
-          email: document.getElementById("email").value,
-          nombre: document.getElementById("nombre").value,
-          apellido: document.getElementById("apellido").value
-        };
-        const idToken = localStorage.getItem("idToken");
-        const res = await fetch("http://localhost:8080/api/usuarios/" + id, {
-          method: "PUT",
+        const response = await fetch("http://localhost:8080/api/transacciones/comprar", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + idToken
+            Authorization: "Bearer " + token
           },
-          body: JSON.stringify(usuario)
+          body: JSON.stringify(compraRequest)
         });
-        const text = await res.text();
-        if (!res.ok) throw new Error("Error " + res.status + ": " + text);
-        const data = text ? JSON.parse(text) : {};
-        document.getElementById("respuesta").textContent = JSON.stringify(data, null, 2);
+
+        const responseText = await response.text();
+        if (!response.ok) {
+          throw new Error("Error al comprar: " + response.status + " " + responseText);
+        }
+
+        const resultado = JSON.parse(responseText);
+        document.getElementById("respuesta").textContent = JSON.stringify(resultado, null, 2);
+
       } catch (err) {
-        document.getElementById("respuesta").textContent = "⚠️ Error al actualizar perfil: " + err.message;
+        alert("Error al comprar: " + err.message);
       }
     });
-  </script>
+  });
+</script>
+
 </body>
 </html>

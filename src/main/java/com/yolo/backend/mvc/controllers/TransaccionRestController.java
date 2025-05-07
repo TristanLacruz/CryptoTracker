@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.yolo.backend.mvc.model.dto.CompraRequestDTO;
 import com.yolo.backend.mvc.model.entity.Transaccion;
 import com.yolo.backend.mvc.model.services.ITransaccionService;
 
@@ -38,26 +41,30 @@ public class TransaccionRestController {
         return Transaccion;
     }
 	
-	@PostMapping("/comprar")
-	public Transaccion buyCrypto(@RequestParam String usuarioId,
-	                             @RequestParam String simbolo,
-	                             @RequestParam double cantidadUSD) {
-	    if (cantidadUSD <= 0) {
-	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cantidad debe ser mayor que 0");
-	    }
-	    return transaccionService.comprarCrypto(usuarioId, simbolo, cantidadUSD);
-	}
+//	@PostMapping("/comprar")
+//	public Transaccion buyCrypto(@RequestBody CompraRequestDTO dto) {
+//	    System.out.println("📥 Datos recibidos en compra:");
+//	    System.out.println("usuarioId: " + dto.getUsuarioId());
+//	    System.out.println("simbolo: " + dto.getSimbolo());
+//	    System.out.println("nombreCrypto: " + dto.getNombreCrypto());
+//	    System.out.println("cantidadCrypto: " + dto.getCantidadCrypto());
+//	    System.out.println("precio: " + dto.getPrecio());
+//
+//	    if (dto.getCantidadCrypto() <= 0 || dto.getPrecio() <= 0) {
+//	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad o precio inválido");
+//	    }
+//
+//	    return transaccionService.comprarCrypto(
+//	        dto.getUsuarioId(),
+//	        dto.getSimbolo(),
+//	        dto.getNombreCrypto(),
+//	        dto.getCantidadCrypto(),
+//	        dto.getPrecio()
+//	    );
+//	}
 
 
-	@PostMapping("/vender")
-	public Transaccion sellCrypto(@RequestParam String usuarioId,
-	                              @RequestParam String simbolo,
-	                              @RequestParam double cantidadUSD) {
-	    if (cantidadUSD <= 0) {
-	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cantidad debe ser mayor que 0");
-	    }
-	    return transaccionService.venderCrypto(usuarioId, simbolo, cantidadUSD);
-	}
+
 
     
     @GetMapping("/usuario")
@@ -71,6 +78,11 @@ public class TransaccionRestController {
         return transaccionService.findByUsuarioId(uid);
     }
 
+    @GetMapping("/invertido/{usuarioId}")
+    public ResponseEntity<Double> getTotalInvertido(@PathVariable String usuarioId) {
+        double total = transaccionService.getTotalInvertido(usuarioId);
+        return ResponseEntity.ok(total);
+    }
 
 
 }

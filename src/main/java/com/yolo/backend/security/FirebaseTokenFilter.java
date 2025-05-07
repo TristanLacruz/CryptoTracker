@@ -10,6 +10,7 @@ import com.google.firebase.auth.FirebaseToken;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 public class FirebaseTokenFilter extends OncePerRequestFilter {
@@ -35,13 +37,24 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             return;
         }
 
+        String token = header.replace("Bearer ", "");
+        System.out.println("🔐 Token recibido: " + token);
+
         String idToken = header.substring(7);
         try {
             FirebaseToken decodedToken = firebaseService.verifyToken(idToken);
             String uid = decodedToken.getUid();
 
             UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(uid, null, Collections.emptyList());
+                    new UsernamePasswordAuthenticationToken(
+                    		uid, 
+                    		null, 
+                            List.of(new SimpleGrantedAuthority("ROLE_USER")) // 👈 Autoridad mínima
+                            );
+                            System.out.println("🔐 UID autenticado: " + uid);
+                           
+                            System.out.println("🔐 Token decodificado correctamente: UID=" + uid);
+                            System.out.println("🔐 Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
 
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
