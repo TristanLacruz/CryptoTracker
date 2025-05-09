@@ -12,6 +12,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -160,107 +161,116 @@ public class SimuladorOperacionView extends VBox {
 	}
 
 	private void realizarVenta(String simbolo, String nombreCrypto, double cantidad, double precio) {
-		String usuarioId = AuthContext.getInstance().getUsuarioId();
+	    JSONObject payload = new JSONObject();
+	    payload.put("usuarioId", AuthContext.getInstance().getUsuarioId());
+	    payload.put("simbolo", simbolo);
+	    payload.put("nombreCrypto", nombreCrypto);
+	    payload.put("cantidadCrypto", cantidad);
+	    payload.put("precio", precio);
 
-// 1) Preparamos el payload JSON
-		JSONObject payload = new JSONObject();
-		payload.put("usuarioId", usuarioId);
-		payload.put("simbolo", simbolo);
-		payload.put("nombreCrypto", nombreCrypto);
-		payload.put("cantidadCrypto", cantidad);
-		payload.put("precio", precio);
+	    HttpRequest.Builder b = HttpRequest.newBuilder()
+	        .uri(URI.create("http://localhost:8080/api/cryptos/sell"))
+	        .header("Content-Type", "application/json")
+	        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
 
-// 2) Construimos la petición
-		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/api/cryptos/sell"))
-				.header("Content-Type", "application/json")
-				.POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
+	    String token = AuthContext.getInstance().getIdToken();
+	    if (token != null && !token.isBlank()) {
+	        b.header("Authorization", "Bearer " + token);
+	    }
+	    HttpRequest request = b.build();
 
-// 3) Sólo añadimos Authorization si tenemos un token válido
-		String idToken = AuthContext.getInstance().getIdToken();
-		if (idToken != null && !idToken.isBlank()) {
-			builder.header("Authorization", "Bearer " + idToken);
-		}
+	    HttpClient.newHttpClient()
+	        .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+	        .thenAccept(response -> Platform.runLater(() -> {
+	            int status = response.statusCode();
+	            String body = response.body();
 
-		HttpRequest request = builder.build();
+	            // DEBUG puro
+	            System.out.println("[DEBUG] Venta: status=" + status + ", body=[" + body + "]");
+	            mostrarAlerta("🛠 Debug Venta", "status=" + status + "\nbody=" + (body.isBlank() ? "<vacío>" : body));
 
-// 4) Envío asíncrono y manejo de la respuesta
-		HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-				.thenAccept(response -> Platform.runLater(() -> {
-					int status = response.statusCode();
-					String body = response.body();
+	            if (body == null || body.isBlank()) {
+	                mostrarAlerta("❌ Venta fallida (sin contenido)",
+	                              "El backend devolvió HTTP " + status + " sin cuerpo.");
+	                return;
+	            }
 
-// Error HTTP
-					if (status != 200) {
-						mostrarAlerta("❌ Venta fallida", "Código HTTP: " + status);
-						return;
-					}
+	            try {
+	                JSONObject root;
+	                String trimmed = body.trim();
+	                if (trimmed.startsWith("[")) {
+	                    JSONArray arr = new JSONArray(trimmed);
+	                    if (arr.length() == 0) {
+	                        mostrarAlerta("❌ Venta fallida", "Array JSON vacío");
+	                        return;
+	                    }
+	                    root = arr.getJSONObject(0);
+	                } else {
+	                    root = new JSONObject(trimmed);
+	                }
 
-// Respuesta vacía
-					if (body == null || body.isBlank()) {
-						mostrarAlerta("❌ Respuesta vacía", "El servidor no devolvió contenido.");
-						return;
-					}
+	                String estado  = root.optString("estado", "");
+	                String mensaje = root.optString("mensaje", "");
+	                JSONObject det  = root.optJSONObject("detalle");
 
-// Parseamos JSON
-					try {
-						JSONObject root = new JSONObject(body);
-						String estado = root.optString("estado", "error");
-						String mensaje = root.optString("mensaje", "");
+	                if (status != 200 || !"exito".equalsIgnoreCase(estado) || det == null) {
+	                    String detalleText = root.optString("detalle", "");
+	                    String textoError = mensaje.isBlank()
+	                        ? "Código HTTP " + status
+	                        : mensaje + (detalleText.isBlank() ? "" : ": " + detalleText);
+	                    mostrarAlerta("❌ Venta fallida", textoError);
+	                    return;
+	                }
 
-						if (!"exito".equalsIgnoreCase(estado)) {
-							mostrarAlerta("❌ Venta fallida", mensaje);
-							return;
-						}
+	                double cant  = det.getDouble("cantidad");
+	                String sim   = det.getString("simbolo");
+	                double total = det.getDouble("valorTotal");
 
-						JSONObject det = root.getJSONObject("detalle");
-						double cant = det.getDouble("cantidad");
-						String sim = det.getString("simbolo");
-						double total = det.getDouble("valorTotal");
+	                mostrarAlerta("✅ Venta exitosa",
+	                    String.format("Vendiste %.6f %s por %.2f €", cant, sim, total));
+	                actualizarDatosPortafolio();
 
-						mostrarAlerta("✅ Venta exitosa",
-								String.format("Vendiste %.6f %s por %.2f €", cant, sim, total));
-						actualizarDatosPortafolio();
-
-					} catch (JSONException ex) {
-						mostrarAlerta("❌ Respuesta inválida", ex.getMessage());
-					}
-				})).exceptionally(ex -> {
-					Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
-					return null;
-				});
+	            } catch (JSONException ex) {
+	                mostrarAlerta("❌ Error parseando JSON", ex.toString());
+	            }
+	        }))
+	        .exceptionally(ex -> {
+	            Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
+	            return null;
+	        });
 	}
+
 
 	private void actualizarDatosPortafolio() {
-		String usuarioId = AuthContext.getInstance().getUsuarioId();
+	    String usuarioId = AuthContext.getInstance().getUsuarioId();
+	    String idToken   = AuthContext.getInstance().getIdToken();
 
-		String url = "http://localhost:8080/api/portafolios/" + usuarioId;
+	    // 1) Asegúrate de imprimir el token para depurar:
+	    System.out.println("[CLIENT DEBUG] IdToken=" + idToken);
 
-		HttpClient client = HttpClient.newHttpClient();
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url))
-				.header("Authorization", "Bearer " + AuthContext.getInstance().getIdToken()).build();
+	    String url = "http://localhost:8080/api/portafolios/" + usuarioId;
 
-		client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(HttpResponse::body)
-				.thenAccept(json -> Platform.runLater(() -> {
-					try {
-						if (json == null || json.isBlank() || !json.trim().startsWith("{")) {
-							throw new IllegalArgumentException("Respuesta vacía o inválida del backend");
-						}
+	    // 2) Construye la petición explicitando el método GET y la cabecera
+	    HttpRequest request = HttpRequest.newBuilder()
+	        .uri(URI.create(url))
+	        .GET()   // <- Muy importante: fuerza el GET
+	        .header("Authorization", "Bearer " + idToken)
+	        .build();
 
-						JSONObject obj = new JSONObject(json);
-						double saldo = obj.getDouble("saldo");
-						JSONObject criptos = obj.getJSONObject("criptomonedas");
-						double cantidadCrypto = criptos.optDouble(cryptoId, 0.0);
-
-						resultadoLabel.setStyle("-fx-text-fill: black;");
-						resultadoLabel.setText("💰 Saldo: " + saldo + " € | 🪙 " + cryptoId + ": " + cantidadCrypto);
-
-					} catch (Exception e) {
-						resultadoLabel.setStyle("-fx-text-fill: red;");
-						resultadoLabel.setText("❌ Error al leer el portafolio: " + e.getMessage());
-						System.out.println("❌ Respuesta no válida: " + json); // Para depuración
-					}
-				}));
-
+	    // 3) Dispara la petición y procesa la respuesta
+	    HttpClient.newHttpClient()
+	              .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+	              .thenApply(HttpResponse::body)
+	              .thenAccept(json -> Platform.runLater(() -> {
+	                  // ... tu código de parseo y actualización de UI ...
+	              }))
+	              .exceptionally(ex -> {
+	                  Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
+	                  return null;
+	              });
 	}
+
+
+
 
 }

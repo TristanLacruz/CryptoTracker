@@ -29,106 +29,130 @@
   <h3>Respuesta del servidor:</h3>
   <pre id="respuesta"></pre>
 
-<!-- SCRIPTS DE FIREBASE -->
+  <!-- FIREBASE -->
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
 
   <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs",
-    authDomain: "cryptotracker-717d2.firebaseapp.com",
-    projectId: "cryptotracker-717d2",
-    storageBucket: "cryptotracker-717d2.appspot.com",
-    messagingSenderId: "122496075810",
-    appId: "1:122496075810:web:3db6bc39ef64a03e75a27b"
-  };
+  document.addEventListener('DOMContentLoaded', () => {
+    const firebaseConfig = {
+      apiKey: "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs",
+      authDomain: "cryptotracker-717d2.firebaseapp.com",
+      projectId: "cryptotracker-717d2",
+      storageBucket: "cryptotracker-717d2.appspot.com",
+      messagingSenderId: "122496075810",
+      appId: "1:122496075810:web:3db6bc39ef64a03e75a27b"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-
-  async function obtenerPrecioActual(simbolo) {
-  try {
-    const response = await fetch(`http://localhost:8080/api/cryptos/precio/${simbolo}`);
-    if (!response.ok) throw new Error("No se pudo obtener el precio");
-    const data = await response.json();
-    console.log("📦 Respuesta de precio:", data); // 👈 Útil para depurar
-    return data; // 👈 Este campo debe existir
-  } catch (error) {
-    console.error("❌ Error en obtenerPrecioActual:", error.message);
-    return 0;
-  }
-}
-
-
-
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) {
-      alert("No has iniciado sesión.");
-      window.location.href = "firebase-login.html";
-      return;
-    }
-
-    const token = await user.getIdToken();
-
-    document.getElementById("btn-comprar").addEventListener("click", async () => {
-      const simbolo = document.getElementById("input-simbolo").value.toLowerCase();
-      const cantidadCrypto = parseFloat(document.getElementById("input-cantidad").value);
-
-      if (isNaN(cantidadCrypto) || cantidadCrypto <= 0) {
-        alert("Cantidad inválida");
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
+        console.warn('Usuario no autenticado');
         return;
       }
 
-   let precio = 0;
-try {
-  precio = await obtenerPrecioActual(simbolo);
-  console.log("💰 Precio recibido:", precio); // 👈 Lo verás en consola
-  if (!precio || isNaN(precio)) {
-    throw new Error("Precio inválido");
-  }
-} catch (e) {
-  alert("Error al obtener el precio: " + e.message);
-  return;
-}
+	const token = localStorage.getItem("token");
+	console.log("Token leído de localStorage:", token);
+	console.log("Header que envío:", { Authorization: `Bearer ${token}` });
+	
+	fetch("/api/portafolios/me", {
+	  method: "GET",
+	  headers: {
+	    "Accept": "application/json",
+	    "Content-Type": "application/json",
+	    "Authorization": `Bearer ${token}`
+	  }
+	})
+	.then(r => r.json())
+	.then(console.log)
+	.catch(console.error);
 
+      // 1) GET resumen del portafolio
+      console.log('✈️ Llamando a /api/portafolios/me/resumen con token', token);
+      let respResumen = await fetch("http://localhost:8080/api/portafolios/me/resumen", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      console.log('📶 /resumen status:', respResumen.status);
+      if (!respResumen.ok) {
+        console.error("Error al obtener el resumen:", await respResumen.text());
+      } else {
+        const resumen = await respResumen.json();
+        console.log("🏦 Resumen:", resumen);
+      }
 
+      // 2) GET portafolio completo
+      console.log('✈️ Llamando a /api/portafolios/me con token', token);
+      let respPortafolio = await fetch("http://localhost:8080/api/portafolios/me", {
+        headers: { "Authorization": "Bearer " + token }
+      });
+      console.log('📶 /me status:', respPortafolio.status);
+      if (!respPortafolio.ok) {
+        console.error("Error al obtener portafolio:", await respPortafolio.text());
+      } else {
+        const portafolio = await respPortafolio.json();
+        console.log("📋 Portafolio:", portafolio);
+      }
 
-      const nombreCrypto = simbolo.charAt(0).toUpperCase() + simbolo.slice(1);
+      // 3) Listener para comprar
+      document.getElementById("btn-comprar").addEventListener("click", async (e) => {
+        e.preventDefault();
+        const simbolo = document.getElementById("input-simbolo").value.toLowerCase();
+        const cantidadCrypto = parseFloat(document.getElementById("input-cantidad").value);
+        if (isNaN(cantidadCrypto) || cantidadCrypto <= 0) {
+          return alert("Cantidad inválida");
+        }
 
-      const compraRequest = {
-        usuarioId: user.uid,
-        simbolo,
-        nombreCrypto,
-        cantidadCrypto,
-        precio
-      };
+        // Precio actual
+        let precio;
+        try {
+          precio = await obtenerPrecioActual(simbolo);
+          console.log("💰 Precio recibido:", precio);
+          if (!precio || isNaN(precio)) throw new Error("Precio inválido");
+        } catch (err) {
+          return alert("Error al obtener el precio: " + err.message);
+        }
 
-      console.log("📤 Enviando compra:", compraRequest);
+        const compraRequest = {
+          usuarioId: user.uid,
+          simbolo,
+          nombreCrypto: simbolo[0].toUpperCase() + simbolo.slice(1),
+          cantidadCrypto,
+          precio
+        };
+        console.log("📤 Enviando compra:", compraRequest);
 
-      try {
-        const response = await fetch("http://localhost:8080/api/transacciones/comprar", {
+        // POST transacción
+        const respCompra = await fetch("http://localhost:8080/api/transacciones/comprar", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer " + token
+            "Authorization": "Bearer " + token
           },
           body: JSON.stringify(compraRequest)
         });
-
-        const responseText = await response.text();
-        if (!response.ok) {
-          throw new Error("Error al comprar: " + response.status + " " + responseText);
+        console.log('📶 /comprar status:', respCompra.status);
+        const text = await respCompra.text();
+        if (!respCompra.ok) {
+          return alert("Error al comprar: " + respCompra.status + " " + text);
         }
+        document.getElementById("respuesta").textContent = text;
+      });
 
-        const resultado = JSON.parse(responseText);
-        document.getElementById("respuesta").textContent = JSON.stringify(resultado, null, 2);
-
-      } catch (err) {
-        alert("Error al comprar: " + err.message);
-      }
     });
-  });
-</script>
 
+    async function obtenerPrecioActual(simbolo) {
+      try {
+        const r = await fetch(`http://localhost:8080/api/cryptos/precio/${simbolo}`);
+        if (!r.ok) throw new Error("No se pudo obtener el precio");
+        const d = await r.json();
+        return d.current_price ?? d;  // ajusta según tu API
+      } catch (e) {
+        console.error("❌ obtenerPrecioActual:", e);
+        return 0;
+      }
+    }
+  });
+  </script>
 </body>
 </html>

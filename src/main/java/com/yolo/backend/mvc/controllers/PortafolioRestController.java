@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,7 +25,7 @@ import com.yolo.backend.mvc.model.services.IPortafolioService;
 import com.yolo.backend.mvc.model.services.ICriptomonedaService;
 
 @RestController
-@RequestMapping("/api/portafolio")
+@RequestMapping("/api/portafolios")
 @CrossOrigin(origins = "*")
 public class PortafolioRestController {
 
@@ -48,13 +49,16 @@ public class PortafolioRestController {
 
     @GetMapping("/{usuarioId}")
     public ResponseEntity<?> getPortafolio(@PathVariable String usuarioId) {
-        try {
-            Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
-            return ResponseEntity.ok(portafolio);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                 .body(Map.of("error", "Portafolio no encontrado"));
+        Portafolio p = portafolioService.getPortafolioDeUsuarioId(usuarioId);
+        if (p == null) {
+            return ResponseEntity.status(404)
+                  .body(Map.of("estado","error","mensaje","Portafolio no encontrado"));
         }
+        Map<String,Object> resp = Map.of(
+            "saldo", p.getSaldo(),
+            "criptomonedas", p.getCriptomonedas()
+        );
+        return ResponseEntity.ok(resp);
     }
     
     @GetMapping("/{usuarioId}/resumen")
@@ -88,21 +92,39 @@ public class PortafolioRestController {
         return portafolioService.calcularRendimiento(usuarioId);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getMiPortafolio(Authentication auth) {
+        String userId = auth.getName();
+    	System.out.println("[DEBUG] getMiPortafolio para userId=" + userId);
+    	Portafolio p = portafolioService.getPortafolioDeUsuarioId(auth.getName());
+        if (p == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("estado","error","mensaje","Portafolio no encontrado"));
+        }
+        return ResponseEntity.ok(p);
+    }
+    
+    @GetMapping("/me/resumen")
+    public List<CriptoPosesionDTO> getMiResumen(Authentication auth) {
+        return getResumenPortafolio(auth.getName());
+    }
+
+
 
     @GetMapping("/{usuarioId}/evolucion-completa")
     public List<EvolucionCompletaDTO> getEvolucionCompleta(@PathVariable String usuarioId) {
         return portafolioService.calcularEvolucionCompleta(usuarioId);
     }
     
-    @GetMapping("/portafolios/{usuarioId}")
-    public ResponseEntity<?> obtenerPortafolio(@PathVariable String usuarioId) {
-        try {
-            Portafolio portafolio = portafolioService.findByUsuarioId(usuarioId);
-            return ResponseEntity.ok(portafolio);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Portafolio no encontrado para el usuario: " + usuarioId);
-        }
-    }
+//    @GetMapping("/portafolios/{usuarioId}")
+//    public ResponseEntity<?> obtenerPortafolio(@PathVariable String usuarioId) {
+//        try {
+//            Portafolio portafolio = portafolioService.findByUsuarioId(usuarioId);
+//            return ResponseEntity.ok(portafolio);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Portafolio no encontrado para el usuario: " + usuarioId);
+//        }
+//    }
 
 
 }

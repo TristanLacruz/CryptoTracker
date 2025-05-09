@@ -297,13 +297,41 @@ public class CriptomonedaRestController {
 	            venta.getCantidadCrypto(),
 	            venta.getPrecio()
 	        );
+
+	        if (transaccion == null) {
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+	                Map.of("estado", "error", "mensaje", "No se pudo realizar la venta.")
+	            );
+	        }
+
 	        System.out.println("✅ Venta realizada. Total: " + transaccion.getValorTotal());
-	        return ResponseEntity.ok(transaccion);
+
+	        Map<String, Object> respuesta = Map.of(
+	            "estado", "exito",
+	            "mensaje", "Venta realizada con éxito",
+	            "detalle", Map.of(
+	                "simbolo",    transaccion.getCryptoId(),
+	                "cantidad",   transaccion.getCantidadCrypto(),
+	                "precio",     transaccion.getPrecioTransaccion(),
+	                "valorTotal", transaccion.getValorTotal()
+	            )
+	        );
+
+	        return ResponseEntity.ok(respuesta);
+
 	    } catch (RuntimeException e) {
 	        System.out.println("❌ Error en venta: " + e.getMessage());
-	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
+
+	        Map<String, Object> respuesta = Map.of(
+	            "estado", "error",
+	            "mensaje", "Ocurrió un error al procesar la venta",
+	            "detalle", e.getMessage()
+	        );
+
+	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	    }
 	}
+
 
 
 

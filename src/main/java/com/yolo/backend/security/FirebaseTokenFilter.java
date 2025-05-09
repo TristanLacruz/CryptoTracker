@@ -30,7 +30,11 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        String header = request.getHeader("Authorization");
+        String path = request.getRequestURI();
+    	String header = request.getHeader("Authorization");
+
+    	 // DEBUG: imprime siempre ruta y cabecera
+        System.out.println("[FILTER DEBUG] URI=" + path + ", Authorization=" + header);
 
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -58,10 +62,17 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
+            System.out.println("✅ Auth in context: " + 
+                SecurityContextHolder.getContext().getAuthentication());
+
         } catch (FirebaseAuthException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            System.out.println("🔐 Token inválido en FirebaseTokenFilter: " + e.getMessage());
+            // mejor usar sendError para que Spring genere el 401 correctamente
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o expirado");
             return;
-        }
+        } 
+
 
         filterChain.doFilter(request, response);
     }

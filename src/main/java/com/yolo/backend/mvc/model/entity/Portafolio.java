@@ -8,81 +8,68 @@ import java.util.Map;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import lombok.Data;
-
 @Document(collection = "portafolios")
 public class Portafolio {
 
-	@Id
-	private String id;
+    @Id
+    private String id;
+    private String usuarioId;
+    private Map<String, Double> criptomonedas = new HashMap<>();
+    private double saldo;
 
-	private String usuarioId;
-    private Map<String, Double> criptomonedas = new HashMap<>(); // key: símbolo, value: cantidad
-	private double saldo; // 💰 Dinero ficticio disponible
+    public Portafolio() {}
 
-	public Portafolio() {
-	}
-	
-	@Data
-    public static class CriptoActivo {
-        private String cryptoId;
-        private String nombre;
-        private double cantidad; // cantidad que posee
+    public Portafolio(String id) {
+        this.id = id;
     }
-
-	public Portafolio(String id) {
-		this.id = id;
-	}
 
 	public Portafolio(String usuarioId, String idCriptomoneda, double cantidadAlmacenada, double precioMedioCompra) {
 		this.usuarioId = usuarioId;
 	}
 
-	public String getId() {
-		return id;
-	}
-	
-	public double getSaldo() {
-	    return saldo;
-	}
+	// Getters / setters para Portafolio
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-	public void setSaldo(double saldo) {
-	    this.saldo = saldo;
-	}
+    public String getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(String usuarioId) { this.usuarioId = usuarioId; }
 
+    public Map<String, Double> getCriptomonedas() {
+        return criptomonedas;
+    }
+    public void setCriptomonedas(Map<String, Double> criptomonedas) {
+        this.criptomonedas = criptomonedas;
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public double getSaldo() { return saldo; }
+    public void setSaldo(double saldo) { this.saldo = saldo; }
 
-	public String getUsuarioId() {
-		return usuarioId;
-	}
+    // ejemplo de método de negocio
+    public void agregarCripto(String simbolo, double cantidad) {
+        this.criptomonedas.merge(simbolo, cantidad, Double::sum);
+    }
 
-	public void setUsuarioId(String usuarioId) {
-		this.usuarioId = usuarioId;
-	}
+    // Inner DTO sin @Data
+    public static class CriptoActivo {
+        private String cryptoId;
+        private String nombre;
+        private double cantidad;
 
-	public Map<String, Double> getCriptomonedas() {
-		return criptomonedas;
-	}
+        public CriptoActivo() {}
 
-	public void setCriptomonedas(Map<String, Double> criptomonedas) {
-		this.criptomonedas = criptomonedas;
-	}
+        public String getCryptoId() { return cryptoId; }
+        public void setCryptoId(String cryptoId) {
+            this.cryptoId = cryptoId;
+        }
 
-	
-	public void agregarCripto(String simbolo, double cantidad) {
-	    this.criptomonedas.merge(simbolo, cantidad, Double::sum);
-	}
+        public String getNombre() { return nombre; }
+        public void setNombre(String nombre) {
+            this.nombre = nombre;
+        }
 
-	public void actualizarConCompra(String simbolo, double cantidad, double coste) {
-	    // Restamos el dinero gastado
-	    this.saldo -= coste;
-
-	    // Sumamos la cantidad comprada al mapa de criptomonedas
-	    this.criptomonedas.merge(simbolo, cantidad, Double::sum);
-	}
-
-	
+        public double getCantidad() { return cantidad; }
+        public void setCantidad(double cantidad) {
+            this.cantidad = cantidad;
+        }
+    }
 }
