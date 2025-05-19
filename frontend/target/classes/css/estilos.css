@@ -1,0 +1,18 @@
+.root {
+    -fx-background-color: #1E1E1E;
+}
+
+.button {
+    -fx-background-color: white;
+    -fx-border-color: #001F3F;     /* Azul oscuro */
+    -fx-border-width: 2px;
+    -fx-text-fill: #EFB810;        /* Dorado cálido */
+    -fx-font-weight: bold;
+    -fx-padding: 8 16;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+.button:hover {
+    -fx-background-color: #f0f0f0;
+}
