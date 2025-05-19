@@ -6,6 +6,7 @@ import com.yolo.backend.mvc.model.dto.UsuarioDTO;
 import com.yolo.backend.mvc.model.entity.Usuario;
 import com.yolo.backend.security.FirebaseService;
 import com.yolo.backend.mvc.model.services.IUsuarioService;
+import com.yolo.backend.mvc.model.AuthRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -37,4 +38,12 @@ public class AuthController {
             return ResponseEntity.status(401).body("Token inválido: " + e.getMessage());
         }
     }
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+        // Aquí puedes implementar lógica adicional si haces login manual
+        // Si ya usas Firebase para autenticación desde el frontend, puedes omitir esto
+        return ResponseEntity.ok("Login request recibido con email: " + request.getEmail());
+    }
+
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
@@ -39,36 +40,41 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	@Override
 	public void save(Usuario u) {
-	    // 1. Comprobar si el usuario ya existe en MongoDB por UID
-	    Optional<Usuario> existente = usuarioDAO.findByUid(u.getUid());
-	    if (existente.isPresent()) {
-	        return; // ya está registrado
-	    }
-
 	    try {
-	        // 2. Comprobar si existe en Firebase por email (opcional, puede lanzar excepción si no existe)
-	        FirebaseAuth.getInstance().getUserByEmail(u.getEmail());
-	        // Si no lanza excepción, ya existe en Firebase → no lo creamos de nuevo
-	    } catch (FirebaseAuthException ex) {
-	        if ("USER_NOT_FOUND".equals(ex.getErrorCode())) {
-	            // 3. Crear en Firebase si no existe
-	            try {
-	            	UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-	    	                .setEmail(u.getEmail())
-	    	                .setPassword(u.getContrasena());
-	    	            UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
-	    	            u.setUid(userRecord.getUid());
-				} catch (Exception e) {
-					// TODO: handle exception
-				}      		       
-	        } else {
-	            throw new RuntimeException("Error al comprobar usuario en Firebase: " + ex.getMessage());
-	        }
-	    }
+	        // Intentamos obtener el usuario en Firebase
+	        UserRecord firebaseUser;
+	        try {
+	            firebaseUser = FirebaseAuth.getInstance().getUserByEmail(u.getEmail());
+	        } catch (FirebaseAuthException ex) {
+	            if (ex.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+	            	if (u.getContrasena().length() < 6) {
+	            	    throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
+	            	}
 
-	    // 4. Cifrar y guardar en Mongo
-	    u.setContrasena(passwordEncoder.encode(u.getContrasena()));
-	    usuarioDAO.save(u);
+	            	// Crear usuario en Firebase
+	                UserRecord.CreateRequest request = new UserRecord.CreateRequest()
+	                        .setEmail(u.getEmail())
+	                        .setPassword(u.getContrasena());
+
+	                firebaseUser = FirebaseAuth.getInstance().createUser(request);
+	            } else {
+	                throw new RuntimeException("Error al comprobar usuario en Firebase: " + ex.getMessage(), ex);
+	            }
+	        }
+
+
+	        // Seteamos UID
+	        u.setUid(firebaseUser.getUid());
+
+	        // Verificamos si ya está en Mongo
+	        if (!usuarioDAO.findByUid(u.getUid()).isPresent()) {
+	            u.setContrasena(passwordEncoder.encode(u.getContrasena()));
+	            usuarioDAO.save(u);
+	        }
+
+	    } catch (Exception e) {
+	        throw new RuntimeException("Error al guardar el usuario: " + e.getMessage(), e);
+	    }
 	}
 
 

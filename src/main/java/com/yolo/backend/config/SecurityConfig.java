@@ -46,17 +46,17 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		return http.cors(withDefaults()) // Habilita CORS
-				.csrf(csrf -> csrf.disable()) // ❌ Desactiva CSRF
+				.csrf(csrf -> csrf.disable()) // Desactiva CSRF
 				.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/admin/**").hasRole("ADMIN")
 						.requestMatchers("/auth/me/details", "/", "/index.html", "/favicon.ico", "/js/**", "/css/**",
 								"/images/**",
 
-								// 🔓 Endpoints públicos
+								// Endpoints públicos
 								"/auth/**", "/firebase-login.html", "/perfil.html", "/firebase-register.html",
 								"/recover-password.html", "/reset-password.html",
 
-								// ✅ APIs públicas
+								// APIs públicas
 								"/api/usuarios", "/api/usuarios/me", "/api/recover", "/api/reset", "/cryptos/**",
 								"/api/cryptos/**", "/precio/**", "/info/**", "/api/transacciones/**", "/alertas",
 								"/ordenes/**", "/notifications")

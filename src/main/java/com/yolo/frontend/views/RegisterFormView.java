@@ -1,141 +1,102 @@
 package com.yolo.frontend.views;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yolo.frontend.AuthContext;
-import com.yolo.frontend.CryptoTableViewApp;
-import com.yolo.frontend.dto.UsuarioDTO;
 import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
+import java.net.http.*;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RegisterFormView {
 
-    public void mostrarRegistro(Stage stage) {
-        Label lblTitulo = new Label("Registro de Usuario");
+	public void mostrar(Stage parentStage) {
+		Stage stage = new Stage();
 
-        TextField emailField = new TextField();
-        emailField.setPromptText("Correo electrónico");
+		TextField nombreUsuario = new TextField();
+		TextField email = new TextField();
+		TextField nombre = new TextField();
+		TextField apellido = new TextField();
+		PasswordField password = new PasswordField();
 
-        PasswordField passField = new PasswordField();
-        passField.setPromptText("Contraseña");
+		Button btnVolver = new Button("Volver al menú");
+		Button btnRegistrar = new Button("Registrarse");
+		Label mensaje = new Label();
 
-        Button registrarBtn = new Button("Registrarse");
-        Label mensajeLabel = new Label();
-
-        registrarBtn.setOnAction(e -> {
-            String email = emailField.getText();
-            String pass = passField.getText();
-
-            if (email.isEmpty() || pass.isEmpty()) {
-                mensajeLabel.setStyle("-fx-text-fill: red;");
-                mensajeLabel.setText("❌ Todos los campos son obligatorios");
-                return;
-            }
-
-            registrarEnFirebase(email, pass, mensajeLabel, stage);
+		VBox root = new VBox(10, new Label("Nombre de usuario:"), nombreUsuario, new Label("Correo electrónico:"),
+				email, new Label("Nombre:"), nombre, new Label("Apellido:"), apellido, new Label("Contraseña:"),
+				password, btnRegistrar, btnVolver, mensaje);
+        root.setPadding(new Insets(20));
+        
+		btnVolver.setOnAction(ev -> {
+        	try {
+        		new MainMenuView().start(parentStage); // Vuelve al menú
+        		stage.close(); // Cierra la ventana actual
+        	} catch (Exception ex) {
+        		ex.printStackTrace();
+        	}
         });
+		
+		btnRegistrar.setOnAction(e -> {
+			try {
+				Map<String, String> datos = new HashMap<>();
+				datos.put("nombreUsuario", nombreUsuario.getText());
+				datos.put("email", email.getText());
+				datos.put("nombre", nombre.getText());
+				datos.put("apellido", apellido.getText());
+				datos.put("contrasena", password.getText());
+				datos.put("rol", "USER");
 
-        VBox layout = new VBox(10, lblTitulo, emailField, passField, registrarBtn, mensajeLabel);
-        layout.setPadding(new Insets(20));
-        stage.setScene(new Scene(layout, 400, 250));
-        stage.setTitle("Registro");
-        stage.show();
-    }
+				ObjectMapper mapper = new ObjectMapper();
+				String json = mapper.writeValueAsString(datos);
 
-    private void registrarEnFirebase(String email, String password, Label mensajeLabel, Stage stage) {
-        String json = String.format("""
-        {
-          "email": "%s",
-          "password": "%s",
-          "returnSecureToken": true
-        }
-        """, email, password);
+				HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/api/usuarios"))
+						.header("Content-Type", "application/json")
+						.POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8)).build();
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=TU_API_KEY"))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
+				HttpClient client = HttpClient.newHttpClient();
+				client.sendAsync(request, BodyHandlers.ofString()).thenApply(HttpResponse::body)
+				.thenAccept(response -> {
+				    Platform.runLater(() -> {
+				        mensaje.setText("✅ Usuario registrado correctamente.");
+				        // Cierra ventana de registro
+				        stage.close();
+				        try {
+				            // Cargar y mostrar la nueva vista principal
+				            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/main/MainView.fxml"));
+				            Parent mainRoot = loader.load();  // 👈 cambio aquí
+				            Stage mainStage = new Stage();
+				            mainStage.setScene(new Scene(mainRoot));
+				            mainStage.setTitle("CryptoTracker - Panel principal");
+				            mainStage.show();
+				        } catch (Exception ex) {
+				            ex.printStackTrace();
+				            mensaje.setText("❌ No se pudo abrir la ventana principal.");
+				        }
+				    });
+				});
 
-        HttpClient client = HttpClient.newHttpClient();
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(response -> Platform.runLater(() -> {
-                    if (response.contains("error")) {
-                        mensajeLabel.setStyle("-fx-text-fill: red;");
-                        mensajeLabel.setText("❌ Error: " + extraerMensajeError(response));
-                        return;
-                    }
 
-                    String idToken = extraerCampo(response, "idToken");
-                    obtenerDatosUsuario(idToken, stage);
-                }))
-                .exceptionally(e -> {
-                    Platform.runLater(() -> {
-                        mensajeLabel.setStyle("-fx-text-fill: red;");
-                        mensajeLabel.setText("❌ Error al registrar: " + e.getMessage());
-                    });
-                    return null;
-                });
-    }
+			} catch (Exception ex) {
+				mensaje.setText("❌ Error interno.");
+				ex.printStackTrace();
+			}
+		});
 
-    private void obtenerDatosUsuario(String idToken, Stage stage) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/auth/me/details"))
-                .header("Authorization", "Bearer " + idToken)
-                .GET()
-                .build();
+		Scene scene = new Scene(root, 400, 400);
+		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm()); // <--- aquí
+		stage.setScene(scene);
 
-        HttpClient client = HttpClient.newHttpClient();
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(json -> Platform.runLater(() -> {
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        UsuarioDTO usuario = mapper.readValue(json, UsuarioDTO.class);
-
-                        AuthContext.getInstance().setUsuario(usuario);
-                        AuthContext.getInstance().setUsuarioId(usuario.getId());
-                        AuthContext.getInstance().setIdToken(idToken);
-
-                        System.out.println("✅ Usuario registrado y logueado: " + usuario.getEmail());
-
-                        CryptoTableViewApp app = new CryptoTableViewApp();
-                        app.mostrarAppPrincipal(stage);
-
-                    } catch (Exception e) {
-                        mostrarAlerta("Error al procesar usuario", e.getMessage());
-                    }
-                }))
-                .exceptionally(e -> {
-                    Platform.runLater(() -> mostrarAlerta("Error al obtener usuario", e.getMessage()));
-                    return null;
-                });
-    }
-
-    private String extraerCampo(String json, String campo) {
-        int start = json.indexOf(campo + "\":\"") + campo.length() + 3;
-        int end = json.indexOf("\"", start);
-        return json.substring(start, end);
-    }
-
-    private String extraerMensajeError(String response) {
-        if (response.contains("EMAIL_EXISTS")) return "El correo ya está registrado";
-        return "Registro fallido";
-    }
-
-    private void mostrarAlerta(String titulo, String mensaje) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titulo);
-        alert.setContentText(mensaje);
-        alert.showAndWait();
-    }
+		stage.setTitle("Formulario de Registro");
+		stage.show();
+		parentStage.close();
+	}
 }

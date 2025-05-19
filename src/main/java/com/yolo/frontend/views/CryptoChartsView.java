@@ -16,6 +16,7 @@ import java.util.List;
 
 public class CryptoChartsView extends VBox {
 
+	
     private final String cryptoId;
     private final Label rsiLabel = new Label("RSI: Cargando...");
     private final LineChart<Number, Number> priceChart;

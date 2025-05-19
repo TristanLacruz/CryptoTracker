@@ -32,6 +32,7 @@ public class SimuladorOperacionView extends VBox {
 		this.cryptoId = cryptoId;
 		this.nombreCrypto = nombreCrypto;
 		this.precioActual = precioActual;
+        this.setStyle("-fx-background-color: #1E1E1E;");
 
 		Label lblOperacion = new Label("Simular operación");
 

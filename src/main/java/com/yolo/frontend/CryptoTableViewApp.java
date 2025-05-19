@@ -55,7 +55,7 @@ public class CryptoTableViewApp extends Application {
 
 	@Override
 	public void start(Stage primaryStage) {
-	    new LoginFormView().mostrarLogin(primaryStage);
+	    new LoginFormView().mostrar(primaryStage);
 	}
 
 	
@@ -189,6 +189,7 @@ public class CryptoTableViewApp extends Application {
 		layout.getChildren().add(0, verPortafolioBtn); // lo añade arriba del buscador
 
 		Scene scene = new Scene(layout, 1000, 600); // Aumenté el tamaño para acomodar más columnas
+		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Listado de Criptomonedas");
 		primaryStage.show();

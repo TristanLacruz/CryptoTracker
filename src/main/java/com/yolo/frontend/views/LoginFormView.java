@@ -1,10 +1,5 @@
 package com.yolo.frontend.views;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.yolo.frontend.AuthContext;
-import com.yolo.frontend.CryptoTableViewApp;
-import com.yolo.frontend.dto.UsuarioDTO;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -17,121 +12,108 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yolo.frontend.CryptoTableViewApp;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class LoginFormView {
 
-    private static final String FIREBASE_API_KEY = "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs"; // ← cambia esto por la real
+    private static final String API_KEY = "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs";
 
-    public void mostrarLogin(Stage primaryStage) {
-        Label lblCorreo = new Label("Correo:");
-        TextField txtCorreo = new TextField();
+    public void mostrar(Stage parentStage) {
+        Stage stage = new Stage();
 
-        Label lblClave = new Label("Contraseña:");
-        PasswordField txtClave = new PasswordField();
-
+        TextField emailField = new TextField();
+        PasswordField passwordField = new PasswordField();
+        Label resultado = new Label();
+        Button btnVolver = new Button("Volver al menú");
         Button btnLogin = new Button("Iniciar sesión");
-        Label lblEstado = new Label();
 
-        btnLogin.setOnAction(e -> {
-            String email = txtCorreo.getText();
-            String password = txtClave.getText();
+        VBox root = new VBox(10,
+                new Label("Correo electrónico:"), emailField,
+                new Label("Contraseña:"), passwordField,
+                btnLogin,
+                btnVolver,
+                resultado
+        );
+        root.setPadding(new Insets(20));
 
-            if (email.isBlank() || password.isBlank()) {
-                lblEstado.setText("❌ Completa ambos campos");
-                return;
-            }
-
-            autenticarConFirebase(email, password, primaryStage, lblEstado);
+        btnVolver.setOnAction(ev -> {
+        	try {
+        		new MainMenuView().start(parentStage); // Vuelve al menú
+        		stage.close(); // Cierra la ventana actual
+        	} catch (Exception ex) {
+        		ex.printStackTrace();
+        	}
         });
 
-        VBox layout = new VBox(10, lblCorreo, txtCorreo, lblClave, txtClave, btnLogin, lblEstado);
-        layout.setPadding(new Insets(20));
-        Scene scene = new Scene(layout, 400, 300);
+        btnLogin.setOnAction(e -> {
+            String email = emailField.getText();
+            String password = passwordField.getText();
 
-        primaryStage.setTitle("Login");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
+            Map<String, String> credenciales = new HashMap<>();
+            credenciales.put("email", email);
+            credenciales.put("password", password);
+            credenciales.put("returnSecureToken", "true");
 
-    private void autenticarConFirebase(String email, String password, Stage stage, Label lblEstado) {
-        try {
-            String jsonBody = String.format("""
-                {
-                  "email": "%s",
-                  "password": "%s",
-                  "returnSecureToken": true
-                }
-                """, email, password);
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(credenciales);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + FIREBASE_API_KEY))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
-                    .build();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=" + API_KEY))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(json))
+                        .build();
 
-            HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApply(HttpResponse::body)
-                    .thenAccept(response -> Platform.runLater(() -> {
-                        try {
-                            ObjectMapper mapper = new ObjectMapper();
-                            JsonNode json = mapper.readTree(response);
+                HttpClient client = HttpClient.newHttpClient();
+                client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                        .thenApply(HttpResponse::body)
+                        .thenAccept(response -> {
+                            try {
+                                Map<String, Object> datos = mapper.readValue(response, Map.class);
+                                String idToken = (String) datos.get("idToken");
 
-                            if (json.has("error")) {
-                                String mensaje = json.get("error").get("message").asText();
-                                lblEstado.setText("❌ Error: " + mensaje);
-                            } else {
-                                String idToken = json.get("idToken").asText();
-                                obtenerUsuarioDesdeBackend(idToken, stage);
+                                Platform.runLater(() -> {
+                                    resultado.setText("✅ Login correcto.");
+                                    stage.close();
+
+                                    try {
+                                        // Guarda el token en sesión si lo necesitas globalmente
+                                        Session.idToken = idToken;
+
+                                        // Abre la vista principal con la lista de criptomonedas
+                                        new CryptoTableViewApp().start(stage);// O el nombre real de tu clase de vista principal
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                    }
+                                });
+
+
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> resultado.setText("⚠️ Error al procesar respuesta: " + ex.getMessage()));
                             }
-                        } catch (Exception ex) {
-                            lblEstado.setText("❌ Error inesperado al procesar respuesta");
-                        }
-                    }))
-                    .exceptionally(e -> {
-                        Platform.runLater(() -> lblEstado.setText("❌ Error de red: " + e.getMessage()));
-                        return null;
-                    });
+                        })
+                        .exceptionally(error -> {
+                            Platform.runLater(() -> resultado.setText("❌ Error de login: " + error.getMessage()));
+                            error.printStackTrace();
+                            return null;
+                        });
 
-        } catch (Exception e) {
-            lblEstado.setText("❌ Error al construir la solicitud");
-        }
-    }
+            } catch (Exception ex) {
+                resultado.setText("❌ Error interno: " + ex.getMessage());
+                ex.printStackTrace();
+            }
+        });
+        
+        Scene scene = new Scene(root, 400, 400);
+        scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm()); // <--- aquí
+        stage.setScene(scene);
 
-    private void obtenerUsuarioDesdeBackend(String idToken, Stage primaryStage) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("http://localhost:8080/auth/me/details"))
-                .header("Authorization", "Bearer " + idToken)
-                .GET()
-                .build();
-
-        HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept(json -> Platform.runLater(() -> {
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        UsuarioDTO usuario = mapper.readValue(json, UsuarioDTO.class);
-
-                        // Guardar en contexto
-                        AuthContext.getInstance().setUsuario(usuario);
-                        AuthContext.getInstance().setUsuarioId(usuario.getId());
-                        AuthContext.getInstance().setIdToken(idToken);
-
-                        System.out.println("✅ Login correcto: " + usuario.getEmail());
-                        new CryptoTableViewApp().mostrarAppPrincipal(primaryStage);
-
-                    } catch (Exception e) {
-                        mostrarAlerta("Error al procesar usuario", e.getMessage());
-                    }
-                }))
-                .exceptionally(e -> {
-                    Platform.runLater(() -> mostrarAlerta("Error al obtener usuario", e.getMessage()));
-                    return null;
-                });
-    }
-
-    private void mostrarAlerta(String titulo, String mensaje) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(titulo);
-        alert.setContentText(mensaje);
-        alert.showAndWait();
+        stage.setTitle("Iniciar sesión");
+        stage.show();
+        parentStage.close();
     }
 }

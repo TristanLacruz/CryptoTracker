@@ -53,12 +53,6 @@ public class UsuarioRestController {
 		return (Usuario) auth.getPrincipal();
 	}
 
-//	@PutMapping("/usuarios/{id}")
-//	public ResponseEntity<Usuario> updateUser(@PathVariable String id, @RequestBody Usuario updatedData) {
-//	    Usuario updatedUser = usuarioService.update(updatedData, id);
-//	    return ResponseEntity.ok(updatedUser);
-//	}
-
 	@PutMapping("/usuarios/{id}")
 	public Usuario updateUsuario(@RequestBody Usuario usuario, @PathVariable String id) {
 	    return usuarioService.update(usuario, id);
