@@ -86,7 +86,7 @@ public class SecurityConfig {
 
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors() // habilita la CORS configurada arriba
-				.and().csrf().disable().authorizeRequests().requestMatchers("/api/portafolios/me/**").authenticated()
+				.and().csrf().disable().authorizeRequests().requestMatchers("/api/portafolio/me/**").authenticated()
 				.anyRequest().permitAll().and().oauth2ResourceServer().jwt(); // o el provider que uses
 	}
 

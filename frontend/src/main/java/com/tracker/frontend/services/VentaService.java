@@ -11,7 +11,7 @@ public class VentaService {
 
 	    private static final String API_URL = "http://localhost:8080/api/transacciones/comprar";
 
-	    public void comprarCripto(String usuarioId, String simbolo, double valor) {
+	    public void venderCripto(String usuarioId, String simbolo, double valor) {
 	        try {
 	            // Crear el objeto DTO
 	            VentaRequestDTO venta = new VentaRequestDTO();

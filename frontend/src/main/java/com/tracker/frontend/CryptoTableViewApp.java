@@ -21,6 +21,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.collections.transformation.FilteredList;
 import javafx.stage.Stage;
@@ -28,9 +29,12 @@ import javafx.stage.Stage;
 import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.common.dto.CryptoMarketDTO;
 import com.tracker.frontend.services.CryptoService;
+import com.tracker.frontend.util.InactivityTimer;
+import com.tracker.frontend.views.AnimatedBackgroundView;
 import com.tracker.frontend.views.CryptoDetailView;
 import com.tracker.frontend.views.LoginFormView;
 import com.tracker.frontend.views.PortfolioView;
+import com.tracker.frontend.session.Session;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -55,6 +59,7 @@ public class CryptoTableViewApp extends Application {
 
 	@Override
 	public void start(Stage primaryStage) {
+	    System.out.println("✅ Se está cargando CryptoTableViewApp");
 	    new LoginFormView().mostrar(primaryStage);
 	}
 
@@ -172,23 +177,46 @@ public class CryptoTableViewApp extends Application {
 		            double precioActual = selected.getCurrentPrice();
 
 		            new CryptoDetailView(cryptoId, nombreCrypto, precioActual).mostrar(); // ✅ Correcto
+		            Stage currentStage = (Stage) tableView.getScene().getWindow();
+		            currentStage.close(); // Cierra la ventana actual
 		        }
 		    }
 		});
 
 
-		// Diseño principal
-		VBox layout = new VBox(10, buscador, tableView);
-		layout.setPadding(new Insets(10));
-
 		// Botón para mostrar el portafolio
 		Button verPortafolioBtn = new Button("Ver mi Portafolio");
 		verPortafolioBtn.setOnAction(e -> new PortfolioView(usuarioId).mostrar());
 
-		// Añadir botón al layout
-		layout.getChildren().add(0, verPortafolioBtn); // lo añade arriba del buscador
+		Button btnCerrarSesion = new Button("Cerrar sesión");
+		btnCerrarSesion.setOnAction(e -> {
+		    Session.idToken = null;
+		    Stage stage = (Stage) btnCerrarSesion.getScene().getWindow();
+		    stage.close();
+		    new LoginFormView().mostrar(new Stage());
+		});
 
-		Scene scene = new Scene(layout, 1000, 600); // Aumenté el tamaño para acomodar más columnas
+		// Agrupar botones en la parte superior
+		HBox topBar = new HBox(10, verPortafolioBtn, btnCerrarSesion);
+
+		VBox layout = new VBox(10, topBar, buscador, tableView);
+		layout.setPadding(new Insets(10));
+		layout.setStyle("-fx-background-color: transparent;");
+
+		AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
+		StackPane root = new StackPane(fondo, layout);
+
+		Scene scene = new Scene(root, 1000, 600);
+
+		// ⏱ Inactividad: cerrar sesión y volver al login
+		InactivityTimer timer = new InactivityTimer(primaryStage, () -> {
+		    Session.idToken = null;
+		    primaryStage.close();
+		    new LoginFormView().mostrar(new Stage());
+		});
+
+		timer.attachToScene(scene); // <- activa el control
+
 		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 		primaryStage.setScene(scene);
 		primaryStage.setTitle("Listado de Criptomonedas");

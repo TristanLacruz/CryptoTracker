@@ -19,6 +19,8 @@ public class CompraService {
             compra.setSimbolo(simbolo);
             compra.setCantidadCrypto(valor);
 
+            compra.setNombreCrypto(simbolo.toUpperCase()); // O el nombre real si lo tienes
+            
             // Convertir el DTO a JSON
             ObjectMapper objectMapper = new ObjectMapper();
             String requestBody = objectMapper.writeValueAsString(compra);

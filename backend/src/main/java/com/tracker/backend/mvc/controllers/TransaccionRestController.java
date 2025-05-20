@@ -41,27 +41,27 @@ public class TransaccionRestController {
         return Transaccion;
     }
 	
-//	@PostMapping("/comprar")
-//	public Transaccion buyCrypto(@RequestBody CompraRequestDTO dto) {
-//	    System.out.println("📥 Datos recibidos en compra:");
-//	    System.out.println("usuarioId: " + dto.getUsuarioId());
-//	    System.out.println("simbolo: " + dto.getSimbolo());
-//	    System.out.println("nombreCrypto: " + dto.getNombreCrypto());
-//	    System.out.println("cantidadCrypto: " + dto.getCantidadCrypto());
-//	    System.out.println("precio: " + dto.getPrecio());
-//
-//	    if (dto.getCantidadCrypto() <= 0 || dto.getPrecio() <= 0) {
-//	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad o precio inválido");
-//	    }
-//
-//	    return transaccionService.comprarCrypto(
-//	        dto.getUsuarioId(),
-//	        dto.getSimbolo(),
-//	        dto.getNombreCrypto(),
-//	        dto.getCantidadCrypto(),
-//	        dto.getPrecio()
-//	    );
-//	}
+	@PostMapping("/comprar")
+	public Transaccion buyCrypto(@RequestBody CompraRequestDTO dto) {
+	    System.out.println("📥 Datos recibidos en compra:");
+	    System.out.println("usuarioId: " + dto.getUsuarioId());
+	    System.out.println("simbolo: " + dto.getSimbolo());
+	    System.out.println("nombreCrypto: " + dto.getNombreCrypto());
+	    System.out.println("cantidadCrypto: " + dto.getCantidadCrypto());
+	    System.out.println("precio: " + dto.getPrecio());
+
+	    if (dto.getCantidadCrypto() <= 0 || dto.getPrecio() <= 0) {
+	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad o precio inválido");
+	    }
+
+	    return transaccionService.comprarCrypto(
+	        dto.getUsuarioId(),
+	        dto.getSimbolo(),
+	        dto.getNombreCrypto(),
+	        dto.getCantidadCrypto(),
+	        dto.getPrecio()
+	    );
+	}
 
 
 

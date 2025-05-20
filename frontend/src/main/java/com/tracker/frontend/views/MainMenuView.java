@@ -3,48 +3,39 @@ package com.tracker.frontend.views;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class MainMenuView {
 
-    public void mostrar(Stage primaryStage) {
-        // Botones
-        Button btnLogin = new Button("Iniciar sesión");
-        Button btnRegister = new Button("Registrarse");
+	public void mostrar(Stage primaryStage) {
+	    double width = 1000;
+	    double height = 600;
 
-        // Acción del botón "Iniciar sesión"
-        btnLogin.setOnAction(e -> {
-            System.out.println("🔵 Botón 'Iniciar sesión' pulsado");
-            try {
-                new LoginFormView().mostrar(primaryStage);
-            } catch (Exception ex) {
-                System.out.println("❌ Error al abrir LoginFormView");
-                ex.printStackTrace();
-            }
-        });
+	    AnimatedBackgroundView bg = new AnimatedBackgroundView("/images/fondo.jpg");
 
-        // Acción del botón "Registrarse"
-        btnRegister.setOnAction(e -> {
-            System.out.println("🟢 Botón 'Registrarse' pulsado");
-            try {
-                new RegisterFormView().mostrar(primaryStage);
-            } catch (Exception ex) {
-                System.out.println("❌ Error al abrir RegisterFormView");
-                ex.printStackTrace();
-            }
-        });
+	    Button btnLogin = new Button("Iniciar sesión");
+	    Button btnRegister = new Button("Registrarse");
 
-        // Layout
-        VBox root = new VBox(20, btnRegister, btnLogin);
-        root.setStyle("-fx-background-color: #1E1E1E;");
-        root.setAlignment(Pos.CENTER);
+	    btnLogin.setOnAction(e -> {
+	        new LoginFormView().mostrar(primaryStage);
+	    });
 
-        Scene scene = new Scene(root, 400, 400);
-        scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
+	    btnRegister.setOnAction(e -> {
+	        new RegisterFormView().mostrar(primaryStage);
+	    });
 
-        primaryStage.setTitle("CryptoTracker - Menú Principal");
-        primaryStage.setScene(scene);
-        primaryStage.show();
-    }
+	    VBox buttonLayout = new VBox(20, btnRegister, btnLogin);
+	    buttonLayout.setAlignment(Pos.CENTER);
+
+	    StackPane root = new StackPane(bg, buttonLayout);
+
+	    Scene scene = new Scene(root, width, height);
+	    scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
+
+	    primaryStage.setTitle("CryptoTracker - Menú Principal");
+	    primaryStage.setScene(scene);
+	    primaryStage.show();
+	}
 }

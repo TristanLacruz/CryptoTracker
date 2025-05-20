@@ -163,7 +163,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			}
 
 			System.out.println("📶 Código HTTP: " + response.statusCode());
-			System.out.println("📦 Respuesta raw de CoinGecko:\n" + response.body());
+			//System.out.println("📦 Respuesta raw de CoinGecko:\n" + response.body());
 
 			if (response.statusCode() != 200) {
 				System.err.println("❌ Error: CoinGecko devolvió código " + response.statusCode());
@@ -205,9 +205,10 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 					.build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			System.out.println("🟡 [Live] Respuesta CoinGecko:\n" + response.body());
+			//System.out.println(" [Live] Respuesta CoinGecko:\n" + response.body());
 
 			JSONObject json = new JSONObject(response.body());
+			//System.out.println("🧪 JSON recibido: " + response.body());
 			JSONArray priceArray = json.getJSONArray("prices");
 
 			List<List<Double>> historicalPrices = new ArrayList<>();
@@ -276,6 +277,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			System.out.println("🟡 Respuesta CoinGecko:\n" + response.body());
 
 			JSONObject json = new JSONObject(response.body());
+			//System.out.println("🧪 JSON recibido: " + response.body());
 			JSONArray priceArray = json.getJSONArray("prices");
 
 			for (int i = 0; i < priceArray.length(); i++) {
@@ -301,7 +303,14 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
 	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
+	        //System.out.println("🧪 JSON recibido: " + response.body());
+
 	        JSONObject json = new JSONObject(response.body());
+
+	        if (!json.has("prices")) {
+	            throw new RuntimeException("La respuesta no contiene 'prices':\n" + json.toString(2));
+	        }
+
 	        JSONArray prices = json.getJSONArray("prices");
 
 	        if (prices.length() > 0) {
@@ -314,6 +323,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 	    return 0;
 	}
+
 
 	@Override
 	public double obtenerPrecioActual(String simbolo) {

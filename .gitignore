@@ -1,0 +1,8 @@
+# Ignorar archivos compilados
+/target/
+/*.jar
+
+# Ignorar credenciales
+*.json
+*.pem
+*.key

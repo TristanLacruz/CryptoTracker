@@ -33,8 +33,8 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
     	String header = request.getHeader("Authorization");
 
-    	 // DEBUG: imprime siempre ruta y cabecera
-        System.out.println("[FILTER DEBUG] URI=" + path + ", Authorization=" + header);
+    	// DEBUG: imprime siempre ruta y cabecera
+        // System.out.println("[FILTER DEBUG] URI=" + path + ", Authorization=" + header);
 
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);

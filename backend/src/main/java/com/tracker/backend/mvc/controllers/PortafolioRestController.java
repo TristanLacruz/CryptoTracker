@@ -26,7 +26,7 @@ import com.tracker.common.dto.OperacionDTO;
 import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 
 @RestController
-@RequestMapping("/api/portafolios")
+@RequestMapping("/api/portafolio")
 @CrossOrigin(origins = "*")
 public class PortafolioRestController {
 
@@ -51,6 +51,7 @@ public class PortafolioRestController {
     @GetMapping("/{usuarioId}")
     public ResponseEntity<?> getPortafolio(@PathVariable String usuarioId) {
         Portafolio p = portafolioService.getPortafolioDeUsuarioId(usuarioId);
+        System.out.println("🌐 Endpoint /portafolios llamado con usuarioId: " + usuarioId);
         if (p == null) {
             return ResponseEntity.status(404)
                   .body(Map.of("estado","error","mensaje","Portafolio no encontrado"));
@@ -65,7 +66,7 @@ public class PortafolioRestController {
     @GetMapping("/{usuarioId}/resumen")
     public List<CriptoPosesionDTO> getResumenPortafolio(@PathVariable String usuarioId) {
         Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
-
+        System.out.println("🔍 Criptomonedas en portafolio de " + usuarioId + ": " + portafolio.getCriptomonedas());
         return portafolio.getCriptomonedas().entrySet().stream()
             .map(entry -> {
                 CriptoPosesionDTO dto = new CriptoPosesionDTO();
@@ -82,6 +83,7 @@ public class PortafolioRestController {
                 return dto;
             }).toList();
     }
+
 
     @GetMapping("/{usuarioId}/evolucion")
     public List<ValorDiarioDTO> getEvolucion(@PathVariable String usuarioId) {
