@@ -44,10 +44,25 @@ public class Portafolio {
     public double getSaldo() { return saldo; }
     public void setSaldo(double saldo) { this.saldo = saldo; }
 
-    // ejemplo de método de negocio
     public void agregarCripto(String simbolo, double cantidad) {
-        this.criptomonedas.merge(simbolo, cantidad, Double::sum);
+        if (criptomonedas == null) {
+            criptomonedas = new HashMap<>();
+        }
+        criptomonedas.put(simbolo, criptomonedas.getOrDefault(simbolo, 0.0) + cantidad);
     }
+    
+    public void restarCripto(String simbolo, double cantidad) {
+        if (this.criptomonedas.containsKey(simbolo)) {
+            double nuevaCantidad = this.criptomonedas.get(simbolo) - cantidad;
+            if (nuevaCantidad <= 0) {
+                this.criptomonedas.remove(simbolo);
+            } else {
+                this.criptomonedas.put(simbolo, nuevaCantidad);
+            }
+        }
+    }
+
+
 
     // Inner DTO sin @Data
     public static class CriptoActivo {

@@ -73,6 +73,7 @@ public class PortafolioServiceImpl implements IPortafolioService {
 	@Override
 	public void anadirCrypto(String usuarioId, String simbolo, double quantity) {
 		Portafolio Portafolio = portafolioDAO.findByUsuarioId(usuarioId).orElse(new Portafolio(usuarioId));
+		System.out.println("🔍 Buscando portafolio por userId = " + usuarioId + " y criptoId = " + simbolo);
 
 		Portafolio.getCriptomonedas().merge(simbolo, quantity, Double::sum);
 		portafolioDAO.save(Portafolio);
@@ -110,15 +111,18 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 	@Override
 	public Portafolio getPortafolioDeUsuarioId(String usuarioId) {
-	    Portafolio p = portafolioDAO.findByUsuarioId(usuarioId)
-	        .orElseGet(() -> {
-	            Portafolio nuevo = new Portafolio(usuarioId);
-	            nuevo.setSaldo(10000);
-	            nuevo.setCriptomonedas(new HashMap<>());
-	            return portafolioDAO.save(nuevo);
-	        });
-	    log.debug("Portafolio para {} = {}", usuarioId, p);	    return p;
+	    System.out.println("🔍 Buscando portafolio para usuario: " + usuarioId);
+	    return portafolioDAO.findByUsuarioId(usuarioId)
+	    	    .orElseGet(() -> {
+	    	        Portafolio nuevo = new Portafolio();
+	    	        nuevo.setUsuarioId(usuarioId);
+	    	        nuevo.setSaldo(10000.0);
+	    	        portafolioDAO.save(nuevo);
+	    	        return nuevo;
+	    	    });
+
 	}
+
 
 
 	@Override
@@ -126,7 +130,7 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		Portafolio Portafolio = portafolioDAO.findById(usuarioId).orElseGet(() -> {
 			Portafolio nuevoPortafolio = new Portafolio();
 			nuevoPortafolio.setId(usuarioId);
-			nuevoPortafolio.setCriptomonedas(null);
+			nuevoPortafolio.setCriptomonedas(new HashMap<>());
 			return nuevoPortafolio;
 		});
 
@@ -187,6 +191,27 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 		return evolucion;
 	}
+	
+	@Override
+	public void actualizarPortafolio(String uid, String cryptoId, double cantidad, double precioCompra) {
+	    Portafolio portafolio = portafolioDAO.findByUsuarioId(uid)
+	        .orElseGet(() -> {
+	            Portafolio nuevo = new Portafolio();
+	            nuevo.setUsuarioId(uid);
+	            nuevo.setCriptomonedas(new HashMap<>());
+	            nuevo.setSaldo(10000);
+	            return nuevo;
+	        });
+
+	    Map<String, Double> criptos = portafolio.getCriptomonedas();
+	    criptos.put(cryptoId, criptos.getOrDefault(cryptoId, 0.0) + cantidad);
+	    portafolio.setCriptomonedas(criptos);
+
+	    portafolioDAO.save(portafolio);
+	}
+
+
+
 
 	public List<RendimientoDiarioDTO> calcularRendimiento(String usuarioId) {
 		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);

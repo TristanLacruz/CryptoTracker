@@ -21,6 +21,7 @@ public interface IPortafolioService {
     Portafolio getPortafolioDeUsuarioId(String usuarioId);
 	void updatePortafolioDespuesDeCompra(String usuarioId, String cryptoId, double cantidad);
 	Portafolio findByUsuarioId(String usuarioId);
+	void actualizarPortafolio(String uid, String cryptoId, double cantidad, double precioCompra);
 
 	List<ValorDiarioDTO> calcularEvolucion(String usuarioId);
 	List<EvolucionCompletaDTO> calcularEvolucionCompleta(String usuarioId);

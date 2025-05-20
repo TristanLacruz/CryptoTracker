@@ -3,9 +3,11 @@ package com.tracker.frontend.views;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.net.http.*;
@@ -31,9 +33,23 @@ public class RegisterFormView {
 		Button btnRegistrar = new Button("Registrarse");
 		Label mensaje = new Label();
 
-		VBox root = new VBox(10, new Label("Nombre de usuario:"), nombreUsuario, new Label("Correo electrónico:"),
-				email, new Label("Nombre:"), nombre, new Label("Apellido:"), apellido, new Label("Contraseña:"),
-				password, btnRegistrar, btnVolver, mensaje);
+		VBox content = new VBox(10,
+			    new Label("Nombre de usuario:"), nombreUsuario,
+			    new Label("Correo electrónico:"), email,
+			    new Label("Nombre:"), nombre,
+			    new Label("Apellido:"), apellido,
+			    new Label("Contraseña:"), password,
+			    btnRegistrar, btnVolver, mensaje
+			);
+			content.setPadding(new Insets(20));
+			content.setAlignment(Pos.CENTER);
+
+			// Fondo animado
+			AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
+
+			// Superponer fondo y formulario
+			StackPane root = new StackPane(fondo, content);
+
         root.setPadding(new Insets(20));
         
 		btnVolver.setOnAction(ev -> {

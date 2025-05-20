@@ -67,9 +67,9 @@ public class GraficoPrecioView extends VBox {
                     emaSeries.getData().add(new XYChart.Data<>(i + 7, ema.get(i)));
                 }
 
-                System.out.println("📊 Precios: " + precios);
-                System.out.println("📊 SMA: " + sma);
-                System.out.println("📊 EMA: " + ema);
+                // System.out.println("📊 Precios: " + precios);
+                // System.out.println("📊 SMA: " + sma);
+                // System.out.println("📊 EMA: " + ema);
 
                 Platform.runLater(() -> {
                     chart.getData().clear(); // por si hay datos anteriores ocultos

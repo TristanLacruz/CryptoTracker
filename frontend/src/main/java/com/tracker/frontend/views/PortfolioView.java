@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.frontend.views.componentes.BotonesPortafolioView;
+import com.tracker.frontend.views.graficos.GraficoCombinadoView;
+import com.tracker.frontend.session.Session;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -20,6 +22,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
@@ -88,31 +91,44 @@ public class PortfolioView {
                 botones
         );
         vbox.setPadding(new Insets(10));
+        vbox.setStyle("-fx-background-color: transparent;");
 
-        stage.setScene(new Scene(vbox, 600, 450));
+        AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
+        StackPane root = new StackPane(fondo, vbox);
+
+        Scene scene = new Scene(root, 600, 450);
+        stage.setScene(scene);
+
         stage.show();
 
         // Cargar datos
         new Thread(() -> {
             try {
                 HttpClient client = HttpClient.newHttpClient();
+                ObjectMapper mapper = new ObjectMapper();
 
+                // ✅ Obtener resumen del portafolio
                 String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/resumen";
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + Session.idToken)
+                    .GET()
+                    .build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                ObjectMapper mapper = new ObjectMapper();
                 List<CriptoPosesionDTO> lista = mapper.readValue(response.body(), new TypeReference<List<CriptoPosesionDTO>>() {});
 
-                double total = lista.stream()
-                        .mapToDouble(CriptoPosesionDTO::getValorTotal)
-                        .sum();
-
+                // ✅ Obtener cantidad invertida
                 String urlInversion = "http://localhost:8080/api/transacciones/invertido/" + usuarioId;
-                HttpRequest invRequest = HttpRequest.newBuilder().uri(URI.create(urlInversion)).build();
+                HttpRequest invRequest = HttpRequest.newBuilder()
+                    .uri(URI.create(urlInversion))
+                    .header("Authorization", "Bearer " + Session.idToken)
+                    .GET()
+                    .build();
                 HttpResponse<String> invResponse = client.send(invRequest, HttpResponse.BodyHandlers.ofString());
 
                 double invertido = Double.parseDouble(invResponse.body());
+                double total = lista.stream().mapToDouble(CriptoPosesionDTO::getValorTotal).sum();
                 double diferencia = total - invertido;
                 double rendimiento = invertido == 0 ? 0 : (diferencia / invertido) * 100;
 
@@ -128,103 +144,113 @@ public class PortfolioView {
                 System.err.println("❌ Error al obtener portafolio: " + e.getMessage());
             }
         }).start();
+	}
+    
+    private void mostrarGraficaEvolucion() {
+        Stage stage = new Stage();
+        stage.setTitle("Evolución del Portafolio");
+
+        NumberAxis xAxis = new NumberAxis();
+        xAxis.setLabel("Día");
+
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Valor (€)");
+
+        LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
+        lineChart.setTitle("Histórico del valor del portafolio");
+
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+        series.setName("Valor diario");
+
+        VBox vbox = new VBox(10, lineChart);
+        vbox.setPadding(new Insets(10));
+        stage.setScene(new Scene(vbox, 600, 400));
+        stage.show();
+
+        new Thread(() -> {
+            try {
+                String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion";
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + Session.idToken)
+                    .GET()
+                    .build();
+
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+                ObjectMapper mapper = new ObjectMapper();
+                List<JsonNode> puntos = mapper.readValue(response.body(), new TypeReference<List<JsonNode>>() {});
+
+                for (JsonNode punto : puntos) {
+                    int dia = punto.get("dia").asInt();
+                    double valor = punto.get("valor").asDouble();
+                    series.getData().add(new XYChart.Data<>(dia, valor));
+                }
+
+                Platform.runLater(() -> lineChart.getData().add(series));
+            } catch (Exception e) {
+                System.err.println("❌ Error al cargar evolución del portafolio: " + e.getMessage());
+            }
+        }).start();
     }
 
-    private void mostrarGraficaEvolucion() {
-	    Stage stage = new Stage();
-	    stage.setTitle("Evolución del Portafolio");
-
-	    NumberAxis xAxis = new NumberAxis();
-	    xAxis.setLabel("Día");
-
-	    NumberAxis yAxis = new NumberAxis();
-	    yAxis.setLabel("Valor (€)");
-
-	    LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
-	    lineChart.setTitle("Histórico del valor del portafolio");
-
-	    XYChart.Series<Number, Number> series = new XYChart.Series<>();
-	    series.setName("Valor diario");
-
-	    VBox vbox = new VBox(10, lineChart);
-	    vbox.setPadding(new Insets(10));
-	    stage.setScene(new Scene(vbox, 600, 400));
-	    stage.show();
-
-	    // Obtener los datos desde el backend
-	    new Thread(() -> {
-	        try {
-	            String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion";
-	            HttpClient client = HttpClient.newHttpClient();
-	            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-	            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-	            ObjectMapper mapper = new ObjectMapper();
-	            List<JsonNode> puntos = mapper.readValue(response.body(), new TypeReference<List<JsonNode>>() {});
-
-	            for (JsonNode punto : puntos) {
-	                int dia = punto.get("dia").asInt();
-	                double valor = punto.get("valor").asDouble();
-	                series.getData().add(new XYChart.Data<>(dia, valor));
-	            }
-
-	            Platform.runLater(() -> lineChart.getData().add(series));
-
-	        } catch (Exception e) {
-	            System.err.println("❌ Error al cargar evolución del portafolio: " + e.getMessage());
-	        }
-	    }).start();
-	}
 
 
     private void mostrarGraficaRendimiento() {
-	    Stage stage = new Stage();
-	    stage.setTitle("Ganancia/Pérdida acumulada");
+        Stage stage = new Stage();
+        stage.setTitle("Ganancia/Pérdida acumulada");
 
-	    NumberAxis xAxis = new NumberAxis();
-	    xAxis.setLabel("Día");
+        NumberAxis xAxis = new NumberAxis();
+        xAxis.setLabel("Día");
 
-	    NumberAxis yAxis = new NumberAxis();
-	    yAxis.setLabel("Ganancia (€)");
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Ganancia (€)");
 
-	    LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
-	    chart.setTitle("Rendimiento neto diario");
+        LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
+        chart.setTitle("Rendimiento neto diario");
 
-	    XYChart.Series<Number, Number> series = new XYChart.Series<>();
-	    series.setName("Ganancia acumulada");
+        XYChart.Series<Number, Number> series = new XYChart.Series<>();
+        series.setName("Ganancia acumulada");
 
-	    VBox vbox = new VBox(10, chart);
-	    vbox.setPadding(new Insets(10));
-	    stage.setScene(new Scene(vbox, 600, 400));
-	    stage.show();
-	    
-	    
+        VBox vbox = new VBox(10, chart);
+        vbox.setPadding(new Insets(10));
+        stage.setScene(new Scene(vbox, 600, 400));
+        stage.show();
 
+        new Thread(() -> {
+            try {
+                String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/rendimiento";
+                HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + Session.idToken)
+                    .GET()
+                    .build();
 
-	    new Thread(() -> {
-	        try {
-	            String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/rendimiento";
-	            HttpClient client = HttpClient.newHttpClient();
-	            HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-	            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-	            ObjectMapper mapper = new ObjectMapper();
-	            List<JsonNode> datos = mapper.readValue(response.body(), new TypeReference<List<JsonNode>>() {});
+                ObjectMapper mapper = new ObjectMapper();
+                List<JsonNode> datos = mapper.readValue(response.body(), new TypeReference<List<JsonNode>>() {});
 
-	            for (JsonNode punto : datos) {
-	                int dia = punto.get("dia").asInt();
-	                double ganancia = punto.get("ganancia").asDouble();
-	                series.getData().add(new XYChart.Data<>(dia, ganancia));
-	            }
+                for (JsonNode punto : datos) {
+                    int dia = punto.get("dia").asInt();
+                    double ganancia = punto.get("ganancia").asDouble();
+                    series.getData().add(new XYChart.Data<>(dia, ganancia));
+                }
 
-	            Platform.runLater(() -> chart.getData().add(series));
-	        } catch (Exception e) {
-	            System.err.println("❌ Error al obtener rendimiento: " + e.getMessage());
-	        }
-	    }).start();
-	}
+                Platform.runLater(() -> chart.getData().add(series));
+            } catch (Exception e) {
+                System.err.println("❌ Error al obtener rendimiento: " + e.getMessage());
+            }
+        }).start();
+    }
+
 
     private void mostrarGraficaCombinada() {
-        // Llama a tu método mostrarGraficaCombinada(usuarioId)
+        new GraficoCombinadoView(usuarioId).mostrar();
     }
+
+
+
 }

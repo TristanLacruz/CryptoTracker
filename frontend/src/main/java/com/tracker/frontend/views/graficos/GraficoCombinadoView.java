@@ -3,6 +3,7 @@ package com.tracker.frontend.views.graficos;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tracker.frontend.session.Session;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -58,6 +59,8 @@ public class GraficoCombinadoView {
                 // 📈 Evolución
                 HttpRequest evRequest = HttpRequest.newBuilder()
                         .uri(URI.create("http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion"))
+                        .header("Authorization", "Bearer " + Session.idToken)
+                        .GET()
                         .build();
                 HttpResponse<String> evResponse = client.send(evRequest, HttpResponse.BodyHandlers.ofString());
                 List<JsonNode> evData = mapper.readValue(evResponse.body(), new TypeReference<List<JsonNode>>() {});
@@ -70,10 +73,12 @@ public class GraficoCombinadoView {
                 // 💹 Rendimiento
                 HttpRequest rdRequest = HttpRequest.newBuilder()
                         .uri(URI.create("http://localhost:8080/api/portafolio/" + usuarioId + "/rendimiento"))
+                        .header("Authorization", "Bearer " + Session.idToken)
+                        .GET()
                         .build();
                 HttpResponse<String> rdResponse = client.send(rdRequest, HttpResponse.BodyHandlers.ofString());
                 List<JsonNode> rdData = mapper.readValue(rdResponse.body(), new TypeReference<List<JsonNode>>() {});
-                
+
                 for (JsonNode punto : rdData) {
                     int dia = punto.get("dia").asInt();
                     double ganancia = punto.get("ganancia").asDouble();
@@ -87,4 +92,4 @@ public class GraficoCombinadoView {
             }
         }).start();
     }
-} 
+}

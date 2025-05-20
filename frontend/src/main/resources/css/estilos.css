@@ -1,5 +1,8 @@
 .root {
-    -fx-background-color: #1E1E1E;
+    -fx-background-image: url("/images/fondo.jpg");
+    -fx-background-repeat: no-repeat;
+    -fx-background-size: cover;
+    -fx-background-position: center center;
 }
 
 .button {

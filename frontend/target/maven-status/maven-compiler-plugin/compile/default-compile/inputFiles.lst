@@ -5,10 +5,12 @@ C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTrac
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\services\CryptoService.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\services\OperacionRestClient.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\services\VentaService.java
+C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\session\Session.java
+C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\util\InactivityTimer.java
+C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\AnimatedBackgroundView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\componentes\BotonesPortafolioView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\CryptoChartsView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\CryptoDetailView.java
-C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\CryptoListView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\graficos\GraficoCombinadoView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\graficos\GraficoMACDView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\graficos\GraficoPrecioView.java
@@ -23,5 +25,5 @@ C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTrac
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\PortfolioChartView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\PortfolioView.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\RegisterFormView.java
-C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\Session.java
+C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\ScrollingBackgroundApp.java
 C:\Users\lacru\Documents\workspace-spring-tool-suite-4-4.28.1.RELEASE\CryptoTracker\frontend\src\main\java\com\tracker\frontend\views\SimuladorOperacionView.java
