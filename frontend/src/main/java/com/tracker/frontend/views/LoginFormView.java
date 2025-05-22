@@ -30,7 +30,13 @@ public class LoginFormView {
 		Stage stage = new Stage();
 
 		TextField emailField = new TextField();
+		emailField.setPrefWidth(300);           // Establece ancho deseado
+		emailField.setMaxWidth(300);            // LIMITA el máximo real
+		emailField.getStyleClass().add("text-field");
 		PasswordField passwordField = new PasswordField();
+		passwordField.setPrefWidth(300);
+		passwordField.setMaxWidth(300);
+		passwordField.getStyleClass().add("password-field");
 		Label resultado = new Label();
 		Button btnVolver = new Button("Volver al menú");
 		Button btnLogin = new Button("Iniciar sesión");
@@ -93,14 +99,41 @@ public class LoginFormView {
 								// Verificamos si hay un error
 								if (datos.containsKey("error")) {
 									Map<String, Object> errorInfo = (Map<String, Object>) datos.get("error");
-									String mensajeError = (String) errorInfo.get("message");
+									String errorCode = (String) errorInfo.get("message");
+
+									String mensajePersonalizado;
+									switch (errorCode) {
+										case "EMAIL_NOT_FOUND":
+											mensajePersonalizado = "No existe ninguna cuenta con ese correo.";
+											break;
+										case "INVALID_PASSWORD":
+											mensajePersonalizado = "Contraseña incorrecta.";
+											break;
+										case "USER_DISABLED":
+											mensajePersonalizado = "Esta cuenta ha sido desactivada.";
+											break;
+										case "INVALID_LOGIN_CREDENTIALS":
+											mensajePersonalizado = "Correo o contraseña incorrectos.";
+											break;
+										case "MISSING_PASSWORD":
+											mensajePersonalizado = "La contraseña no puede estar vacía.";
+											break;
+										case "INVALID_EMAIL":
+											mensajePersonalizado = "El correo no puede estar vacío.";
+											break;
+										default:
+											mensajePersonalizado = "Error desconocido: " + errorCode;
+											break;
+									}
+
 
 									Platform.runLater(() -> {
-										resultado.setText("❌ Error: " + mensajeError);
+										resultado.setText("❌ " + mensajePersonalizado);
 										btnLogin.setDisable(false); // Reactivar botón
 									});
 									return;
 								}
+
 
 								String idToken = (String) datos.get("idToken");
 								String usuarioId = (String) datos.get("localId"); // <- Este es el UID del usuario
@@ -157,6 +190,7 @@ public class LoginFormView {
 		stage.setScene(scene);
 
 		stage.setTitle("Iniciar sesión");
+		stage.setMaximized(true); // Pantalla completa
 		stage.show();
 		parentStage.close();
 	}

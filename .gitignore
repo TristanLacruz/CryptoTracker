@@ -1,7 +1,7 @@
 # Ignorar archivos compilados
 /target/
 /*.jar
-
+/backend/target/
 # Ignorar credenciales
 *.json
 *.pem

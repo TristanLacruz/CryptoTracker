@@ -144,53 +144,69 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		portafolioDAO.save(Portafolio);
 	}
 
+	@Override
 	public List<ValorDiarioDTO> calcularEvolucion(String usuarioId) {
-		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
+	    List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
 
-		if (transacciones.isEmpty())
-			return List.of();
+	    if (transacciones.isEmpty())
+	        return List.of();
 
-		LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
-		LocalDate hoy = LocalDate.now();
-		long dias = ChronoUnit.DAYS.between(inicio, hoy);
+	    LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
+	    LocalDate hoy = LocalDate.now();
+	    long dias = ChronoUnit.DAYS.between(inicio, hoy);
 
-		Map<String, Double> cantidades = new HashMap<>();
-		List<ValorDiarioDTO> evolucion = new ArrayList<>();
+	    // Garantiza al menos 7 días de datos para el gráfico
+	    if (dias < 6) {
+	        inicio = hoy.minusDays(6);
+	        dias = 6;
+	    }
 
-		for (int i = 0; i <= dias; i++) {
-			LocalDate fecha = inicio.plusDays(i);
+	    Map<String, Double> cantidades = new HashMap<>();
+	    List<ValorDiarioDTO> evolucion = new ArrayList<>();
 
-			// Aplicar transacciones de ese día
-			for (Transaccion tx : transacciones) {
-				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
-					cantidades.putIfAbsent(tx.getCryptoId(), 0.0);
-					double cantidadActual = cantidades.get(tx.getCryptoId());
-					double cantidadNueva = tx.getTipoTransaccion() == TransactionType.COMPRAR
-							? cantidadActual + tx.getCantidadCrypto()
-							: cantidadActual - tx.getCantidadCrypto();
-					cantidades.put(tx.getCryptoId(), cantidadNueva);
-				}
-			}
+	    for (int i = 0; i <= dias; i++) {
+	        LocalDate fecha = inicio.plusDays(i);
+	        System.out.printf("📆 Día %d (%s)\n", i, fecha);
 
-			// Calcular valor total del portafolio ese día
-			double valorDia = 0;
-			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
-				String criptoId = entry.getKey();
-				double cantidad = entry.getValue();
+	        // Aplicar transacciones del día
+	        for (Transaccion tx : transacciones) {
+	            if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
+	                cantidades.putIfAbsent(tx.getCryptoId(), 0.0);
+	                double cantidadActual = cantidades.get(tx.getCryptoId());
+	                double cantidadNueva = tx.getTipoTransaccion() == TransactionType.COMPRAR
+	                        ? cantidadActual + tx.getCantidadCrypto()
+	                        : cantidadActual - tx.getCantidadCrypto();
+	                cantidades.put(tx.getCryptoId(), cantidadNueva);
+	            }
+	        }
 
-				if (cantidad <= 0)
-					continue;
+	        // Calcular valor total del portafolio ese día
+	        double valorDia = 0;
+	        for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
+	            String criptoId = entry.getKey();
+	            double cantidad = entry.getValue();
 
-				// Reemplaza por tu servicio de precios históricos
-				double precio = cryptoService.getPrecioEnFecha(criptoId, fecha);
-				valorDia += precio * cantidad;
-			}
+	            if (cantidad <= 0)
+	                continue;
 
-			evolucion.add(new ValorDiarioDTO(i, valorDia));
-		}
+	            double precio = cryptoService.getPrecioEnFecha(criptoId, fecha);
+	            if (precio <= 0) {
+	                System.out.printf("⚠️ Precio histórico no disponible para %s en %s. Usando precio actual.%n", criptoId, fecha);
+	                precio = cryptoService.getPrecioActual(criptoId);
+	            }
 
-		return evolucion;
+	            double subtotal = precio * cantidad;
+	            System.out.printf("🪙 %s: %.4f × %.4f€ = %.2f€\n", criptoId, cantidad, precio, subtotal);
+	            valorDia += subtotal;
+	        }
+
+	        System.out.printf("💰 Valor total día %d: %.2f€\n\n", i, valorDia);
+	        evolucion.add(new ValorDiarioDTO(i, valorDia));
+	    }
+
+	    return evolucion;
 	}
+
 	
 	@Override
 	public void actualizarPortafolio(String uid, String cryptoId, double cantidad, double precioCompra) {
@@ -213,103 +229,135 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 
 
+	@Override
 	public List<RendimientoDiarioDTO> calcularRendimiento(String usuarioId) {
-		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
+	    List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
 
-		if (transacciones.isEmpty())
-			return List.of();
+	    if (transacciones.isEmpty())
+	        return List.of();
 
-		LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
-		LocalDate hoy = LocalDate.now();
-		long dias = ChronoUnit.DAYS.between(inicio, hoy);
+	    LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
+	    LocalDate hoy = LocalDate.now();
+	    long dias = ChronoUnit.DAYS.between(inicio, hoy);
 
-		Map<String, Double> cantidades = new HashMap<>();
-		double inversionAcumulada = 0;
-		List<RendimientoDiarioDTO> lista = new ArrayList<>();
+	    if (dias < 6) {
+	        inicio = hoy.minusDays(6);
+	        dias = 6;
+	    }
 
-		for (int i = 0; i <= dias; i++) {
-			LocalDate fecha = inicio.plusDays(i);
+	    Map<String, Double> cantidades = new HashMap<>();
+	    double inversionAcumulada = 0;
+	    List<RendimientoDiarioDTO> lista = new ArrayList<>();
 
-			// Aplicar transacciones del día
-			for (Transaccion tx : transacciones) {
-				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
-					double cantidad = cantidades.getOrDefault(tx.getCryptoId(), 0.0);
+	    for (int i = 0; i <= dias; i++) {
+	        LocalDate fecha = inicio.plusDays(i);
+	        System.out.printf("📆 Día %d (%s)\n", i, fecha);
 
-					if (tx.getTipoTransaccion() == TransactionType.COMPRAR) {
-						inversionAcumulada += tx.getValorTotal();
-						cantidad += tx.getCantidadCrypto();
-					} else {
-						cantidad -= tx.getCantidadCrypto();
-					}
+	        // Aplicar transacciones del día
+	        for (Transaccion tx : transacciones) {
+	            if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
+	                double cantidad = cantidades.getOrDefault(tx.getCryptoId(), 0.0);
 
-					cantidades.put(tx.getCryptoId(), cantidad);
-				}
-			}
+	                if (tx.getTipoTransaccion() == TransactionType.COMPRAR) {
+	                    inversionAcumulada += tx.getValorTotal();
+	                    cantidad += tx.getCantidadCrypto();
+	                } else {
+	                    cantidad -= tx.getCantidadCrypto();
+	                }
 
-			// Calcular valor actual del portafolio ese día
-			double valorDia = 0;
-			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
-				double cantidad = entry.getValue();
-				if (cantidad <= 0)
-					continue;
+	                cantidades.put(tx.getCryptoId(), cantidad);
+	            }
+	        }
 
-				double precio = cryptoService.getPrecioEnFecha(entry.getKey(), fecha);
-				valorDia += cantidad * precio;
-			}
+	        double valorDia = 0;
+	        for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
+	            String criptoId = entry.getKey();
+	            double cantidad = entry.getValue();
+	            if (cantidad <= 0) continue;
 
-			double ganancia = valorDia - inversionAcumulada;
-			lista.add(new RendimientoDiarioDTO(i, ganancia));
-		}
+	            double precio = cryptoService.getPrecioEnFecha(criptoId, fecha);
+	            if (precio <= 0) {
+	                System.out.printf("⚠️ Precio histórico no disponible para %s en %s. Usando precio actual.%n", criptoId, fecha);
+	                precio = cryptoService.getPrecioActual(criptoId);
+	            }
 
-		return lista;
+	            double subtotal = cantidad * precio;
+	            System.out.printf("📈 %s: %.4f × %.4f€ = %.2f€\n", criptoId, cantidad, precio, subtotal);
+	            valorDia += subtotal;
+	        }
+
+	        double ganancia = valorDia - inversionAcumulada;
+	        System.out.printf("💸 Inversión acumulada: %.2f€, Valor: %.2f€, Ganancia: %.2f€\n\n", inversionAcumulada, valorDia, ganancia);
+	        lista.add(new RendimientoDiarioDTO(i, ganancia));
+	    }
+
+	    return lista;
 	}
+
 
 	@Override
 	public List<EvolucionCompletaDTO> calcularEvolucionCompleta(String usuarioId) {
-		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
+	    List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
 
-		if (transacciones.isEmpty())
-			return List.of();
+	    if (transacciones.isEmpty())
+	        return List.of();
 
-		LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
-		LocalDate hoy = LocalDate.now();
-		long dias = ChronoUnit.DAYS.between(inicio, hoy);
+	    LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
+	    LocalDate hoy = LocalDate.now();
+	    long dias = ChronoUnit.DAYS.between(inicio, hoy);
 
-		Map<String, Double> cantidades = new HashMap<>();
-		double inversionAcumulada = 0;
+	    if (dias < 6) {
+	        inicio = hoy.minusDays(6);
+	        dias = 6;
+	    }
 
-		List<EvolucionCompletaDTO> lista = new ArrayList<>();
+	    Map<String, Double> cantidades = new HashMap<>();
+	    double inversionAcumulada = 0;
+	    List<EvolucionCompletaDTO> lista = new ArrayList<>();
 
-		for (int i = 0; i <= dias; i++) {
-			LocalDate fecha = inicio.plusDays(i);
+	    for (int i = 0; i <= dias; i++) {
+	        LocalDate fecha = inicio.plusDays(i);
+	        System.out.printf("📆 Día %d (%s)\n", i, fecha);
 
-			for (Transaccion tx : transacciones) {
-				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
-					double actual = cantidades.getOrDefault(tx.getCryptoId(), 0.0);
-					if (tx.getTipoTransaccion() == TransactionType.COMPRAR) {
-						inversionAcumulada += tx.getValorTotal();
-						actual += tx.getCantidadCrypto();
-					} else {
-						actual -= tx.getCantidadCrypto();
-					}
-					cantidades.put(tx.getCryptoId(), actual);
-				}
-			}
+	        for (Transaccion tx : transacciones) {
+	            if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
+	                double actual = cantidades.getOrDefault(tx.getCryptoId(), 0.0);
+	                if (tx.getTipoTransaccion() == TransactionType.COMPRAR) {
+	                    inversionAcumulada += tx.getValorTotal();
+	                    actual += tx.getCantidadCrypto();
+	                } else {
+	                    actual -= tx.getCantidadCrypto();
+	                }
+	                cantidades.put(tx.getCryptoId(), actual);
+	            }
+	        }
 
-			double valorDia = 0;
-			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
-				if (entry.getValue() <= 0)
-					continue;
-				double precio = cryptoService.getPrecioEnFecha(entry.getKey(), fecha);
-				valorDia += entry.getValue() * precio;
-			}
+	        double valorDia = 0;
+	        for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
+	            String criptoId = entry.getKey();
+	            double cantidad = entry.getValue();
+	            if (cantidad <= 0) continue;
 
-			double ganancia = valorDia - inversionAcumulada;
-			lista.add(new EvolucionCompletaDTO(i, valorDia, ganancia));
-		}
+	            double precio = cryptoService.getPrecioEnFecha(criptoId, fecha);
+	            if (precio <= 0) {
+	                System.out.printf("⚠️ Precio histórico no disponible para %s en %s. Usando precio actual.%n", criptoId, fecha);
+	                precio = cryptoService.getPrecioActual(criptoId);
+	            }
 
-		return lista;
+	            double subtotal = cantidad * precio;
+	            System.out.printf("🧩 %s: %.4f × %.4f€ = %.2f€\n", criptoId, cantidad, precio, subtotal);
+	            valorDia += subtotal;
+	        }
+
+	        double ganancia = valorDia - inversionAcumulada;
+	        System.out.printf("📊 Día %d: Valor %.2f€, Ganancia %.2f€\n\n", i, valorDia, ganancia);
+	        lista.add(new EvolucionCompletaDTO(i, valorDia, ganancia));
+	    }
+
+	    return lista;
 	}
+
+	
 
 	@Override
 	public Portafolio findByUsuarioId(String usuarioId) {

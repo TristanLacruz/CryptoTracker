@@ -118,6 +118,7 @@ public class PortafolioRestController {
     public List<EvolucionCompletaDTO> getEvolucionCompleta(@PathVariable String usuarioId) {
         return portafolioService.calcularEvolucionCompleta(usuarioId);
     }
+
     
 //    @GetMapping("/portafolios/{usuarioId}")
 //    public ResponseEntity<?> obtenerPortafolio(@PathVariable String usuarioId) {

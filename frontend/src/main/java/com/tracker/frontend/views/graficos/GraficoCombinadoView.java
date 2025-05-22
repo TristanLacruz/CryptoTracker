@@ -1,8 +1,8 @@
 package com.tracker.frontend.views.graficos;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tracker.common.dto.EvolucionCompletaDTO;
 import com.tracker.frontend.session.Session;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -29,22 +29,22 @@ public class GraficoCombinadoView {
 
     public void mostrar() {
         Stage stage = new Stage();
-        stage.setTitle("Gráfico combinado del portafolio");
+        stage.setTitle("Evolución del portafolio");
 
         NumberAxis xAxis = new NumberAxis();
         xAxis.setLabel("Día");
 
         NumberAxis yAxis = new NumberAxis();
-        yAxis.setLabel("Valor (€)");
+        yAxis.setLabel("€");
 
         LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
-        chart.setTitle("Evolución y rendimiento del portafolio");
+        chart.setTitle("Valor total y ganancia neta");
 
-        XYChart.Series<Number, Number> evolucionSeries = new XYChart.Series<>();
-        evolucionSeries.setName("Evolución diaria");
+        XYChart.Series<Number, Number> valorSeries = new XYChart.Series<>();
+        valorSeries.setName("Valor diario (€)");
 
-        XYChart.Series<Number, Number> rendimientoSeries = new XYChart.Series<>();
-        rendimientoSeries.setName("Ganancia acumulada");
+        XYChart.Series<Number, Number> gananciaSeries = new XYChart.Series<>();
+        gananciaSeries.setName("Ganancia acumulada (€)");
 
         VBox vbox = new VBox(10, chart);
         vbox.setPadding(new Insets(10));
@@ -53,42 +53,34 @@ public class GraficoCombinadoView {
 
         new Thread(() -> {
             try {
+                String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion-completa";
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + Session.idToken)
+                        .GET()
+                        .build();
+
                 HttpClient client = HttpClient.newHttpClient();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
                 ObjectMapper mapper = new ObjectMapper();
+                List<EvolucionCompletaDTO> datos = mapper.readValue(
+                    response.body(), 
+                    new TypeReference<List<EvolucionCompletaDTO>>() {}
+                );
 
-                // 📈 Evolución
-                HttpRequest evRequest = HttpRequest.newBuilder()
-                        .uri(URI.create("http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion"))
-                        .header("Authorization", "Bearer " + Session.idToken)
-                        .GET()
-                        .build();
-                HttpResponse<String> evResponse = client.send(evRequest, HttpResponse.BodyHandlers.ofString());
-                List<JsonNode> evData = mapper.readValue(evResponse.body(), new TypeReference<List<JsonNode>>() {});
-                for (JsonNode punto : evData) {
-                    int dia = punto.get("dia").asInt();
-                    double valor = punto.get("valor").asDouble();
-                    evolucionSeries.getData().add(new XYChart.Data<>(dia, valor));
+                for (EvolucionCompletaDTO punto : datos) {
+                    valorSeries.getData().add(new XYChart.Data<>(punto.getDia(), punto.getValorTotal()));
+                    gananciaSeries.getData().add(new XYChart.Data<>(punto.getDia(), punto.getGanancia()));
                 }
 
-                // 💹 Rendimiento
-                HttpRequest rdRequest = HttpRequest.newBuilder()
-                        .uri(URI.create("http://localhost:8080/api/portafolio/" + usuarioId + "/rendimiento"))
-                        .header("Authorization", "Bearer " + Session.idToken)
-                        .GET()
-                        .build();
-                HttpResponse<String> rdResponse = client.send(rdRequest, HttpResponse.BodyHandlers.ofString());
-                List<JsonNode> rdData = mapper.readValue(rdResponse.body(), new TypeReference<List<JsonNode>>() {});
-
-                for (JsonNode punto : rdData) {
-                    int dia = punto.get("dia").asInt();
-                    double ganancia = punto.get("ganancia").asDouble();
-                    rendimientoSeries.getData().add(new XYChart.Data<>(dia, ganancia));
-                }
-
-                Platform.runLater(() -> chart.getData().addAll(evolucionSeries, rendimientoSeries));
+                valorSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2px;");
+                gananciaSeries.getNode().setStyle("-fx-stroke: #FF4081; -fx-stroke-width: 2px;");
+                Platform.runLater(() -> chart.getData().addAll(valorSeries, gananciaSeries));
 
             } catch (Exception e) {
                 System.err.println("❌ Error al cargar gráfico combinado: " + e.getMessage());
+                e.printStackTrace();
             }
         }).start();
     }

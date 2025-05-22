@@ -42,7 +42,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         }
 
         String token = header.replace("Bearer ", "");
-        System.out.println("🔐 Token recibido: " + token);
+        //System.out.println("🔐 Token recibido: " + token);
 
         String idToken = header.substring(7);
         try {
@@ -62,8 +62,7 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
-            System.out.println("✅ Auth in context: " + 
-                SecurityContextHolder.getContext().getAuthentication());
+            //System.out.println("✅ Auth in context: " + SecurityContextHolder.getContext().getAuthentication());
 
         } catch (FirebaseAuthException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

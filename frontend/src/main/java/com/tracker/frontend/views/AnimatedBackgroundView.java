@@ -23,6 +23,7 @@ public class AnimatedBackgroundView extends Pane {
 		// 🔄 Vincula el tamaño del canvas al tamaño del Pane
 		canvas.widthProperty().bind(this.widthProperty());
 		canvas.heightProperty().bind(this.heightProperty());
+		this.setMouseTransparent(true);  // Evita que tape los nodos de encima
 
 		startAnimation();
 	}
