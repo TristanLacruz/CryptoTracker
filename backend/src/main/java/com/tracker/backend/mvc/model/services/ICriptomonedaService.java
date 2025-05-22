@@ -21,7 +21,7 @@ public interface ICriptomonedaService {
 
 	double obtenerPrecioActual(String simbolo);
 
-	double getPrecioActual(String symbol); // Ej: "bitcoin"
+	double getPrecioActual(String symbol); 
 	
     Map<String, Object> getCryptoInfo(String symbol);
 

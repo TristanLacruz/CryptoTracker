@@ -29,4 +29,6 @@ public interface IUsuarioService extends UserDetailsService {
 	org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username);
 
     public Optional<Usuario> findByEmail(String email);
+    
+    boolean existsByEmail(String email);
 }

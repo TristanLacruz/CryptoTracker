@@ -87,137 +87,139 @@ public class SimuladorOperacionView extends VBox {
 	}
 
 	private void realizarCompra(String simbolo, String nombreCrypto, double cantidad, double precio) {
-    String usuarioId = AuthContext.getInstance().getUsuarioId();
-    String idToken = AuthContext.getInstance().getIdToken();
+		String usuarioId = AuthContext.getInstance().getUsuarioId();
+		String idToken = AuthContext.getInstance().getIdToken();
 
-    JSONObject payload = new JSONObject();
-    payload.put("usuarioId", usuarioId);
-    payload.put("simbolo", simbolo);
-    payload.put("nombreCrypto", nombreCrypto);
-    payload.put("cantidadCrypto", cantidad);
-    payload.put("precio", precio);
+		JSONObject payload = new JSONObject();
+		payload.put("usuarioId", usuarioId);
+		payload.put("simbolo", simbolo);
+		payload.put("nombreCrypto", nombreCrypto);
+		payload.put("cantidadCrypto", cantidad);
+		payload.put("precio", precio);
 
-    HttpRequest.Builder builder = HttpRequest.newBuilder()
-            .uri(URI.create("http://localhost:8080/api/cryptos/buy"))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
+		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/api/cryptos/buy"))
+				.header("Content-Type", "application/json")
+				.POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
 
-    if (idToken != null && !idToken.isBlank()) {
-        builder.header("Authorization", "Bearer " + idToken);
-    }
+		if (idToken != null && !idToken.isBlank()) {
+			builder.header("Authorization", "Bearer " + idToken);
+		}
 
-    HttpRequest request = builder.build();
+		HttpRequest request = builder.build();
 
-    HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .thenAccept(response -> Platform.runLater(() -> {
-                int status = response.statusCode();
-                String body = response.body();
+		HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+				.thenAccept(response -> Platform.runLater(() -> {
+					int status = response.statusCode();
+					String body = response.body();
 
-                if (status != 200) {
-                    mostrarAlerta("❌ Compra fallida", "Código HTTP: " + status);
-                    return;
-                }
+					if (status != 200) {
+						mostrarAlertaEstilizada("❌ Compra fallida", "Código HTTP: " + status, "alerta-error");
+						return;
+					}
 
-                if (body == null || body.isBlank()) {
-                    mostrarAlerta("❌ Respuesta vacía", "El servidor no devolvió contenido.");
-                    return;
-                }
+					if (body == null || body.isBlank()) {
+						mostrarAlertaEstilizada("❌ Respuesta vacía", "El servidor no devolvió contenido.",
+								"alerta-error");
+						return;
+					}
 
-                try {
-                    JSONObject root = new JSONObject(body);
-                    String estado = root.optString("estado", "error");
-                    String mensaje = root.optString("mensaje", "");
+					try {
+						JSONObject root = new JSONObject(body);
+						String estado = root.optString("estado", "error");
+						String mensaje = root.optString("mensaje", "");
 
-                    if (!"exito".equalsIgnoreCase(estado)) {
-                        mostrarAlerta("❌ Compra fallida", mensaje);
-                        return;
-                    }
+						if (!"exito".equalsIgnoreCase(estado)) {
+							mostrarAlerta("❌ Compra fallida", mensaje);
+							return;
+						}
 
-                    JSONObject det = root.getJSONObject("detalle");
-                    double cant = det.getDouble("cantidad");
-                    String sim = det.getString("simbolo");
-                    double total = det.getDouble("valorTotal");
+						JSONObject det = root.getJSONObject("detalle");
+						double cant = det.getDouble("cantidad");
+						String sim = det.getString("simbolo");
+						double total = det.getDouble("valorTotal");
 
-                    mostrarAlerta("✅ Compra exitosa",
-                            String.format("Compraste %.6f %s por %.2f €", cant, sim, total));
+						mostrarAlertaEstilizada("✅ Compra exitosa",
+								String.format("Compraste %.6f %s por %.2f €", cant, sim, total), "alerta-exito");
 
-                    actualizarDatosPortafolio();
+						actualizarDatosPortafolio();
 
-                } catch (JSONException ex) {
-                    mostrarAlerta("❌ Respuesta inválida", ex.getMessage());
-                }
-            }))
-            .exceptionally(ex -> {
-                Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
-                return null;
-            });
-}
-
-
+					} catch (JSONException ex) {
+						mostrarAlertaEstilizada("❌ Respuesta inválida", ex.getMessage(), "alerta-error");
+					}
+				})).exceptionally(ex -> {
+					Platform.runLater(() ->  mostrarAlertaEstilizada("❌ Error de red", ex.getMessage(), "alerta-error"));
+					return null;
+				});
+	}
 
 	private void realizarVenta(String simbolo, String nombreCrypto, double cantidad, double precio) {
-    String usuarioId = AuthContext.getInstance().getUsuarioId();
-    String idToken = AuthContext.getInstance().getIdToken();
+		String usuarioId = AuthContext.getInstance().getUsuarioId();
+		String idToken = AuthContext.getInstance().getIdToken();
 
-    // Montamos el payload JSON
-    JSONObject payload = new JSONObject();
-    payload.put("usuarioId", usuarioId);
-    payload.put("simbolo", simbolo);
-    payload.put("nombreCrypto", nombreCrypto);
-    payload.put("cantidadCrypto", cantidad);
-    payload.put("precio", precio);
+		// Montamos el payload JSON
+		JSONObject payload = new JSONObject();
+		payload.put("usuarioId", usuarioId);
+		payload.put("simbolo", simbolo);
+		payload.put("nombreCrypto", nombreCrypto);
+		payload.put("cantidadCrypto", cantidad);
+		payload.put("precio", precio);
 
-    // Construimos la petición
-    HttpRequest.Builder builder = HttpRequest.newBuilder()
-        .uri(URI.create("http://localhost:8080/api/cryptos/sell"))
-        .header("Content-Type", "application/json")
-        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
+		// Construimos la petición
+		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/api/cryptos/sell"))
+				.header("Content-Type", "application/json")
+				.POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
 
-    if (idToken != null && !idToken.isBlank()) {
-        builder.header("Authorization", "Bearer " + idToken);
-    }
+		if (idToken != null && !idToken.isBlank()) {
+			builder.header("Authorization", "Bearer " + idToken);
+		}
 
-    HttpRequest request = builder.build();
+		HttpRequest request = builder.build();
 
-    // Envío asíncrono y procesamiento
-    HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
-        .thenAccept(response -> Platform.runLater(() -> {
-            int status = response.statusCode();
-            String body = response.body();
+		// Envío asíncrono y procesamiento
+		HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
+				.thenAccept(response -> Platform.runLater(() -> {
+					int status = response.statusCode();
+					String body = response.body();
 
-            if (status != 200 || body == null || body.isBlank()) {
-                mostrarAlerta("❌ Venta fallida", "Código HTTP: " + status + "\nCuerpo vacío o error.");
-                return;
-            }
+					if (status != 200 || body == null || body.isBlank()) {
+						mostrarAlertaEstilizada("❌ Venta fallida", "Código HTTP: " + status + "\nCuerpo vacío o error.",
+								"alerta-error");
+						return;
+					}
 
-            try {
-                JSONObject root = new JSONObject(body);
-                String estado = root.optString("estado", "error");
-                String mensaje = root.optString("mensaje", "");
-                JSONObject detalle = root.optJSONObject("detalle");
+					try {
+						JSONObject root = new JSONObject(body);
+						String estado = root.optString("estado", "error");
+						String mensaje = root.optString("mensaje", "");
+						JSONObject detalle = root.optJSONObject("detalle");
 
-                if (!"exito".equalsIgnoreCase(estado) || detalle == null) {
-                    String detalleText = root.optString("detalle", "");
-                    mostrarAlerta("❌ Venta fallida", mensaje + (detalleText.isBlank() ? "" : ": " + detalleText));
-                    return;
-                }
+						if (!"exito".equalsIgnoreCase(estado)) {
+                            String detalleText = root.has("detalle") && !root.isNull("detalle")
+                                    ? root.get("detalle").toString()
+                                    : "";
 
-                double cant = detalle.getDouble("cantidad");
-                String sim = detalle.getString("simbolo");
-                double total = detalle.getDouble("valorTotal");
+                            String contenido = mensaje + (!detalleText.isBlank() ? "\nDetalles: " + detalleText : "");
+                            mostrarAlertaEstilizada("❌ Venta fallida", contenido, "alerta-error");
+                            return;
+                        }
 
-                mostrarAlerta("✅ Venta exitosa", String.format("Vendiste %.6f %s por %.2f €", cant, sim, total));
-                actualizarDatosPortafolio();
 
-            } catch (JSONException e) {
-                mostrarAlerta("❌ Error al procesar respuesta", e.getMessage());
-            }
-        })).exceptionally(ex -> {
-            Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
-            return null;
-        });
-}
+						double cant = detalle.getDouble("cantidad");
+						String sim = detalle.getString("simbolo");
+						double total = detalle.getDouble("valorTotal");
 
+						mostrarAlertaEstilizada("✅ Venta exitosa",
+								String.format("Vendiste %.6f %s por %.2f €", cant, sim, total), "alerta-exito");
+						actualizarDatosPortafolio();
+
+					} catch (JSONException e) {
+						mostrarAlerta("❌ Error al procesar respuesta", e.getMessage());
+					}
+				})).exceptionally(ex -> {
+					Platform.runLater(() ->  mostrarAlertaEstilizada("❌ Error de red", ex.getMessage(), "alerta-error"));
+					return null;
+				});
+	}
 
 	private void actualizarDatosPortafolio() {
 		String usuarioId = AuthContext.getInstance().getUsuarioId();
@@ -240,6 +242,22 @@ public class SimuladorOperacionView extends VBox {
 					Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
 					return null;
 				});
+	}
+
+	private void mostrarAlertaEstilizada(String titulo, String mensaje, String tipoCss) {
+		Alert alerta = new Alert(Alert.AlertType.NONE);
+		alerta.setTitle(titulo);
+		alerta.setHeaderText(null);
+		alerta.setContentText(mensaje);
+
+		ButtonType ok = new ButtonType("Aceptar", ButtonBar.ButtonData.OK_DONE);
+		alerta.getButtonTypes().setAll(ok);
+
+		DialogPane pane = alerta.getDialogPane();
+		pane.getStylesheets().add(getClass().getResource("/styles/estilos-alerta.css").toExternalForm());
+		pane.getStyleClass().add(tipoCss); // Por ejemplo: "alerta-error" o "alerta-exito"
+
+		alerta.showAndWait();
 	}
 
 }

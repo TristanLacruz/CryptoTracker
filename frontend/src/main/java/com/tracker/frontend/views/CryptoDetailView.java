@@ -51,6 +51,7 @@ public class CryptoDetailView {
 		StackPane root = new StackPane(fondo, layout);
 
 		Scene scene = new Scene(root, 700, 900);
+		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 
 
 		// ⏱ Inactividad: cerrar sesión y volver al login

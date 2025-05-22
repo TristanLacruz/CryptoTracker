@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.services.IUsuarioService;
@@ -43,10 +44,15 @@ public class UsuarioRestController {
 
 	@PostMapping("/usuarios")
 	@ResponseStatus(HttpStatus.CREATED)
-	public Usuario createUser(@RequestBody Usuario usuario) {
-		usuarioService.save(usuario);
-		return usuario;
+	public void createUser(@RequestBody Usuario usuario) {
+	    try {
+	        usuarioService.save(usuario); // ✅ no devuelve nada
+	    } catch (IllegalStateException | IllegalArgumentException ex) {
+	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+	    }
 	}
+
+
 
 	@GetMapping("/perfil")
 	public Usuario perfilUsuario(Authentication auth) {

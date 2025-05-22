@@ -53,6 +53,7 @@ public class GraficoEvolucionView {
                 HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                System.out.println("📦 Datos evolución portafolio:\n" + response.body());
 
                 ObjectMapper mapper = new ObjectMapper();
                 List<JsonNode> puntos = mapper.readValue(response.body(), new TypeReference<List<JsonNode>>() {});

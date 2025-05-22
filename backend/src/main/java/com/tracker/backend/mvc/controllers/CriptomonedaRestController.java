@@ -235,9 +235,9 @@ public class CriptomonedaRestController {
 	
 	@PostMapping("/buy")
 	public ResponseEntity<?> comprarCrypto(@RequestBody CompraRequestDTO compra) {
-	    System.out.println("🟢 Entrando a /buy");
-	    System.out.println("🧪 usuarioId: " + compra.getUsuarioId());
-	    System.out.println("🧪 cantidad: " + compra.getCantidadCrypto() + ", precio: " + compra.getPrecio());
+	    System.out.println("Entrando a /buy");
+	    System.out.println("usuarioId: " + compra.getUsuarioId());
+	    System.out.println("cantidad: " + compra.getCantidadCrypto() + ", precio: " + compra.getPrecio());
 
 	    try {
 	        Transaccion transaccion = transaccionService.comprarCrypto(
@@ -285,9 +285,9 @@ public class CriptomonedaRestController {
 
 	@PostMapping("/sell")
 	public ResponseEntity<?> venderCrypto(@RequestBody VentaRequestDTO venta) {
-	    System.out.println("🟠 Entrando a /sell");
-	    System.out.println("🧪 usuarioId: " + venta.getUsuarioId());
-	    System.out.println("🧪 cantidad: " + venta.getCantidadCrypto() + ", precio: " + venta.getPrecio());
+	    System.out.println("Entrando a /sell");
+	    System.out.println("usuarioId: " + venta.getUsuarioId());
+	    System.out.println("cantidad: " + venta.getCantidadCrypto() + ", precio: " + venta.getPrecio());
 
 	    try {
 	        Transaccion transaccion = transaccionService.venderCrypto(

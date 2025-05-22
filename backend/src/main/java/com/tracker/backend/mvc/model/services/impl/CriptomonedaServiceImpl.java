@@ -98,18 +98,34 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 	@Override
 	public double getPrecioActual(String simbolo) {
-		// Puedes usar una llamada directa a CoinGecko o desde tu caché
-		String url = "https://api.coingecko.com/api/v3/simple/price?ids=" + simbolo + "&vs_currencies=eur";
-		try {
-			HttpClient client = HttpClient.newHttpClient();
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-			JSONObject json = new JSONObject(response.body());
-			return json.getJSONObject(simbolo).getDouble("eur");
-		} catch (Exception e) {
-			System.err.println("❌ Error al obtener precio para " + simbolo + ": " + e.getMessage());
-			return 0;
-		}
+	    // Mapeo manual de símbolo a ID de CoinGecko
+	    Map<String, String> simboloToId = Map.ofEntries(
+	        Map.entry("BTC", "bitcoin"),
+	        Map.entry("ETH", "ethereum"),
+	        Map.entry("BNB", "binancecoin"),
+	        Map.entry("ADA", "cardano"),
+	        Map.entry("XRP", "ripple"),
+	        Map.entry("USDT", "tether"),
+	        Map.entry("DOGE", "dogecoin"),
+	        Map.entry("DOT", "polkadot"),
+	        Map.entry("SOL", "solana"),
+	        Map.entry("USDC", "usd-coin")
+	    );
+
+	    String id = simboloToId.getOrDefault(simbolo.toUpperCase(), simbolo.toLowerCase());
+	    String url = "https://api.coingecko.com/api/v3/simple/price?ids=" + id + "&vs_currencies=eur";
+
+	    try {
+	        HttpClient client = HttpClient.newHttpClient();
+	        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+	        JSONObject json = new JSONObject(response.body());
+	        return json.getJSONObject(id).getDouble("eur");
+	    } catch (Exception e) {
+	        System.err.println("❌ Error al obtener precio para " + simbolo + " (ID: " + id + "): " + e.getMessage());
+	        return 0.0;
+	    }
 	}
 
 	@Override
@@ -149,7 +165,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 		try {
 			String url = BASE_URL
-					+ "/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=10&page=1&sparkline=false";
+					+ "/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=25&page=1&sparkline=false";
 
 			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json")
 //					.header("x-cg-demo-api-key", apiKey)

@@ -12,5 +12,7 @@ public interface IUsuarioDAO extends MongoRepository<Usuario, String>{
     Optional<Usuario> findByUid(String uid);
 
     Optional<Usuario> findByEmail(String email);
+    
+    boolean existsByEmail(String email);
 
 }

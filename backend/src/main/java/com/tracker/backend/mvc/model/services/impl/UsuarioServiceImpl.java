@@ -40,6 +40,13 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	@Override
 	public void save(Usuario u) {
+		 if (u.getEmail() == null || u.getEmail().trim().isEmpty()) {
+		        throw new IllegalArgumentException("EMAIL_INVALID");
+		    }
+
+		    if (existsByEmail(u.getEmail())) {
+		        throw new IllegalStateException("EMAIL_EXISTS");
+		    }
 	    try {
 	        // Intentamos obtener el usuario en Firebase
 	        UserRecord firebaseUser;
@@ -155,6 +162,10 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	    return usuarioDAO.findByUid(uid);
 	}
 
+	@Override
+	public boolean existsByEmail(String email) {
+	    return usuarioDAO.existsByEmail(email);
+	}
 
 	
 	

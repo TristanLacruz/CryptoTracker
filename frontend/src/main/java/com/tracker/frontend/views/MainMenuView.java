@@ -1,8 +1,12 @@
 package com.tracker.frontend.views;
 
+import com.tracker.frontend.util.InactivityTimer;
+
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
@@ -10,6 +14,9 @@ import javafx.stage.Stage;
 public class MainMenuView {
 
 	public void mostrar(Stage primaryStage) {
+		Label titulo = new Label("CryptoTracker");
+		titulo.getStyleClass().add("titulo-app");
+
 	    double width = 1000;
 	    double height = 600;
 
@@ -26,15 +33,19 @@ public class MainMenuView {
 	        new RegisterFormView().mostrar(primaryStage);
 	    });
 
-	    VBox buttonLayout = new VBox(20, btnRegister, btnLogin);
+	    VBox buttonLayout = new VBox(20, titulo, btnRegister, btnLogin);
 	    buttonLayout.setAlignment(Pos.CENTER);
 
 	    StackPane root = new StackPane(bg, buttonLayout);
 
 	    Scene scene = new Scene(root, width, height);
+	    
+	
+        
 	    scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 
 	    primaryStage.setTitle("CryptoTracker - Menú Principal");
+	    primaryStage.setMaximized(true); //Ventana completa
 	    primaryStage.setScene(scene);
 	    primaryStage.show();
 	}
