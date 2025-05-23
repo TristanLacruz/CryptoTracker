@@ -3,7 +3,6 @@ package com.tracker.frontend.views;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +10,6 @@ import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.frontend.views.componentes.BotonesPortafolioView;
 import com.tracker.frontend.views.graficos.GraficoCombinadoView;
 import com.tracker.frontend.session.Session;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -25,7 +23,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -40,6 +37,9 @@ public class PortfolioView {
         this.usuarioId = usuarioId;
     }
 
+    /**
+     * Muestra la vista del portafolio del usuario.
+     */
     public void mostrar() {
         Stage stage = new Stage();
         stage.setTitle("Mi Portafolio");
@@ -49,14 +49,12 @@ public class PortfolioView {
 
         Label totalLabel = new Label("Total del portafolio: €0.00");
 
-        // Botones
         BotonesPortafolioView botones = new BotonesPortafolioView(
         	    v -> mostrarGraficaEvolucion(),
         	    v -> mostrarGraficaRendimiento(),
         	    v -> mostrarGraficaCombinada()
         	);
 
-        // Tabla
         TableColumn<CriptoPosesionDTO, String> simboloCol = new TableColumn<>("Criptomoneda");
         simboloCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("simbolo"));
 
@@ -80,7 +78,6 @@ public class PortfolioView {
             }
         });
 
-
         tableView.getColumns().addAll(simboloCol, cantidadCol, valorCol);
         tableView.setItems(data);
 
@@ -101,13 +98,11 @@ public class PortfolioView {
 
         stage.show();
 
-        // Cargar datos
         new Thread(() -> {
             try {
                 HttpClient client = HttpClient.newHttpClient();
                 ObjectMapper mapper = new ObjectMapper();
 
-                // ✅ Obtener resumen del portafolio
                 String url = "http://localhost:8080/api/portafolio/" + usuarioId + "/resumen";
                 HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -118,7 +113,6 @@ public class PortfolioView {
 
                 List<CriptoPosesionDTO> lista = mapper.readValue(response.body(), new TypeReference<List<CriptoPosesionDTO>>() {});
 
-                // ✅ Obtener cantidad invertida
                 String urlInversion = "http://localhost:8080/api/transacciones/invertido/" + usuarioId;
                 HttpRequest invRequest = HttpRequest.newBuilder()
                     .uri(URI.create(urlInversion))
@@ -132,7 +126,7 @@ public class PortfolioView {
                 double diferencia = total - invertido;
                 double rendimiento = invertido == 0 ? 0 : (diferencia / invertido) * 100;
 
-                String resumen = String.format("💼 Total del portafolio: €%,.2f\n📊 Rendimiento: %+.2f € (%.2f%%)",
+                String resumen = String.format("Total del portafolio: €%,.2f\nRendimiento: %+.2f € (%.2f%%)",
                         total, diferencia, rendimiento);
 
                 Platform.runLater(() -> {
@@ -141,11 +135,14 @@ public class PortfolioView {
                 });
 
             } catch (Exception e) {
-                System.err.println("❌ Error al obtener portafolio: " + e.getMessage());
+                System.err.println("Error al obtener portafolio: " + e.getMessage());
             }
         }).start();
 	}
     
+    /**
+     * Muestra la gráfica de evolución del portafolio.
+     */
     private void mostrarGraficaEvolucion() {
         Stage stage = new Stage();
         stage.setTitle("Evolución del Portafolio");
@@ -190,13 +187,14 @@ public class PortfolioView {
 
                 Platform.runLater(() -> lineChart.getData().add(series));
             } catch (Exception e) {
-                System.err.println("❌ Error al cargar evolución del portafolio: " + e.getMessage());
+                System.err.println("Error al cargar evolución del portafolio: " + e.getMessage());
             }
         }).start();
     }
 
-
-
+    /**
+     * Muestra la gráfica de rendimiento acumulado del portafolio.
+     */
     private void mostrarGraficaRendimiento() {
         Stage stage = new Stage();
         stage.setTitle("Ganancia/Pérdida acumulada");
@@ -241,7 +239,7 @@ public class PortfolioView {
 
                 Platform.runLater(() -> chart.getData().add(series));
             } catch (Exception e) {
-                System.err.println("❌ Error al obtener rendimiento: " + e.getMessage());
+                System.err.println("Error al obtener rendimiento: " + e.getMessage());
             }
         }).start();
     }

@@ -65,7 +65,7 @@ public class GraficoRendimientoView {
 
                 Platform.runLater(() -> chart.getData().add(series));
             } catch (Exception e) {
-                System.err.println("❌ Error al obtener rendimiento: " + e.getMessage());
+                System.err.println("Error al obtener rendimiento: " + e.getMessage());
             }
         }).start();
     }

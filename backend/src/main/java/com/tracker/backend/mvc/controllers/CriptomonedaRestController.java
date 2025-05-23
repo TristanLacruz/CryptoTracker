@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.tracker.backend.indicadores.EMAUtil;
 import com.tracker.backend.indicadores.MACDUtil;
 import com.tracker.backend.indicadores.RSIUtil;
@@ -73,7 +71,6 @@ public class CriptomonedaRestController {
 		return criptomonedaService.getMarketData();
 	}
 	
-	
 	@GetMapping("/{id}/historical")
 	public ResponseEntity<Map<String, Object>> getHistoricalPrices(@PathVariable String id) {
 	    List<List<Double>> prices = criptomonedaService.getHistoricalPrices(id);
@@ -84,13 +81,11 @@ public class CriptomonedaRestController {
 	    return ResponseEntity.ok(response);
 	}
 
-
-
 	@GetMapping("/{id}/rsi")
 	public ResponseEntity<?> getRSI(@PathVariable String id) {
 	    List<Double> precios = criptomonedaService.getHistoricalPrices(id)
 	        .stream()
-	        .map(pair -> pair.get(1)) // el precio, no el timestamp
+	        .map(pair -> pair.get(1))
 	        .collect(Collectors.toList());
 
 	    if (precios.size() < 15) {
@@ -99,9 +94,9 @@ public class CriptomonedaRestController {
 	    }
 
 	    List<Double> rsiList = RSIUtil.calculateRSIList(precios, 14);
-	    double rsi = rsiList.get(rsiList.size() - 1); // ✅ último valor
+	    double rsi = rsiList.get(rsiList.size() - 1);
 
-	    return ResponseEntity.ok(rsi); // ahora sí será un número (no una lista)
+	    return ResponseEntity.ok(rsi);
 	}
 	
 	@GetMapping("/{id}/sma")
@@ -154,7 +149,6 @@ public class CriptomonedaRestController {
 	    return ResponseEntity.ok(macdData);
 	}
 
-	
 	@GetMapping("/{id}/indicadores")
 	public ResponseEntity<Map<String, Object>> getIndicadores(@PathVariable String id) {
 	    List<List<Double>> historicalPrices = criptomonedaService.getHistoricalPrices(id);
@@ -163,17 +157,14 @@ public class CriptomonedaRestController {
 	        return ResponseEntity.badRequest().body(Map.of("error", "No hay datos históricos"));
 	    }
 
-	    // Extraer solo los precios
 	    List<Double> precios = historicalPrices.stream()
 	        .map(pair -> pair.get(1))
 	        .collect(Collectors.toList());
 
 	    Map<String, Object> indicadores = new HashMap<>();
 
-	    // Añadir precios
 	    indicadores.put("precios", precios);
 
-	    // RSI (14)
 	    if (precios.size() >= 15) {
 	        List<Double> rsi = RSIUtil.calculateRSIList(precios, 14);
 	        indicadores.put("rsi", rsi);
@@ -181,7 +172,6 @@ public class CriptomonedaRestController {
 	        indicadores.put("rsi", List.of());
 	    }
 
-	    // SMA (7)
 	    if (precios.size() >= 7) {
 	        List<Double> sma = SMAUtil.calcularSMA(precios, 7);
 	        indicadores.put("sma", sma);
@@ -189,7 +179,6 @@ public class CriptomonedaRestController {
 	        indicadores.put("sma", List.of());
 	    }
 
-	    // EMA (7)
 	    if (precios.size() >= 7) {
 	        List<Double> ema = EMAUtil.calcularEMA(precios, 7);
 	        indicadores.put("ema", ema);
@@ -197,7 +186,6 @@ public class CriptomonedaRestController {
 	        indicadores.put("ema", List.of());
 	    }
 
-	    // MACD
 	    if (precios.size() >= 35) {
 	        Map<String, List<Double>> macd = MACDUtil.calcularMACD(precios);
 	        indicadores.put("macd", macd.getOrDefault("macd", List.of()));
@@ -210,14 +198,13 @@ public class CriptomonedaRestController {
 	    return ResponseEntity.ok(indicadores);
 	}
 
-
 	@GetMapping("/{id}/rsi/history")
 	public ResponseEntity<List<Double>> getRsiHistory(@PathVariable String id) {
 		List<Double> precios = criptomonedaService.getHistoricalPrices(id)
                 .stream()
-                .map(pair -> pair.get(1)) // toma solo el precio
+                .map(pair -> pair.get(1))
                 .collect(Collectors.toList());
-	    List<Double> rsi = RSIUtil.calculateRSIList(precios, 14); // ✅
+	    List<Double> rsi = RSIUtil.calculateRSIList(precios, 14);
 	    return ResponseEntity.ok(rsi);
 	}
 	
@@ -231,7 +218,6 @@ public class CriptomonedaRestController {
 
 	    return ResponseEntity.ok(historicalPrices);
 	}
-	
 	
 	@PostMapping("/buy")
 	public ResponseEntity<?> comprarCrypto(@RequestBody CompraRequestDTO compra) {
@@ -254,7 +240,7 @@ public class CriptomonedaRestController {
 	            );
 	        }
 	        
-	        System.out.println("✅ Compra realizada. Total: " + transaccion.getValorTotal());
+	        System.out.println("Compra realizada. Total: " + transaccion.getValorTotal());
 
 	        Map<String, Object> respuesta = Map.of(
 	            "estado", "exito",
@@ -270,7 +256,7 @@ public class CriptomonedaRestController {
 	        return ResponseEntity.ok(respuesta);
 
 	    } catch (RuntimeException e) {
-	        System.out.println("❌ Error en compra: " + e.getMessage());
+	        System.out.println("Error en compra: " + e.getMessage());
 
 	        Map<String, Object> respuesta = Map.of(
 	            "estado", "error",
@@ -281,7 +267,6 @@ public class CriptomonedaRestController {
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	    }
 	}
-
 
 	@PostMapping("/sell")
 	public ResponseEntity<?> venderCrypto(@RequestBody VentaRequestDTO venta) {
@@ -304,7 +289,7 @@ public class CriptomonedaRestController {
 	            );
 	        }
 
-	        System.out.println("✅ Venta realizada. Total: " + transaccion.getValorTotal());
+	        System.out.println("Venta realizada. Total: " + transaccion.getValorTotal());
 
 	        Map<String, Object> respuesta = Map.of(
 	            "estado", "exito",
@@ -320,7 +305,7 @@ public class CriptomonedaRestController {
 	        return ResponseEntity.ok(respuesta);
 
 	    } catch (RuntimeException e) {
-	        System.out.println("❌ Error en venta: " + e.getMessage());
+	        System.out.println("Error en venta: " + e.getMessage());
 
 	        Map<String, Object> respuesta = Map.of(
 	            "estado", "error",
@@ -331,8 +316,4 @@ public class CriptomonedaRestController {
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respuesta);
 	    }
 	}
-
-
-
-
 }

@@ -111,7 +111,6 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		usuarioActual.setApellido(u.getApellido());
 		usuarioActual.setContrasena(u.getContrasena());
 		usuarioActual.setRol(u.getRol());
-		usuarioActual.setIdChatTelegram(u.getIdChatTelegram());
 		usuarioActual.setSaldo(u.getSaldo());
 		usuarioActual.setCreadoEl(u.getCreadoEl());
 		usuarioActual.setActualizadoEl(u.getActualizadoEl());

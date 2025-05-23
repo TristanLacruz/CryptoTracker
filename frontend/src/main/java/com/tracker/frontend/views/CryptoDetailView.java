@@ -12,6 +12,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+/**
+ * Clase que representa la vista de detalles de una criptomoneda.
+ * Muestra información detallada sobre la criptomoneda seleccionada.
+ */
 public class CryptoDetailView {
 
 	private final String cryptoId;
@@ -24,6 +28,9 @@ public class CryptoDetailView {
 		this.precioActual = precioActual;
 	}
 
+	/**
+	 * Muestra la vista de detalles de la criptomoneda.
+	 */
 	public void mostrar() {
 		Stage stage = new Stage();
 		stage.setTitle("Detalles de: " + cryptoId);
@@ -37,7 +44,7 @@ public class CryptoDetailView {
 		btnVolver.setOnAction(e -> {
 			stage.close();
 			try {
-				new CryptoTableViewApp().mostrarAppPrincipal(new Stage()); // 👈 Vuelve a la vista principal
+				new CryptoTableViewApp().mostrarAppPrincipal(new Stage()); // Vovler a la vista principal
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -54,14 +61,14 @@ public class CryptoDetailView {
 		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 
 
-		// ⏱ Inactividad: cerrar sesión y volver al login
+		// Si existe inactividad, cerrar sesión y volver al login
 		InactivityTimer timer = new InactivityTimer(stage, () -> {
 		    Session.idToken = null;
 		    stage.close();
 		    new LoginFormView().mostrar(new Stage());
 		});
 
-		timer.attachToScene(scene); // <- activa el control
+		timer.attachToScene(scene);
 
 		stage.setScene(scene);
 		stage.setMaximized(true);

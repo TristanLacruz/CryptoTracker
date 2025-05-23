@@ -5,7 +5,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,9 +12,6 @@ import java.util.Collections;
 @Document(collection = "usuarios")
 public class Usuario implements UserDetails {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	@Id
@@ -27,7 +23,6 @@ public class Usuario implements UserDetails {
 	private String apellido;
 	private String contrasena;
 	private String rol;
-	private String idChatTelegram;
 	private double saldo = 100000.0;
 	private LocalDateTime creadoEl;
 	private LocalDateTime actualizadoEl;
@@ -43,20 +38,17 @@ public class Usuario implements UserDetails {
 		this.id = id;
 	}
 
-	public Usuario(String nombreUsuario, String email, String nombre, String apellido, String contrasena,
-			String idChatTelegram) {
+	public Usuario(String nombreUsuario, String email, String nombre, String apellido, String contrasena) {
 		this.nombreUsuario = nombreUsuario;
 		this.email = email;
 		this.nombre = nombre;
 		this.apellido = apellido;
 		this.contrasena = contrasena;
-		this.idChatTelegram = idChatTelegram;
 		this.saldo = 0.0;
 		this.creadoEl = LocalDateTime.now();
 		this.actualizadoEl = LocalDateTime.now();
 	}
 
-	// Getters y Setters
 	public String getId() {
 		return id;
 	}
@@ -121,14 +113,6 @@ public class Usuario implements UserDetails {
 		this.rol = rol;
 	}
 
-	public String getIdChatTelegram() {
-		return idChatTelegram;
-	}
-
-	public void setIdChatTelegram(String idChatTelegram) {
-		this.idChatTelegram = idChatTelegram;
-	}
-
 	public double getSaldo() {
 		return saldo;
 	}
@@ -168,31 +152,32 @@ public class Usuario implements UserDetails {
 		return nombreUsuario;
 	}
 
+	// METODOS IMPLEMENTADOS DE LA INTERFAZ USERDETAILS
+	// Estos métodos son necesarios para la autenticación y autorización
 	@Override
 	public boolean isAccountNonExpired() {
-		return true; // Puedes implementar lógica específica si lo deseas
+		return true; 
 	}
 
 	@Override
 	public boolean isAccountNonLocked() {
-		return true; // Puedes implementar lógica específica si lo deseas
+		return true; 
 	}
 
 	@Override
 	public boolean isCredentialsNonExpired() {
-		return true; // Puedes implementar lógica específica si lo deseas
+		return true; 
 	}
 
 	@Override
 	public boolean isEnabled() {
-		return true; // Puedes implementar lógica específica si lo deseas
+		return true; 
 	}
 
 	@Override
 	public String toString() {
 		return "Usuario{" + "id='" + id + '\'' + ", nombreUsuario='" + nombreUsuario + '\'' + ", email='" + email + '\''
-				+ ", nombre='" + nombre + '\'' + ", apellido='" + apellido + '\'' + ", idChatTelegram='"
-				+ idChatTelegram + '\'' + ", saldo=" + saldo + ", creadoEl=" + creadoEl + ", actualizadoEl="
+				+ ", nombre='" + nombre + '\'' + ", apellido='" + apellido + '\'' + ", saldo=" + saldo + ", creadoEl=" + creadoEl + ", actualizadoEl="
 				+ actualizadoEl + '}';
 	}
 }

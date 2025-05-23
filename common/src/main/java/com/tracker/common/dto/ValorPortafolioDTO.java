@@ -16,7 +16,4 @@ public class ValorPortafolioDTO {
 	public void setValor(double valor) {
 		this.valor = valor;
 	}
-
-    
-    
 }

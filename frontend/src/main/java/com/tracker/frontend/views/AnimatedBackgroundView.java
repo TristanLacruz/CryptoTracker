@@ -8,26 +8,40 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 
+/**
+ * Clase que representa una vista de fondo animado.
+ * Esta clase extiende Pane y utiliza un Canvas para dibujar una imagen de fondo
+ * que rota continuamente.
+ */
 public class AnimatedBackgroundView extends Pane {
 
 	private final Canvas canvas;
 	private final Image backgroundImage;
 	private double angle = 0;
 
+	/**
+	 * Constructor de la clase AnimatedBackgroundView.
+	 * Inicializa el canvas y la imagen de fondo.
+	 *
+	 * @param imagePath Ruta de la imagen de fondo.
+	 */
 	public AnimatedBackgroundView(String imagePath) {
 		canvas = new Canvas();
 		this.getChildren().add(canvas);
 
 		backgroundImage = new Image(getClass().getResource(imagePath).toExternalForm());
 
-		// 🔄 Vincula el tamaño del canvas al tamaño del Pane
 		canvas.widthProperty().bind(this.widthProperty());
 		canvas.heightProperty().bind(this.heightProperty());
-		this.setMouseTransparent(true);  // Evita que tape los nodos de encima
+		this.setMouseTransparent(true); 
 
 		startAnimation();
 	}
 
+	/**
+	 * Método que inicia la animación de rotación de la imagen de fondo.
+	 * Utiliza un AnimationTimer para actualizar el canvas en cada fotograma.
+	 */
 	private void startAnimation() {
 	    GraphicsContext gc = canvas.getGraphicsContext2D();
 
@@ -43,19 +57,16 @@ public class AnimatedBackgroundView extends Pane {
 
 	            gc.save();
 
-	            // Centro del canvas (centro de rotación)
 	            gc.translate(canvasWidth / 2, canvasHeight / 2);
 	            gc.rotate(angle);
 
-	            // 🔁 Calcular escala para que la imagen siempre cubra la pantalla al rotar
 	            double scaleFactor = Math.max(
 	                canvasWidth / backgroundImage.getWidth(),
 	                canvasHeight / backgroundImage.getHeight()
-	            ) * Math.sqrt(2); // √2 garantiza cubrir incluso en diagonal
+	            ) * Math.sqrt(2); 
 
 	            gc.scale(scaleFactor, scaleFactor);
 
-	            // Dibujar centrado
 	            gc.drawImage(backgroundImage,
 	                -backgroundImage.getWidth() / 2,
 	                -backgroundImage.getHeight() / 2
@@ -63,7 +74,7 @@ public class AnimatedBackgroundView extends Pane {
 
 	            gc.restore();
 
-	            angle += 0.02; // velocidad de rotación
+	            angle += 0.02;
 	        }
 	    }.start();
 	}

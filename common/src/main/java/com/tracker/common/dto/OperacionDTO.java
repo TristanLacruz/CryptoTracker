@@ -10,7 +10,6 @@ public class OperacionDTO {
     private String tipoOperacion;
 
     public OperacionDTO() {
-        // Constructor por defecto obligatorio para deserialización
     }
 
     @JsonCreator
@@ -24,7 +23,6 @@ public class OperacionDTO {
         this.tipoOperacion = tipoOperacion;
     }
 
-    // Getters y Setters
     public String getCryptoId() {
         return cryptoId;
     }

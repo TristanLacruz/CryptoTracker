@@ -3,7 +3,7 @@ package com.tracker.common.dto;
 public class CriptoPosesionDTO {
     private String simbolo;
     private double cantidad;
-    private double valorTotal; // nuevo
+    private double valorTotal; 
 
     public String getSimbolo() {
         return simbolo;

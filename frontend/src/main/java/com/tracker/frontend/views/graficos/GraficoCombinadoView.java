@@ -12,13 +12,15 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+/**
+ * Clase que representa una vista de gráfico combinado para mostrar la evolución del portafolio.
+ */
 public class GraficoCombinadoView {
 
     private final String usuarioId;
@@ -27,6 +29,9 @@ public class GraficoCombinadoView {
         this.usuarioId = usuarioId;
     }
 
+    /**
+     * Muestra el gráfico combinado de la evolución del portafolio.
+     */
     public void mostrar() {
         Stage stage = new Stage();
         stage.setTitle("Evolución del portafolio");

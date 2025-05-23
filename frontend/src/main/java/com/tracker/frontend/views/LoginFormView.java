@@ -9,29 +9,35 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import com.tracker.frontend.session.Session;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.frontend.AuthContext;
 import com.tracker.frontend.CryptoTableViewApp;
-
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Clase que representa la vista del formulario de inicio de sesión.
+ * Permite al usuario ingresar su correo electrónico y contraseña para iniciar sesión.
+ */
 public class LoginFormView {
 
 	private static final String API_KEY = "AIzaSyCeFXdnnytQRyuXup6UO3Dj0VX1qXUyCXs";
 
+	/**
+	 * Muestra la vista del formulario de inicio de sesión.
+	 *
+	 * @param parentStage La ventana principal desde la cual se abre el formulario de inicio de sesión.
+	 */
 	public void mostrar(Stage parentStage) {
 		Stage stage = new Stage();
 
 		TextField emailField = new TextField();
-		emailField.setPrefWidth(300);           // Establece ancho deseado
-		emailField.setMaxWidth(300);            // LIMITA el máximo real
+		emailField.setPrefWidth(300);  
+		emailField.setMaxWidth(300);     
 		emailField.getStyleClass().add("text-field");
 		PasswordField passwordField = new PasswordField();
 		passwordField.setPrefWidth(300);
@@ -49,17 +55,14 @@ public class LoginFormView {
 			content.setPadding(new Insets(20));
 			content.setAlignment(Pos.CENTER);
 
-			// Fondo animado
 			AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
 
-			// StackPane para superponer el fondo y el contenido
 			StackPane root = new StackPane(fondo, content);
-
 
 		btnVolver.setOnAction(ev -> {
 			try {
-				new MainMenuView().mostrar(parentStage); // Vuelve al menú
-				stage.close(); // Cierra la ventana actual
+				new MainMenuView().mostrar(parentStage);
+				stage.close(); 
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -69,7 +72,6 @@ public class LoginFormView {
 			String email = emailField.getText();
 			String password = passwordField.getText();
 			
-			// Desactivar botón para evitar múltiples clics
 			btnLogin.setDisable(true);
 			resultado.setText("⏳ Iniciando sesión...");
 
@@ -92,11 +94,9 @@ public class LoginFormView {
 				client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(HttpResponse::body)
 						.thenAccept(response -> {
 							try {
-								//System.out.println("RESPUESTA DE FIREBASE:");
-								System.out.println(response);
+								System.out.println("Respuesta de Firebase: " + response);
 								Map<String, Object> datos = mapper.readValue(response, Map.class);
 
-								// Verificamos si hay un error
 								if (datos.containsKey("error")) {
 									Map<String, Object> errorInfo = (Map<String, Object>) datos.get("error");
 									String errorCode = (String) errorInfo.get("message");
@@ -128,15 +128,15 @@ public class LoginFormView {
 
 
 									Platform.runLater(() -> {
-										resultado.setText("❌ " + mensajePersonalizado);
-										btnLogin.setDisable(false); // Reactivar botón
+										resultado.setText("Error: " + mensajePersonalizado);
+										btnLogin.setDisable(false);
 									});
 									return;
 								}
 
 
 								String idToken = (String) datos.get("idToken");
-								String usuarioId = (String) datos.get("localId"); // <- Este es el UID del usuario
+								String usuarioId = (String) datos.get("localId"); 
 
 								Session.idToken = idToken;
 								Session.usuarioId = usuarioId;
@@ -147,11 +147,10 @@ public class LoginFormView {
 								Platform.runLater(() -> {
 									try {
 										Session.idToken = idToken;
-										Session.usuarioId = usuarioId; // <- Guardamos también el UID
-										//System.out.println("✅ ID Token guardado: " + Session.idToken);
-										System.out.println("✅ UID guardado: " + Session.usuarioId);
+										Session.usuarioId = usuarioId;
+										System.out.println("UID guardado: " + Session.usuarioId);
 
-										resultado.setText("✅ Login correcto.");
+										resultado.setText("Login correcto.");
 										stage.close();
 
 										new CryptoTableViewApp().mostrarAppPrincipal(new Stage());
@@ -160,37 +159,34 @@ public class LoginFormView {
 									}
 								});
 
-
-
 							} catch (Exception ex) {
 								Platform.runLater(() -> {
-									resultado.setText("⚠️ Error al procesar la respuesta.");
-									btnLogin.setDisable(false); // Reactivar botón
+									resultado.setText("Error al procesar la respuesta.");
+									btnLogin.setDisable(false);
 								});
 								ex.printStackTrace();
 							}
 						}).exceptionally(error -> {
 							Platform.runLater(() -> {
-								resultado.setText("❌ Error de conexión: " + error.getMessage());
-								btnLogin.setDisable(false); // Reactivar botón
+								resultado.setText("Error de conexión: " + error.getMessage());
+								btnLogin.setDisable(false); 
 							});
 							error.printStackTrace();
 							return null;
 						});
-
 			} catch (Exception ex) {
-				resultado.setText("❌ Error interno: " + ex.getMessage());
-				btnLogin.setDisable(false); // Reactivar botón
+				resultado.setText("Error interno: " + ex.getMessage());
+				btnLogin.setDisable(false);
 				ex.printStackTrace();
 			}
 		});
 
 		Scene scene = new Scene(root, 400, 400);
-		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm()); // <--- aquí
+		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm()); 
 		stage.setScene(scene);
 
 		stage.setTitle("Iniciar sesión");
-		stage.setMaximized(true); // Pantalla completa
+		stage.setMaximized(true);
 		stage.show();
 		parentStage.close();
 	}

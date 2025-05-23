@@ -11,6 +11,10 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+/**
+ * Clase que representa la vista del menú principal de la aplicación.
+ * Permite al usuario iniciar sesión o registrarse.
+ */
 public class MainMenuView {
 
 	public void mostrar(Stage primaryStage) {
@@ -35,17 +39,16 @@ public class MainMenuView {
 
 	    VBox buttonLayout = new VBox(20, titulo, btnRegister, btnLogin);
 	    buttonLayout.setAlignment(Pos.CENTER);
-
+	    buttonLayout.setTranslateY(-80); 
+	    
 	    StackPane root = new StackPane(bg, buttonLayout);
 
 	    Scene scene = new Scene(root, width, height);
-	    
-	
-        
+	    	        
 	    scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 
 	    primaryStage.setTitle("CryptoTracker - Menú Principal");
-	    primaryStage.setMaximized(true); //Ventana completa
+	    primaryStage.setMaximized(true); 
 	    primaryStage.setScene(scene);
 	    primaryStage.show();
 	}

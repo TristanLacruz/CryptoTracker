@@ -11,7 +11,6 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -26,6 +25,9 @@ public class GraficoEvolucionView {
         this.usuarioId = usuarioId;
     }
 
+    /**
+     * Muestra el gráfico de evolución del portafolio.
+     */
     public void mostrar() {
         Stage stage = new Stage();
         stage.setTitle("Evolución del Portafolio");
@@ -53,7 +55,7 @@ public class GraficoEvolucionView {
                 HttpClient client = HttpClient.newHttpClient();
                 HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                System.out.println("📦 Datos evolución portafolio:\n" + response.body());
+                System.out.println("Datos evolución portafolio:\n" + response.body());
 
                 ObjectMapper mapper = new ObjectMapper();
                 List<JsonNode> puntos = mapper.readValue(response.body(), new TypeReference<List<JsonNode>>() {});
@@ -67,7 +69,7 @@ public class GraficoEvolucionView {
                 Platform.runLater(() -> lineChart.getData().add(series));
 
             } catch (Exception e) {
-                System.err.println("❌ Error al cargar evolución del portafolio: " + e.getMessage());
+                System.err.println("Error al cargar evolución del portafolio: " + e.getMessage());
             }
         }).start();
     }

@@ -27,7 +27,6 @@ public class Portafolio {
 		this.usuarioId = usuarioId;
 	}
 
-	// Getters / setters para Portafolio
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -62,9 +61,6 @@ public class Portafolio {
         }
     }
 
-
-
-    // Inner DTO sin @Data
     public static class CriptoActivo {
         private String cryptoId;
         private String nombre;

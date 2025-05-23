@@ -19,6 +19,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+/**
+ * Clase que representa una vista de gráfico RSI (Relative Strength Index).
+ * Muestra un gráfico de líneas con los valores del RSI a lo largo del tiempo.
+ */
 public class GraficoRSIView extends VBox {
 
 	private final LineChart<Number, Number> rsiChart;
@@ -44,6 +48,11 @@ public class GraficoRSIView extends VBox {
 		cargarDatosRSI(cryptoId);
 	}
 
+	/**
+	 * Carga los datos del RSI desde el servidor y actualiza el gráfico.
+	 *
+	 * @param cryptoId El ID de la criptomoneda para la que se desea cargar el RSI.
+	 */
 	private void cargarDatosRSI(String cryptoId) {
 		new Thread(() -> {
 			try {
@@ -84,7 +93,7 @@ public class GraficoRSIView extends VBox {
 				});
 
 			} catch (Exception e) {
-				System.err.println("❌ Error al cargar RSI: " + e.getMessage());
+				System.err.println("Error al cargar RSI: " + e.getMessage());
 			}
 		}).start();
 	}

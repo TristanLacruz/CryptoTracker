@@ -7,50 +7,44 @@ import java.util.Map;
 
 public class MACDUtil {
 
-	public static Map<String, List<Double>> calcularMACD(List<Double> precios) {
-	    int rapida = 12;
-	    int lenta = 26;
-	    int señal = 9;
+    /**
+     * Calcula el MACD (Moving Average Convergence Divergence) de una lista de precios.
+     *
+     * @param precios la lista de precios
+     * @return un mapa con las líneas MACD y de señal
+     */
+    public static Map<String, List<Double>> calcularMACD(List<Double> precios) {
+        if (precios == null || precios.size() < 35) { // 26 + 9 mínimo recomendado
+            throw new IllegalArgumentException("Se necesitan al menos 35 precios para calcular el MACD.");
+        }
 
-	    Map<String, List<Double>> resultado = new HashMap<>();
+        int rapida = 12;
+        int lenta = 26;
+        int señal = 9;
 
-	    if (precios.size() < lenta + señal) {
-	        System.err.println("❌ No hay suficientes precios para MACD.");
-	        resultado.put("macd", List.of());
-	        resultado.put("signal", List.of());
-	        return resultado;
-	    }
+        Map<String, List<Double>> resultado = new HashMap<>();
 
-	    List<Double> emaRapida = EMAUtil.calcularEMA(precios, rapida);
-	    List<Double> emaLenta = EMAUtil.calcularEMA(precios, lenta);
+        List<Double> emaRapida = EMAUtil.calcularEMA(precios, rapida);
+        List<Double> emaLenta = EMAUtil.calcularEMA(precios, lenta);
 
-	    if (emaRapida.size() <= emaLenta.size()) {
-	        System.err.println("❌ EMAs no alineadas.");
-	        resultado.put("macd", List.of());
-	        resultado.put("signal", List.of());
-	        return resultado;
-	    }
+        int offset = emaRapida.size() - emaLenta.size();
+        if (offset < 0) {
+            throw new IllegalStateException("La EMA rápida debe tener más valores que la lenta.");
+        }
 
-	    int offset = emaRapida.size() - emaLenta.size();
-	    List<Double> macdLine = new ArrayList<>();
-	    for (int i = 0; i < emaLenta.size(); i++) {
-	        macdLine.add(emaRapida.get(i + offset) - emaLenta.get(i));
-	    }
+        List<Double> macdLine = new ArrayList<>();
+        for (int i = 0; i < emaLenta.size(); i++) {
+            macdLine.add(emaRapida.get(i + offset) - emaLenta.get(i));
+        }
 
-	    if (macdLine.size() < señal) {
-	        System.err.println("❌ No hay suficientes datos para calcular la señal del MACD.");
-	        resultado.put("macd", macdLine);
-	        resultado.put("signal", List.of());
-	        return resultado;
-	    }
+        if (macdLine.size() < señal) {
+            throw new IllegalArgumentException("No hay suficientes valores para calcular la línea de señal.");
+        }
 
-	    List<Double> signalLine = EMAUtil.calcularEMA(macdLine, señal);
+        List<Double> signalLine = EMAUtil.calcularEMA(macdLine, señal);
 
-	    resultado.put("macd", macdLine);
-	    resultado.put("signal", signalLine);
-	    return resultado;
-	}
-
-
-
+        resultado.put("macd", macdLine);
+        resultado.put("signal", signalLine);
+        return resultado;
+    }
 }

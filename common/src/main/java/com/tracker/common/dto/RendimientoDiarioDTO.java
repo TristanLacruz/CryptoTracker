@@ -2,7 +2,7 @@ package com.tracker.common.dto;
 
 public class RendimientoDiarioDTO {
     private int dia;
-    private double ganancia; // puede ser negativa
+    private double ganancia;
 
     public RendimientoDiarioDTO(int dia, double ganancia) {
         this.dia = dia;

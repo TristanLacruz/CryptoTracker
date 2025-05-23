@@ -6,6 +6,12 @@ import java.util.List;
 
 public class RSIUtil {
 
+	/**
+	 * Calcula el Índice de Fuerza Relativa (RSI) para una lista de precios.
+	 *
+	 * @param precios la lista de precios
+	 * @return el valor del RSI
+	 */
 	public static double calcularRSI(List<Double> precios) {
 	    if (precios.size() < 15) {
 	        throw new IllegalArgumentException("Se necesitan al menos 15 precios para calcular RSI.");

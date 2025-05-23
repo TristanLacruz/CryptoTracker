@@ -4,13 +4,20 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import com.fasterxml.jackson.databind.ObjectMapper; // Asegúrate de tener Jackson en tu proyecto
+import com.fasterxml.jackson.databind.ObjectMapper; 
 import com.tracker.common.dto.VentaRequestDTO;
 
 public class VentaService {
 
 	    private static final String API_URL = "http://localhost:8080/api/transacciones/comprar";
 
+		/**
+	     * Realiza una venta de criptomonedas.
+	     *
+	     * @param usuarioId El ID del usuario que realiza la venta.
+	     * @param simbolo   El símbolo de la criptomoneda a vender.
+	     * @param valor     La cantidad de criptomonedas a vender.
+	     */				
 	    public void venderCripto(String usuarioId, String simbolo, double valor) {
 	        try {
 	            // Crear el objeto DTO

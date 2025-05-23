@@ -19,6 +19,11 @@ public class CryptoService {
     private static final ObjectMapper mapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+    /**
+     * Obtiene los datos del mercado de criptomonedas.
+     *
+     * @return Una lista de objetos CryptoMarketDTO.
+     */
     public static CompletableFuture<List<CryptoMarketDTO>> getMarketData() {
         // Paso 1: Codificar usuario y contraseña en Base64
         String user = "admin";
@@ -48,5 +53,4 @@ public class CryptoService {
                     }
                 });
     }
-
 }

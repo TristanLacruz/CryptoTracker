@@ -1,11 +1,11 @@
-.root {
+.root { /* Estilo para la raíz de la aplicación */
     -fx-background-image: url("/images/fondo.jpg");
     -fx-background-repeat: no-repeat;
     -fx-background-size: cover;
     -fx-background-position: center center;
 }
 
-.button {
+.button { /* Estilo para los botones */
     -fx-background-color: #00FF00;
     -fx-border-color: #FFFFFF;
     -fx-border-width: 2px;
@@ -14,34 +14,41 @@
     -fx-padding: 8 16;
     -fx-border-radius: 5;
     -fx-background-radius: 5;
-    -fx-font-size: 16px;      /* antes era 14 o 12 */
-    -fx-padding: 12 24;       /* más grande */
+    -fx-font-size: 16px;   
+    -fx-padding: 12 24;    
 }
 
-.button:hover {
+.button:hover { /* Efecto hover para los botones */
     -fx-background-color: #00CC00;
 }
 
-.label {
-    -fx-text-fill: #00FF00;         /* Verde Matrix */
+.label { /* Estilo para las etiquetas */
+    -fx-text-fill: #00FF00;         
     -fx-font-family: "Consolas", "Courier New", monospace;
     -fx-font-size: 18px;
     -fx-font-weight: bold;
 }
 
-.text-field, .password-field {
+.text-field, .password-field { /* Estilo para los campos de texto */
     -fx-pref-width: 100px;
 }
 
 
-.label-secondary {
-    -fx-text-fill: #39FF14;         /* Verde más suave */
+.label-secondary { /* Estilo para etiquetas secundarias */
+    -fx-text-fill: #39FF14;        
     -fx-font-family: "Consolas", monospace;
     -fx-font-size: 14px;
     -fx-opacity: 0.85;
 }
 
-.text-field, .password-field {
+.text-field, .password-field { /* Estilo para los campos de texto */
+    -fx-background-color: #1E1E1E;
+    -fx-text-fill: #00FF00;
+    -fx-border-color: #00FF00;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 16px;
 	-fx-font-size: 18px;
     -fx-background-color: #121212;
     -fx-text-fill: #00FF00;
@@ -52,7 +59,7 @@
     -fx-background-radius: 4;
 }
 
-.title {
+.title { /* Estilo para el título */
     -fx-text-fill: #00FF00;
     -fx-font-size: 24px;
     -fx-font-family: "Consolas", monospace;
@@ -60,7 +67,7 @@
     -fx-effect: dropshadow(gaussian, #00FF00, 5, 0.5, 0, 0);
 }
 
-.table-view {
+.table-view { /* Estilo para la tabla */
     -fx-background-color: #121212;
     -fx-table-cell-border-color: #00FF00;
     -fx-control-inner-background: #121212;
@@ -69,110 +76,151 @@
 }
 
 .table-view .column-header,
-.table-view .filler {
+.table-view .filler { /* Estilo para el encabezado de la tabla */
     -fx-background-color: #1E1E1E;
     -fx-border-color: #00FF00;
     -fx-border-width: 0 0 2px 0;
 }
 
-.table-view .column-header .label {
+.table-view .column-header .label { /* Estilo para las etiquetas del encabezado */
     -fx-text-fill: #00FF00;
     -fx-font-weight: bold;
     -fx-font-family: "Consolas", monospace;
 }
 
-.table-row-cell {
+.table-row-cell { /* Estilo para las filas de la tabla */
     -fx-background-color: #121212;
     -fx-border-color: transparent transparent #00FF00 transparent;
 }
 
-.table-row-cell:filled:selected, .table-cell:filled:selected {
+.table-row-cell:filled:selected, .table-cell:filled:selected { /* Estilo para las filas seleccionadas */
     -fx-background-color: #003300;
 }
 
-.table-cell {
+.table-cell { /* Estilo para las celdas de la tabla */
     -fx-text-fill: #00FF00;
     -fx-font-family: "Consolas", monospace;
 }
 
-.chart {
+.chart { /* Estilo para los gráficos */
     -fx-background-color: #121212;
     -fx-legend-visible: false;
 }
 
-.chart-plot-background {
+.chart-plot-background { /* Estilo para el fondo del gráfico */
     -fx-background-color: #1E1E1E;
 }
 
-.chart-series-line {
+.chart-series-line { /* Estilo para la línea del gráfico */
     -fx-stroke: #00FF00;
     -fx-stroke-width: 2px;
 }
 
-.chart-line-symbol {
+.chart-line-symbol { /* Estilo para los símbolos de la línea del gráfico */
     -fx-background-color: #00FF00, white;
     -fx-background-insets: 0, 2;
     -fx-background-radius: 5px;
 }
 
-.axis {
+.axis { /* Estilo para los ejes del gráfico */
     -fx-tick-label-fill: #00FF00;
     -fx-font-family: "Consolas", monospace;
 }
 
-.axis-label {
+.axis-label { /* Estilo para las etiquetas de los ejes */
     -fx-text-fill: #00FF00;
 }
 
-.combo-box .list-cell {
+.combo-box .list-cell { /* Estilo para las celdas de la lista del ComboBox */
     -fx-background-color: #1E1E1E;
     -fx-text-fill: #00FF00;
     -fx-font-family: "Consolas", monospace;
 }
 
 .combo-box .list-cell:filled:selected, 
-.combo-box .list-cell:hover {
+.combo-box .list-cell:hover { /* Estilo para las celdas seleccionadas o al pasar el mouse */
     -fx-background-color: #003300;
 }
 
-.table-cell {
+.table-cell { /* Estilo para las celdas de la tabla */
     -fx-alignment: center;
     -fx-text-fill: #00FF00;
     -fx-font-family: "Consolas", monospace;
 }
 
-.table-view .column-header .label {
+.table-view .column-header .label { /* Estilo para las etiquetas del encabezado */
     -fx-alignment: center;
     -fx-text-fill: #00FF00;
     -fx-font-weight: bold;
     -fx-font-family: "Consolas", monospace;
 }
 
-.alerta-error {
+.alerta-error { /* Estilo para las alertas de error */
     -fx-background-color: #2B2B2B;
     -fx-text-fill: #F44336;
     -fx-font-size: 14px;
     -fx-font-family: "Segoe UI", sans-serif;
 }
 
-.alerta-exito {
+.alerta-exito { /* Estilo para las alertas de éxito */
     -fx-background-color: #2B2B2B;
     -fx-text-fill: #4CAF50;
     -fx-font-size: 14px;
     -fx-font-family: "Segoe UI", sans-serif;
 }
 
-.dialog-pane .button {
+.dialog-pane .button { /* Estilo para los botones de los diálogos */
     -fx-background-color: #3B4C66;
     -fx-text-fill: #F4F4F4;
     -fx-background-radius: 10;
 }
 
-.titulo-app {
+.titulo-app { /* Estilo para el título de la aplicación */
     -fx-text-fill: #00FF00;
 -fx-font-family: "JetBrains Mono", monospace;
     -fx-font-size: 48px;
     -fx-font-weight: bold;
     -fx-effect: dropshadow(gaussian, #00FF00, 4, 0.7, 0, 0);
     -fx-padding: 50 0 50 0;
+}
+
+.input-grande, .combo-grande { /* Estilo para los campos de texto grandes */
+    -fx-pref-width: 200px; 
+    -fx-font-size: 16px;
+    -fx-padding: 12 24;
+}
+
+.combo-box, .combo-box-base { /* Estilo para el ComboBox */
+    -fx-background-color: #121212;  
+    -fx-border-color: #00FF00;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #00FF00;
+    -fx-font-family: "Consolas", monospace;
+    -fx-font-size: 16px;
+}
+
+.combo-box .arrow-button { /* Estilo para el botón de flecha del ComboBox */
+    -fx-background-color: #003300; 
+    -fx-background-radius: 4;
+}
+
+.combo-box .arrow { /* Estilo para la flecha del ComboBox */
+    -fx-background-color: #00FF00;
+}
+
+.combo-box:hover { /* Efecto hover para el ComboBox */
+    -fx-background-color: #1A1A1A;
+}
+
+.table-view .column-header .arrow { /* Estilo para la flecha de ordenamiento */
+    -fx-background-color: #00FF00; 
+}
+
+.table-view .column-header .sort-ascending .arrow { /* Estilo para la flecha de orden ascendente */
+    -fx-shape: "M 0 4 L 4 0 L 8 4 Z"; 
+}
+
+.table-view .column-header .sort-descending .arrow { /* Estilo para la flecha de orden descendente */
+    -fx-shape: "M 0 0 L 4 4 L 8 0 Z"; 
 }

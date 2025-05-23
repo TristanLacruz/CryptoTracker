@@ -40,7 +40,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.tracker.launcher.launcher</mainClass>
+                            <mainClass>com.tracker.Launcher</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

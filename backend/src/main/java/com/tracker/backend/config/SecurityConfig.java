@@ -33,9 +33,16 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
 	@Autowired
-	private FirebaseTokenFilter firebaseTokenFilter;
+	private FirebaseTokenFilter firebaseTokenFilter; 
 
-		@Bean
+	/**
+	 * Configura el proveedor de autenticación utilizando el servicio de detalles de usuario y el codificador de contraseñas.
+	 *
+	 * @param userDetailsService el servicio de detalles de usuario
+	 * @param passwordEncoder    el codificador de contraseñas
+	 * @return un AuthenticationProvider configurado
+	 */
+	@Bean
 	public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService,
 			PasswordEncoder passwordEncoder) {
 		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -44,6 +51,13 @@ public class SecurityConfig {
 		return authProvider;
 	}
 
+	/**
+	 * Configura la cadena de filtros de seguridad.
+	 *
+	 * @param http la configuración de seguridad HTTP
+	 * @return la cadena de filtros de seguridad configurada
+	 * @throws Exception si ocurre un error durante la configuración
+	 */
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		return http.cors(withDefaults()) // Habilita CORS
@@ -60,17 +74,32 @@ public class SecurityConfig {
 								// APIs públicas
 								"/api/usuarios", "/api/usuarios/me", "/api/recover", "/api/reset", "/cryptos/**",
 								"/api/cryptos/**", "/precio/**", "/info/**", "/api/transacciones/**", "/alertas",
-								"/ordenes/**", "/notifications")
+								"/ordenes/**", "/notifications",
+						
+								// Endpoints protegidos	
+								"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
 						.permitAll().anyRequest().authenticated())
 				.exceptionHandling(e -> e.authenticationEntryPoint(restAuthEntryPoint()))
 				.addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class).build();
 	}
 
+	/**
+	 * Configura el AuthenticationManager.
+	 *
+	 * @param config la configuración de autenticación
+	 * @return el AuthenticationManager configurado
+	 * @throws Exception si ocurre un error durante la configuración
+	 */
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 		return config.getAuthenticationManager();
 	}
 
+	/**
+	 * Configura CORS para permitir solicitudes desde el frontend.
+	 *
+	 * @return la configuración de CORS
+	 */
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 	  CorsConfiguration cfg = new CorsConfiguration();
@@ -83,13 +112,23 @@ public class SecurityConfig {
 	  return src;
 	}
 
-
+	/**
+	 * Configura la seguridad HTTP.
+	 *
+	 * @param http la configuración de seguridad HTTP
+	 * @throws Exception si ocurre un error durante la configuración
+	 */
 	protected void configure(HttpSecurity http) throws Exception {
 		http.cors() // habilita la CORS configurada arriba
 				.and().csrf().disable().authorizeRequests().requestMatchers("/api/portafolio/me/**").authenticated()
-				.anyRequest().permitAll().and().oauth2ResourceServer().jwt(); // o el provider que uses
+				.anyRequest().permitAll().and().oauth2ResourceServer().jwt(); 
 	}
 
+	/**
+	 * Configura el punto de entrada de autenticación para manejar errores de autenticación.
+	 *
+	 * @return el AuthenticationEntryPoint configurado
+	 */
 	@Bean
 	public AuthenticationEntryPoint restAuthEntryPoint() {
 		return (req, res, ex) -> {

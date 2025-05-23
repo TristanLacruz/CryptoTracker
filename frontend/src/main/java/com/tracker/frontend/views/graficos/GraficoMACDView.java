@@ -4,7 +4,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +12,6 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -32,7 +30,7 @@ public class GraficoMACDView extends VBox {
         NumberAxis xAxis = new NumberAxis();
         yAxis = new NumberAxis();
 
-        this.chart = new LineChart<>(xAxis, yAxis);  // <- CORRECTO
+        this.chart = new LineChart<>(xAxis, yAxis); 
         chart.setMinHeight(250);
         chart.setPrefHeight(300);
 
@@ -76,8 +74,6 @@ public class GraficoMACDView extends VBox {
                     signalSeries.getData().add(new XYChart.Data<>(i + 1 + offset, signal.get(i)));
                 }
 
-                
-                // Combinar ambas listas para encontrar min y max global
                 List<Double> combinados = new java.util.ArrayList<>();
                 combinados.addAll(macd);
                 combinados.addAll(signal);
@@ -100,7 +96,7 @@ public class GraficoMACDView extends VBox {
                 });
 
             } catch (Exception e) {
-                System.err.println("❌ Error al cargar MACD: " + e.getMessage());
+                System.err.println("Error al cargar MACD: " + e.getMessage());
             }
         }).start();
     }

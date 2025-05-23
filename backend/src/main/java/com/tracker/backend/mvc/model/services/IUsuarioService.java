@@ -26,8 +26,8 @@ public interface IUsuarioService extends UserDetailsService {
 	public Usuario getOrCreateByUid(String firebaseUid);
 
 	@Override
-	org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username);
-
+	org.springframework.security.core.userdetails.UserDetails loadUserByUsername(String username); 
+ 
     public Optional<Usuario> findByEmail(String email);
     
     boolean existsByEmail(String email);

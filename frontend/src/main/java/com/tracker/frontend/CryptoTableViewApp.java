@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import javafx.animation.ScaleTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -27,13 +29,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.util.Callback;
+import javafx.util.Duration;
 import javafx.scene.layout.VBox;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.stage.Stage;
 
 import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.common.dto.CryptoMarketDTO;
 import com.tracker.frontend.services.CryptoService;
+import com.tracker.frontend.util.FavoritosStorage;
 import com.tracker.frontend.util.InactivityTimer;
 import com.tracker.frontend.views.AnimatedBackgroundView;
 import com.tracker.frontend.views.CryptoDetailView;
@@ -50,38 +56,114 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Clase principal de la aplicación JavaFX que muestra una tabla de criptomonedas.
+ * Permite al usuario ver información sobre criptomonedas y realizar acciones como
+ * agregar a favoritos y ver detalles.
+ */
 public class CryptoTableViewApp extends Application {
 
 	private final TableView<CryptoMarketDTO> tableView = new TableView<>();
 	private final ObservableList<CryptoMarketDTO> cryptoList = FXCollections.observableArrayList();
 	private ScheduledExecutorService scheduler;
+	private final Set<String> favoritosGuardados = FavoritosStorage.cargarFavoritos();
 
 	String url = "http://localhost:8080/api/cryptos/market";
 
+	/**
+	 * Método que se ejecuta al iniciar la aplicación.
+	 * Crea la ventana principal y muestra la tabla de criptomonedas.
+	 *
+	 * @param primaryStage La ventana principal de la aplicación.
+	 */
 	@Override
 	public void start(Stage primaryStage) {
 		System.out.println("Se está cargando CryptoTableViewApp");
 		new LoginFormView().mostrar(primaryStage);
 	}
 
+	/**
+	 * Muestra la aplicación principal con la tabla de criptomonedas.
+	 *
+	 * @param primaryStage La ventana principal de la aplicación.
+	 */
 	public void mostrarAppPrincipal(Stage primaryStage) {
-		TableView<CryptoMarketDTO> tableView = new TableView<>();
-		
 		String usuarioId = AuthContext.getInstance().getUsuarioId();
 
-		// Columnas
 		TableColumn<CryptoMarketDTO, String> nameCol = new TableColumn<>("Nombre");
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-		nameCol.setMaxWidth(1f * Integer.MAX_VALUE * 20); // más ancho
+		nameCol.setMaxWidth(1f * Integer.MAX_VALUE * 20); 
 		
 		TableColumn<CryptoMarketDTO, String> symbolCol = new TableColumn<>("Símbolo");
 		symbolCol.setCellValueFactory(new PropertyValueFactory<>("symbol"));
-		symbolCol.setMaxWidth(1f * Integer.MAX_VALUE * 10); // medio
+		symbolCol.setMaxWidth(1f * Integer.MAX_VALUE * 10); 
+
+		TableColumn<CryptoMarketDTO, Boolean> favCol = new TableColumn<>("⭐");
+		favCol.setSortable(true); 
+		favCol.setPrefWidth(40); 
+		favCol.setMinWidth(40);
+		favCol.setMaxWidth(40);
+
+		favCol.setCellValueFactory(cellData -> {
+		    CryptoMarketDTO crypto = cellData.getValue();
+		    return new javafx.beans.property.SimpleBooleanProperty(crypto.isFavorito());
+		});
+
+		favCol.setCellFactory(new Callback<TableColumn<CryptoMarketDTO, Boolean>, TableCell<CryptoMarketDTO, Boolean>>() {
+		    @Override
+		    public TableCell<CryptoMarketDTO, Boolean> call(TableColumn<CryptoMarketDTO, Boolean> param) {
+		        return new TableCell<CryptoMarketDTO, Boolean>() {
+		            private final ImageView starView = new ImageView();
+		            private final Image starEmpty = new Image(getClass().getResourceAsStream("/images/star_empty.png"), 20, 20, true, true);
+		            private final Image starFilled = new Image(getClass().getResourceAsStream("/images/star_filled.png"), 20, 20, true, true);
+
+		            {
+		                setGraphic(starView);
+		                setOnMouseClicked(e -> {
+		                    CryptoMarketDTO crypto = getTableView().getItems().get(getIndex());
+		                    ScaleTransition st = new ScaleTransition(Duration.millis(150), starView);
+		                    st.setFromX(1.0);
+		                    st.setFromY(1.0);
+		                    st.setToX(1.3);
+		                    st.setToY(1.3);
+		                    st.setAutoReverse(true);
+		                    st.setCycleCount(2);
+		                    st.play();
+
+		                    crypto.setFavorito(!crypto.isFavorito());
+		                    starView.setImage(crypto.isFavorito() ? starFilled : starEmpty);
+		                    tableView.sort(); 
+		                    if (crypto.isFavorito()) {
+		                        favoritosGuardados.add(crypto.getId());
+		                    } else {
+		                        favoritosGuardados.remove(crypto.getId());
+		                    }
+		                    FavoritosStorage.guardarFavoritos(favoritosGuardados);
+		                });
+		            }
+
+		            @Override
+		            protected void updateItem(Boolean isFav, boolean empty) {
+		                super.updateItem(isFav, empty);
+		                starView.setOnMouseEntered(e -> starView.setOpacity(0.7));
+		                starView.setOnMouseExited(e -> starView.setOpacity(1.0));
+
+		                if (empty || isFav == null) {
+		                    setGraphic(null);
+		                } else {
+		                    starView.setImage(isFav ? starFilled : starEmpty);
+		                    setGraphic(starView);
+		                    setAlignment(Pos.CENTER); 
+		                }
+		            }
+		        };
+		    }
+		});
 
 		TableColumn<CryptoMarketDTO, String> imageCol = new TableColumn<>("Icono");
 		imageCol.setCellValueFactory(new PropertyValueFactory<>("image"));
@@ -111,6 +193,7 @@ public class CryptoTableViewApp extends Application {
 		});
 
 		TableColumn<CryptoMarketDTO, Double> priceCol = new TableColumn<>("Precio (EUR)");
+		priceCol.setSortable(true);
 		priceCol.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
 		priceCol.setMaxWidth(1f * Integer.MAX_VALUE * 15);
 		priceCol.setCellFactory(tc -> new TableCell<CryptoMarketDTO, Double>() {
@@ -138,6 +221,7 @@ public class CryptoTableViewApp extends Application {
 		});
 
 		TableColumn<CryptoMarketDTO, Double> volumeCol = new TableColumn<>("Volumen 24h");
+		volumeCol.setSortable(true); 
 		volumeCol.setCellValueFactory(new PropertyValueFactory<>("totalVolume"));
 		volumeCol.setCellFactory(tc -> new TableCell<CryptoMarketDTO, Double>() {
 			@Override
@@ -148,6 +232,7 @@ public class CryptoTableViewApp extends Application {
 		});
 
 		TableColumn<CryptoMarketDTO, Double> marketCapCol = new TableColumn<>("Capitalización");
+		marketCapCol.setSortable(true);
 		marketCapCol.setCellValueFactory(new PropertyValueFactory<>("marketCap"));
 		marketCapCol.setCellFactory(tc -> new TableCell<CryptoMarketDTO, Double>() {
 			@Override
@@ -157,7 +242,7 @@ public class CryptoTableViewApp extends Application {
 			}
 		});
 
-		tableView.getColumns().addAll(imageCol, nameCol, symbolCol, priceCol, changeCol, volumeCol, marketCapCol);
+		tableView.getColumns().addAll(imageCol, favCol, nameCol, symbolCol, priceCol, changeCol, volumeCol, marketCapCol);
 		tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 		tableView.setMaxWidth(Double.MAX_VALUE);
 
@@ -167,12 +252,24 @@ public class CryptoTableViewApp extends Application {
 
 		FilteredList<CryptoMarketDTO> filteredData = new FilteredList<>(cryptoList, p -> true);
 		buscador.textProperty().addListener((obs, oldVal, newVal) -> {
-			String lower = newVal.toLowerCase();
-			filteredData.setPredicate(crypto -> crypto.getName().toLowerCase().contains(lower)
-					|| crypto.getSymbol().toLowerCase().contains(lower));
+		    String lower = newVal.toLowerCase();
+		    filteredData.setPredicate(crypto -> crypto.getName().toLowerCase().contains(lower)
+		            || crypto.getSymbol().toLowerCase().contains(lower));
 		});
 
-		tableView.setItems(filteredData);
+		SortedList<CryptoMarketDTO> sortedData = new SortedList<>(filteredData);
+		sortedData.comparatorProperty().bind(tableView.comparatorProperty());
+		tableView.setItems(sortedData);
+		favCol.setSortType(TableColumn.SortType.DESCENDING);
+		tableView.getSortOrder().setAll(favCol);
+
+		tableView.getSortOrder().addListener((javafx.collections.ListChangeListener<? super TableColumn<?, ?>>) change -> {
+		    System.out.println("Orden solicitado:");
+		    for (TableColumn<?, ?> col : tableView.getSortOrder()) {
+		        System.out.println(" - Columna: " + col.getText() + " | Orden: " + col.getSortType());
+		    }
+		});
+
 		tableView.setFixedCellSize(40); // Altura fija por fila
 		tableView.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		tableView.setMinHeight(Region.USE_COMPUTED_SIZE);
@@ -213,7 +310,6 @@ public class CryptoTableViewApp extends Application {
 		scrollPane.setFitToHeight(true);
 		scrollPane.setStyle("-fx-background: transparent;");
 		borderPane.setCenter(scrollPane);
-//		borderPane.setCenter(tableView); // o ScrollPane si usas scroll
 		BorderPane.setAlignment(tableView, Pos.TOP_CENTER);
 
 		BorderPane.setMargin(tableView, new Insets(10));
@@ -264,9 +360,12 @@ public class CryptoTableViewApp extends Application {
 			Platform.runLater(() -> {
 				System.out.println("Datos recibidos: " + list.size() + " criptos.");
 				cryptoList.clear();
-				cryptoList.addAll(list);
-//				tableView.setPrefHeight(tableView.getFixedCellSize() * (cryptoList.size() + 1));
-				tableView.setPrefHeight(cryptoList.size() * 35 + 35); // 35px por fila + cabecera
+				for (CryptoMarketDTO crypto : list) {
+				    crypto.setFavorito(favoritosGuardados.contains(crypto.getId()));
+				    cryptoList.add(crypto);
+				}
+
+				tableView.setPrefHeight(cryptoList.size() * 35 + 35); 
 			});
 		}).exceptionally(e -> {
 			System.err.println("Error al obtener criptos: " + e.getMessage());
@@ -277,7 +376,7 @@ public class CryptoTableViewApp extends Application {
 
 	private void parseJson(String responseBody) {
 		System.out.println("Entrando a parseJson()");
-		System.out.println("Respuesta recibida:\n" + responseBody); // Depuración
+		System.out.println("Respuesta recibida:\n" + responseBody);
 
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -285,9 +384,8 @@ public class CryptoTableViewApp extends Application {
 		try {
 			List<CryptoMarketDTO> list = mapper.readValue(responseBody, new TypeReference<List<CryptoMarketDTO>>() {
 			});
-			System.out.println("✅ Criptos parseadas: " + list.size());
+			System.out.println("Criptos parseadas: " + list.size());
 
-			// Verificación de datos
 			list.forEach(crypto -> {
 				System.out.printf("%s (%s) - Precio: %.2f, Cambio: %.2f%%, Volumen: %.0f, MarketCap: %.0f%n",
 						crypto.getName(), crypto.getSymbol(), crypto.getCurrentPrice(),
@@ -321,7 +419,6 @@ public class CryptoTableViewApp extends Application {
 
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-			// 🔥 Aquí mapeamos el objeto completo, no solo un array
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode root = mapper.readTree(response.body());
 			JsonNode prices = root.get("prices");
@@ -330,12 +427,12 @@ public class CryptoTableViewApp extends Application {
 
 			if (prices == null || !prices.isArray()) {
 				System.err.println("No se encontraron datos históricos para: " + cryptoId);
-				return List.of(); // vacío
+				return List.of(); 
 			}
 
 			List<Double> priceList = new ArrayList<>();
 			for (JsonNode point : prices) {
-				priceList.add(point.get(1).asDouble()); // solo el precio
+				priceList.add(point.get(1).asDouble()); 
 			}
 
 			return priceList;

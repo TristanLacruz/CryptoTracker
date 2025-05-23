@@ -2,11 +2,9 @@ package com.tracker.backend.mvc.model.services.impl;
 
 import java.util.Arrays;
 import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import com.tracker.common.dto.CryptoMarketDTO;
 
 @Service

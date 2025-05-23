@@ -2,7 +2,6 @@ package com.tracker.backend.mvc.controllers;
 
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.tracker.backend.mvc.model.entity.Portafolio;
 import com.tracker.backend.mvc.model.services.IPortafolioService;
 import com.tracker.common.dto.CriptoPosesionDTO;
@@ -34,7 +32,7 @@ public class PortafolioRestController {
     private IPortafolioService portafolioService;
 
     @Autowired
-    private ICriptomonedaService cryptoService; // el que tenga getPrecioActual(String simbolo)
+    private ICriptomonedaService cryptoService;
 
     @GetMapping("")
     public List<Portafolio> getUsuarios() {
@@ -51,7 +49,7 @@ public class PortafolioRestController {
     @GetMapping("/{usuarioId}")
     public ResponseEntity<?> getPortafolio(@PathVariable String usuarioId) {
         Portafolio p = portafolioService.getPortafolioDeUsuarioId(usuarioId);
-        System.out.println("🌐 Endpoint /portafolios llamado con usuarioId: " + usuarioId);
+        System.out.println("Endpoint /portafolios llamado con usuarioId: " + usuarioId);
         if (p == null) {
             return ResponseEntity.status(404)
                   .body(Map.of("estado","error","mensaje","Portafolio no encontrado"));
@@ -66,7 +64,7 @@ public class PortafolioRestController {
     @GetMapping("/{usuarioId}/resumen")
     public List<CriptoPosesionDTO> getResumenPortafolio(@PathVariable String usuarioId) {
         Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
-        System.out.println("🔍 Criptomonedas en portafolio de " + usuarioId + ": " + portafolio.getCriptomonedas());
+        System.out.println("Criptomonedas en portafolio de " + usuarioId + ": " + portafolio.getCriptomonedas());
         return portafolio.getCriptomonedas().entrySet().stream()
             .map(entry -> {
                 CriptoPosesionDTO dto = new CriptoPosesionDTO();
@@ -112,23 +110,8 @@ public class PortafolioRestController {
         return getResumenPortafolio(auth.getName());
     }
 
-
-
     @GetMapping("/{usuarioId}/evolucion-completa")
     public List<EvolucionCompletaDTO> getEvolucionCompleta(@PathVariable String usuarioId) {
         return portafolioService.calcularEvolucionCompleta(usuarioId);
     }
-
-    
-//    @GetMapping("/portafolios/{usuarioId}")
-//    public ResponseEntity<?> obtenerPortafolio(@PathVariable String usuarioId) {
-//        try {
-//            Portafolio portafolio = portafolioService.findByUsuarioId(usuarioId);
-//            return ResponseEntity.ok(portafolio);
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Portafolio no encontrado para el usuario: " + usuarioId);
-//        }
-//    }
-
-
 }

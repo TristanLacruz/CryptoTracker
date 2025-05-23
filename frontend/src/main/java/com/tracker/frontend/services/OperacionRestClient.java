@@ -6,6 +6,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Clase para realizar operaciones de compra y venta de criptomonedas a través de un cliente REST.
+ */
 public class OperacionRestClient {
 
     private static final String BASE_URL = "http://localhost:8080/api/transacciones";
@@ -13,7 +16,7 @@ public class OperacionRestClient {
 
     public static CompletableFuture<String> ejecutarOperacion(String usuarioId, String cryptoId, String tipo, double cantidadUSD) {
         if (cantidadUSD <= 0) {
-            return CompletableFuture.completedFuture("❌ La cantidad debe ser mayor que 0");
+            return CompletableFuture.completedFuture("La cantidad debe ser mayor que 0");
         }
 
         String endpoint = tipo.equalsIgnoreCase("COMPRAR") ? "/comprar" : "/vender";
@@ -30,11 +33,11 @@ public class OperacionRestClient {
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
                     if (response.statusCode() == 200) {
-                        return "✅ Operación exitosa: " + response.body();
+                        return "Operación exitosa: " + response.body();
                     } else {
-                        return "❌ Error: " + response.body();
+                        return "Error: " + response.body();
                     }
                 })
-                .exceptionally(ex -> "❌ Error al enviar la operación: " + ex.getMessage());
+                .exceptionally(ex -> "Error al enviar la operación: " + ex.getMessage());
     }
 } 

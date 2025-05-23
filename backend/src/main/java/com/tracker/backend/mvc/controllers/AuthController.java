@@ -22,6 +22,12 @@ public class AuthController {
 	@Autowired
 	private IUsuarioService usuarioService;
 
+	/**
+	 * Endpoint para obtener los detalles del usuario autenticado.
+	 * 
+	 * @param uid el ID de usuario de Firebase
+	 * @return un objeto UsuarioDTO con los detalles del usuario
+	 */
 	@GetMapping("/me/details")
 	public UsuarioDTO obtenerDetalles(@RequestAttribute("usuarioFirebase") String uid) {
 	    Usuario usuario = usuarioService.findByUid(uid)
@@ -29,28 +35,15 @@ public class AuthController {
 	    return new UsuarioDTO(usuario.getUid(), usuario.getEmail());
 	}
 
-
-//	@GetMapping("/me/details")
-//	public ResponseEntity<?> getUserDetails(@RequestHeader("Authorization") String authorizationHeader) {
-//		try {
-//			String token = authorizationHeader.replace("Bearer ", "");
-//			FirebaseToken decodedToken = firebaseService.verifyToken(token);
-//			String firebaseUid = decodedToken.getUid();
-//
-//			Usuario usuario = usuarioService.getOrCreateByUid(firebaseUid);
-//			UsuarioDTO dto = new UsuarioDTO(usuario); // 👈 Convertimos a DTO aquí
-//
-//			return ResponseEntity.ok(dto); // 👈 Devolvemos solo los campos necesarios
-//
-//		} catch (FirebaseAuthException e) {
-//			return ResponseEntity.status(401).body("Token inválido: " + e.getMessage());
-//		}
-//	}
-
+	/**
+	 * Endpoint para iniciar sesión. Este método es un ejemplo y puede ser
+	 * personalizado según tus necesidades.
+	 * 
+	 * @param request el objeto AuthRequest que contiene el email y la contraseña
+	 * @return una respuesta de éxito o error
+	 */
 	@PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
-        // Aquí puedes implementar lógica adicional si haces login manual
-        // Si ya usas Firebase para autenticación desde el frontend, puedes omitir esto
         return ResponseEntity.ok("Login request recibido con email: " + request.getEmail());
     }
 }

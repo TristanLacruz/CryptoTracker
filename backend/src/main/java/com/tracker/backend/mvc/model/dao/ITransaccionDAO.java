@@ -1,9 +1,7 @@
 package com.tracker.backend.mvc.model.dao;
 
 import java.util.List;
-
 import org.springframework.data.mongodb.repository.MongoRepository;
-
 import com.tracker.backend.mvc.model.entity.Transaccion;
 import com.tracker.backend.mvc.model.entity.TransactionType;
 

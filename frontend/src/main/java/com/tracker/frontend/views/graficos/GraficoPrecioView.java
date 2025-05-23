@@ -13,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -27,11 +26,7 @@ public class GraficoPrecioView extends VBox {
 
     public GraficoPrecioView(String cryptoId) {
         NumberAxis xAxis = new NumberAxis();
-        yAxis = new NumberAxis(); // guarda referencia para modificarla luego
-
-        // Desactivamos etiquetas por defecto
-        // xAxis.setLabel("Día");
-        // yAxis.setLabel("Precio (€)");
+        yAxis = new NumberAxis(); 
 
         chart = new LineChart<>(xAxis, yAxis);
         chart.setMinHeight(250);
@@ -39,18 +34,16 @@ public class GraficoPrecioView extends VBox {
 
         this.setSpacing(10);
 
-        // ✅ Texto pequeño alineado a la derecha debajo del gráfico
         Label ejeXLabel = new Label("Días");
         ejeXLabel.setStyle("-fx-text-fill: #00FF00; -fx-font-family: Consolas; -fx-font-size: 10px;");
         HBox labelContainer = new HBox(ejeXLabel);
         labelContainer.setAlignment(Pos.CENTER_RIGHT);
-        labelContainer.setPadding(new Insets(0, 10, 0, 0)); // margen superior y derecho
+        labelContainer.setPadding(new Insets(0, 10, 0, 0)); 
 
         this.getChildren().addAll(chart, labelContainer);
 
         cargarDatos(cryptoId);
     }
-
 
     private void cargarDatos(String cryptoId) {
         new Thread(() -> {
@@ -91,9 +84,9 @@ public class GraficoPrecioView extends VBox {
 
                 Platform.runLater(() -> {
                     yAxis.setAutoRanging(false);
-                    yAxis.setLowerBound(min * 0.98); // margen inferior del 2%
-                    yAxis.setUpperBound(max * 1.02); // margen superior del 2%
-                    yAxis.setTickUnit((max - min) / 10); // división en 10 partes
+                    yAxis.setLowerBound(min * 0.98);
+                    yAxis.setUpperBound(max * 1.02);
+                    yAxis.setTickUnit((max - min) / 10);
 
                     chart.getData().clear();
                     chart.getData().addAll(priceSeries, smaSeries, emaSeries);
@@ -101,13 +94,13 @@ public class GraficoPrecioView extends VBox {
                     double precioActual = precios.get(precios.size() - 1);
                     chart.setTitle("Precio de " + cryptoId + ": " + String.format("%.2f", precioActual) + "€");
                     
-                    priceSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2.5px;"); // Verde brillante
-                    smaSeries.getNode().setStyle("-fx-stroke: #FF4081; -fx-stroke-width: 2.5px;");   // Rosa fuerte
-                    emaSeries.getNode().setStyle("-fx-stroke: #448AFF; -fx-stroke-width: 2.5px;");   // Azul eléctrico
+                    priceSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2.5px;"); 
+                    smaSeries.getNode().setStyle("-fx-stroke: #FF4081; -fx-stroke-width: 2.5px;");
+                    emaSeries.getNode().setStyle("-fx-stroke: #448AFF; -fx-stroke-width: 2.5px;"); 
                 });
 
             } catch (Exception e) {
-                System.err.println("❌ Error al cargar gráfico de precios: " + e.getMessage());
+                System.err.println("Error al cargar gráfico de precios: " + e.getMessage());
             }
         }).start();
     }

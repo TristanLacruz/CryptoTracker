@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,12 +22,9 @@ import com.tracker.common.dto.CryptoMarketDTO;
 import com.tracker.backend.mvc.model.entity.Criptomoneda;
 import com.tracker.backend.mvc.model.exceptions.CriptomonedaNoEncontradaException;
 import com.tracker.backend.mvc.model.services.ICriptomonedaService;
-
 import jakarta.annotation.PostConstruct;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -98,7 +94,6 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 	@Override
 	public double getPrecioActual(String simbolo) {
-	    // Mapeo manual de símbolo a ID de CoinGecko
 	    Map<String, String> simboloToId = Map.ofEntries(
 	        Map.entry("BTC", "bitcoin"),
 	        Map.entry("ETH", "ethereum"),
@@ -123,7 +118,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	        JSONObject json = new JSONObject(response.body());
 	        return json.getJSONObject(id).getDouble("eur");
 	    } catch (Exception e) {
-	        System.err.println("❌ Error al obtener precio para " + simbolo + " (ID: " + id + "): " + e.getMessage());
+	        System.err.println("Error al obtener precio para " + simbolo + " (ID: " + id + "): " + e.getMessage());
 	        return 0.0;
 	    }
 	}
@@ -132,16 +127,14 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	public Map<String, Object> getCryptoInfo(String simbolo) {
 		String url = BASE_URL + "/simple/price?ids=" + simbolo + "&vs_currencies=usd";
 
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json")
-//				.header("x-cg-demo-api-key", apiKey)
-				.build();
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
 
 		try {
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
 			if (response.statusCode() == 403) {
 				System.err.println(
-						"❌ Error 403: CoinGecko ha denegado el acceso. Verifica que la API Key esté correcta y que se esté enviando como 'x-cg-demo-api-key'.");
+						"Error 403: CoinGecko ha denegado el acceso. Verifica que la API Key esté correcta y que se esté enviando como 'x-cg-demo-api-key'.");
 				throw new RuntimeException("Error en la respuesta: 403");
 			}
 
@@ -167,22 +160,20 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			String url = BASE_URL
 					+ "/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=25&page=1&sparkline=false";
 
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json")
-//					.header("x-cg-demo-api-key", apiKey)
-					.build();
+			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
 			if (response.statusCode() == 401) {
-				System.err.println("⚠️ Clave API rechazada. Usando datos vacíos de emergencia.");
-				return Collections.emptyList(); // o lista cacheada antigua si prefieres
+				System.err.println("Clave API rechazada. Usando datos vacíos de emergencia.");
+				return Collections.emptyList(); 
 			}
 
 			System.out.println("📶 Código HTTP: " + response.statusCode());
-			//System.out.println("📦 Respuesta raw de CoinGecko:\n" + response.body());
+			//System.out.println("Respuesta raw de CoinGecko:\n" + response.body());
 
 			if (response.statusCode() != 200) {
-				System.err.println("❌ Error: CoinGecko devolvió código " + response.statusCode());
+				System.err.println("Error: CoinGecko devolvió código " + response.statusCode());
 				return Collections.emptyList();
 			}
 
@@ -196,7 +187,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			return cache;
 
 		} catch (Exception e) {
-			System.err.println("❌ Excepción al obtener datos del mercado: " + e.getMessage());
+			System.err.println("Excepción al obtener datos del mercado: " + e.getMessage());
 			return Collections.emptyList();
 		}
 	}
@@ -209,30 +200,28 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		if (historicalCache.containsKey(id)) {
 			long lastFetch = cacheTimestamps.getOrDefault(id, 0L);
 			if (now - lastFetch < CACHE_TTL) {
-				System.out.println("✅ Usando precios históricos en caché para: " + id);
+				System.out.println("Usando precios históricos en caché para: " + id);
 				return historicalCache.get(id);
 			}
 		}
 
 		try {
 			String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=50&interval=daily";
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json")
-					// .header("x-cg-demo-api-key", apiKey)
-					.build();
+			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			//System.out.println(" [Live] Respuesta CoinGecko:\n" + response.body());
+			//System.out.println("Respuesta CoinGecko:\n" + response.body());
 
 			JSONObject json = new JSONObject(response.body());
-			//System.out.println("🧪 JSON recibido: " + response.body());
+			//System.out.println("JSON recibido: " + response.body());
 			JSONArray priceArray = json.getJSONArray("prices");
 
 			List<List<Double>> historicalPrices = new ArrayList<>();
 			for (int i = 0; i < priceArray.length(); i++) {
 				JSONArray priceEntry = priceArray.getJSONArray(i);
 				List<Double> pricePoint = new ArrayList<>();
-				pricePoint.add(priceEntry.getDouble(0)); // timestamp
-				pricePoint.add(priceEntry.getDouble(1)); // price
+				pricePoint.add(priceEntry.getDouble(0)); // fecha
+				pricePoint.add(priceEntry.getDouble(1)); // precio
 				historicalPrices.add(pricePoint);
 			}
 
@@ -243,7 +232,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			return historicalPrices;
 
 		} catch (Exception e) {
-			System.out.println("❌ Error al obtener precios históricos para " + id + ": " + e.getMessage());
+			System.out.println("Error al obtener precios históricos para " + id + ": " + e.getMessage());
 
 			// Si hubo error, devolver datos anteriores en caché si los hay
 			return historicalCache.getOrDefault(id, Collections.emptyList());
@@ -256,12 +245,10 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		try {
 			String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=30&interval=daily";
 
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json")
-//	                .header("x-cg-demo-api-key", apiKey)
-					.build();
+			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			System.out.println("🟡 Respuesta CoinGecko:\n" + response.body());
+			System.out.println("Respuesta CoinGecko:\n" + response.body());
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode root = mapper.readTree(response.body());
@@ -269,10 +256,10 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 			List<Double> prices = new ArrayList<>();
 			for (JsonNode price : pricesNode) {
-				prices.add(price.get(1).asDouble()); // precio está en la posición 1
+				prices.add(price.get(1).asDouble()); 
 			}
 
-			return RSIUtil.calculateRSIList(prices, 14); // Devuelve lista con RSI
+			return RSIUtil.calculateRSIList(prices, 14);
 		} catch (Exception e) {
 			e.printStackTrace();
 			return Collections.emptyList();
@@ -285,20 +272,18 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		try {
 			String url = BASE_URL + "/coins/" + cryptoId + "/market_chart?vs_currency=eur&days=7&interval=daily";
 
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json")
-//	                .header("x-cg-demo-api-key", apiKey) // CORRECTO
-					.build();
+			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			System.out.println("🟡 Respuesta CoinGecko:\n" + response.body());
+			System.out.println("Respuesta CoinGecko:\n" + response.body());
 
 			JSONObject json = new JSONObject(response.body());
-			//System.out.println("🧪 JSON recibido: " + response.body());
+			//System.out.println("JSON recibido: " + response.body());
 			JSONArray priceArray = json.getJSONArray("prices");
 
 			for (int i = 0; i < priceArray.length(); i++) {
 				JSONArray entry = priceArray.getJSONArray(i);
-				prices.add(entry.getDouble(1)); // El precio está en la segunda posición
+				prices.add(entry.getDouble(1));
 			}
 
 		} catch (Exception e) {
@@ -318,8 +303,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	        HttpClient client = HttpClient.newHttpClient();
 	        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
 	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-	        //System.out.println("🧪 JSON recibido: " + response.body());
+	        //System.out.println("JSON recibido: " + response.body());
 
 	        JSONObject json = new JSONObject(response.body());
 
@@ -334,7 +318,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	        }
 
 	    } catch (Exception e) {
-	        System.err.println("❌ Error obteniendo precio histórico de " + cryptoId + ": " + e.getMessage());
+	        System.err.println("Error obteniendo precio histórico de " + cryptoId + ": " + e.getMessage());
 	    }
 
 	    return 0;

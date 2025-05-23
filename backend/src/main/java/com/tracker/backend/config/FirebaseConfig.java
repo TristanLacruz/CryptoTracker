@@ -12,6 +12,12 @@ import java.io.IOException;
 @Configuration
 public class FirebaseConfig {
 
+    /**
+     * Configura Firebase utilizando las credenciales del archivo JSON.
+     * Este método se ejecuta al iniciar la aplicación.
+     *
+     * @throws IOException si no se puede leer el archivo de credenciales
+     */
     @PostConstruct
     public void init() throws IOException {
         FirebaseOptions options = FirebaseOptions.builder()

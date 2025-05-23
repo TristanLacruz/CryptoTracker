@@ -12,7 +12,7 @@ public class Transaccion {
     
     private String usuarioId;
     private String cryptoId;
-    private TransactionType tipoTransaccion; // "BUY" or "SELL"
+    private TransactionType tipoTransaccion; // "COMPRAR" o "VENDER"
     private double cantidadCrypto;
     private double precioTransaccion;
     private double valorTotal;
@@ -99,7 +99,4 @@ public class Transaccion {
 	public void setFechaTransaccion(LocalDateTime fechaTransaccion) {
 		this.fechaTransaccion = fechaTransaccion;
 	}
-
-    
-
 }

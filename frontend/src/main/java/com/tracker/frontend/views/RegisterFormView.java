@@ -19,8 +19,17 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.frontend.CryptoTableViewApp;
 
+/**
+ * Clase que representa la vista del formulario de registro.
+ * Permite al usuario ingresar su información para crear una nueva cuenta.
+ */
 public class RegisterFormView {
 
+    /**
+     * Muestra la vista del formulario de registro.
+     *
+     * @param parentStage La ventana principal desde la cual se abre el formulario de registro.
+     */
     public void mostrar(Stage parentStage) {
         Stage stage = new Stage();
 
@@ -76,7 +85,7 @@ public class RegisterFormView {
                 ex.printStackTrace();
             }
         });
-
+        
         btnRegistrar.setOnAction(e -> {
             try {
                 Map<String, String> datos = new HashMap<>();
@@ -104,18 +113,18 @@ public class RegisterFormView {
 
                         if (status >= 200 && status < 300) {
                             Platform.runLater(() -> {
-                                mensaje.setText("✅ Usuario registrado correctamente.");
+                                mensaje.setText("Usuario registrado correctamente.");
                                 stage.close();
                                 try {
                                 	new CryptoTableViewApp().mostrarAppPrincipal(new Stage());
                                 } catch (Exception ex) {
                                     ex.printStackTrace();
-                                    mensaje.setText("❌ No se pudo abrir la ventana principal.");
+                                    mensaje.setText("No se pudo abrir la ventana principal.");
                                 }
                             });
                         } else {
                             Platform.runLater(() -> {
-                                String mensajePersonalizado = "❌ Error desconocido al registrar el usuario.";
+                                String mensajePersonalizado = "Error desconocido al registrar el usuario.";
                                 try {
                                     ObjectMapper mapperError = new ObjectMapper();
                                     Map<String, Object> errorJson = mapperError.readValue(body, Map.class);
@@ -135,12 +144,12 @@ public class RegisterFormView {
                                                 mensajePersonalizado = "El formato del correo es inválido.";
                                                 break;
                                             default:
-                                                mensajePersonalizado = "❌ Error: " + mensajeBackend;
+                                                mensajePersonalizado = "Error: " + mensajeBackend;
                                                 break;
                                         }
                                     }
                                 } catch (Exception ex) {
-                                    System.err.println("⚠️ No se pudo leer el mensaje de error: " + ex.getMessage());
+                                    System.err.println("No se pudo leer el mensaje de error: " + ex.getMessage());
                                 }
 
                                 mensaje.setText(mensajePersonalizado);
@@ -149,13 +158,13 @@ public class RegisterFormView {
                         return null;
                     })
                     .exceptionally(error -> {
-                        Platform.runLater(() -> mensaje.setText("❌ Error de conexión: " + error.getMessage()));
+                        Platform.runLater(() -> mensaje.setText("Error de conexión: " + error.getMessage()));
                         error.printStackTrace();
                         return null;
                     });
 
             } catch (Exception ex) {
-                mensaje.setText("❌ Error interno.");
+                mensaje.setText("Error interno.");
                 ex.printStackTrace();
             }
         });

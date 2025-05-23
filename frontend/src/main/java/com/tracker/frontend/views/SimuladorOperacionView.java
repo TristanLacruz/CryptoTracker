@@ -5,19 +5,20 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 import com.tracker.frontend.AuthContext;
 
+/**
+ * Clase que representa la vista del simulador de operaciones para una criptomoneda.
+ * Permite al usuario simular la compra o venta de una criptomoneda.
+ */
 public class SimuladorOperacionView extends VBox {
 
 	private final String cryptoId;
@@ -38,9 +39,11 @@ public class SimuladorOperacionView extends VBox {
 
 		tipoCombo = new ComboBox<>();
 		tipoCombo.getItems().addAll("COMPRAR", "VENDER");
+		tipoCombo.getStyleClass().add("combo-grande");
 		tipoCombo.setValue("COMPRAR");
 
 		cantidadField = new TextField();
+		cantidadField.getStyleClass().add("input-grande");
 		cantidadField.setPromptText("Cantidad en €");
 
 		Button ejecutarBtn = new Button("Ejecutar operación");
@@ -49,9 +52,13 @@ public class SimuladorOperacionView extends VBox {
 		ejecutarBtn.setOnAction(e -> ejecutarOperacion());
 
 		HBox form = new HBox(10, tipoCombo, cantidadField, ejecutarBtn);
+		form.setAlignment(javafx.geometry.Pos.CENTER); // <- AÑADE ESTA LÍNEA
+
 		this.getChildren().addAll(lblOperacion, form, resultadoLabel);
 		this.setPadding(new Insets(10));
 		this.setSpacing(10);
+		this.setAlignment(javafx.geometry.Pos.CENTER);
+
 	}
 
 	private void ejecutarOperacion() {
@@ -63,7 +70,7 @@ public class SimuladorOperacionView extends VBox {
 			double cantidad = Double.parseDouble(cantidadStr);
 			if (cantidad <= 0) {
 				resultadoLabel.setStyle("-fx-text-fill: red;");
-				resultadoLabel.setText("❌ La cantidad debe ser mayor que 0");
+				resultadoLabel.setText("La cantidad debe ser mayor que 0");
 				return;
 			}
 
@@ -75,7 +82,7 @@ public class SimuladorOperacionView extends VBox {
 
 		} catch (NumberFormatException e) {
 			resultadoLabel.setStyle("-fx-text-fill: red;");
-			resultadoLabel.setText("❌ Introduce una cantidad válida");
+			resultadoLabel.setText("Introduce una cantidad válida");
 		}
 	}
 
@@ -113,12 +120,12 @@ public class SimuladorOperacionView extends VBox {
 					String body = response.body();
 
 					if (status != 200) {
-						mostrarAlertaEstilizada("❌ Compra fallida", "Código HTTP: " + status, "alerta-error");
+						mostrarAlertaEstilizada("Compra fallida", "Código HTTP: " + status, "alerta-error");
 						return;
 					}
 
 					if (body == null || body.isBlank()) {
-						mostrarAlertaEstilizada("❌ Respuesta vacía", "El servidor no devolvió contenido.",
+						mostrarAlertaEstilizada("Respuesta vacía", "El servidor no devolvió contenido.",
 								"alerta-error");
 						return;
 					}
@@ -129,7 +136,7 @@ public class SimuladorOperacionView extends VBox {
 						String mensaje = root.optString("mensaje", "");
 
 						if (!"exito".equalsIgnoreCase(estado)) {
-							mostrarAlerta("❌ Compra fallida", mensaje);
+							mostrarAlerta("Compra fallida", mensaje);
 							return;
 						}
 
@@ -138,25 +145,32 @@ public class SimuladorOperacionView extends VBox {
 						String sim = det.getString("simbolo");
 						double total = det.getDouble("valorTotal");
 
-						mostrarAlertaEstilizada("✅ Compra exitosa",
+						mostrarAlertaEstilizada("Compra exitosa",
 								String.format("Compraste %.6f %s por %.2f €", cant, sim, total), "alerta-exito");
 
 						actualizarDatosPortafolio();
 
 					} catch (JSONException ex) {
-						mostrarAlertaEstilizada("❌ Respuesta inválida", ex.getMessage(), "alerta-error");
+						mostrarAlertaEstilizada("Respuesta inválida", ex.getMessage(), "alerta-error");
 					}
 				})).exceptionally(ex -> {
-					Platform.runLater(() ->  mostrarAlertaEstilizada("❌ Error de red", ex.getMessage(), "alerta-error"));
+					Platform.runLater(() ->  mostrarAlertaEstilizada("Error de red", ex.getMessage(), "alerta-error"));
 					return null;
 				});
 	}
 
+	/**
+	 * Muestra una alerta estilizada con un mensaje específico.
+	 *
+	 * @param titulo   El título de la alerta.
+	 * @param mensaje  El mensaje a mostrar en la alerta.
+	 * @param tipoCss  El tipo de CSS para aplicar a la alerta (ej. "alerta-error").
+	 */
 	private void realizarVenta(String simbolo, String nombreCrypto, double cantidad, double precio) {
 		String usuarioId = AuthContext.getInstance().getUsuarioId();
 		String idToken = AuthContext.getInstance().getIdToken();
 
-		// Montamos el payload JSON
+		// Se monta el payload JSON
 		JSONObject payload = new JSONObject();
 		payload.put("usuarioId", usuarioId);
 		payload.put("simbolo", simbolo);
@@ -164,7 +178,7 @@ public class SimuladorOperacionView extends VBox {
 		payload.put("cantidadCrypto", cantidad);
 		payload.put("precio", precio);
 
-		// Construimos la petición
+		// Se construye la petición
 		HttpRequest.Builder builder = HttpRequest.newBuilder().uri(URI.create("http://localhost:8080/api/cryptos/sell"))
 				.header("Content-Type", "application/json")
 				.POST(HttpRequest.BodyPublishers.ofString(payload.toString()));
@@ -182,7 +196,7 @@ public class SimuladorOperacionView extends VBox {
 					String body = response.body();
 
 					if (status != 200 || body == null || body.isBlank()) {
-						mostrarAlertaEstilizada("❌ Venta fallida", "Código HTTP: " + status + "\nCuerpo vacío o error.",
+						mostrarAlertaEstilizada("Venta fallida", "Código HTTP: " + status + "\nCuerpo vacío o error.",
 								"alerta-error");
 						return;
 					}
@@ -199,7 +213,7 @@ public class SimuladorOperacionView extends VBox {
                                     : "";
 
                             String contenido = mensaje + (!detalleText.isBlank() ? "\nDetalles: " + detalleText : "");
-                            mostrarAlertaEstilizada("❌ Venta fallida", contenido, "alerta-error");
+                            mostrarAlertaEstilizada("Venta fallida", contenido, "alerta-error");
                             return;
                         }
 
@@ -208,38 +222,39 @@ public class SimuladorOperacionView extends VBox {
 						String sim = detalle.getString("simbolo");
 						double total = detalle.getDouble("valorTotal");
 
-						mostrarAlertaEstilizada("✅ Venta exitosa",
+						mostrarAlertaEstilizada("Venta exitosa",
 								String.format("Vendiste %.6f %s por %.2f €", cant, sim, total), "alerta-exito");
 						actualizarDatosPortafolio();
 
 					} catch (JSONException e) {
-						mostrarAlerta("❌ Error al procesar respuesta", e.getMessage());
+						mostrarAlerta("Error al procesar respuesta", e.getMessage());
 					}
 				})).exceptionally(ex -> {
-					Platform.runLater(() ->  mostrarAlertaEstilizada("❌ Error de red", ex.getMessage(), "alerta-error"));
+					Platform.runLater(() ->  mostrarAlertaEstilizada("Error de red", ex.getMessage(), "alerta-error"));
 					return null;
 				});
 	}
 
+	// METODO NO TERMINADO
+	/**
+	 * Actualiza los datos del portafolio del usuario.
+	 */
 	private void actualizarDatosPortafolio() {
 		String usuarioId = AuthContext.getInstance().getUsuarioId();
 		String idToken = AuthContext.getInstance().getIdToken();
 
-		// 1) Asegúrate de imprimir el token para depurar:
 		System.out.println("[CLIENT DEBUG] IdToken=" + idToken);
 
 		String url = "http://localhost:8080/api/portafolios/" + usuarioId;
 
-		// 2) Construye la petición explicitando el método GET y la cabecera
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET() // <- Muy importante: fuerza el GET
+		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET() 
 				.header("Authorization", "Bearer " + idToken).build();
 
-		// 3) Dispara la petición y procesa la respuesta
 		HttpClient.newHttpClient().sendAsync(request, HttpResponse.BodyHandlers.ofString())
 				.thenApply(HttpResponse::body).thenAccept(json -> Platform.runLater(() -> {
-					// ... tu código de parseo y actualización de UI ...
+
 				})).exceptionally(ex -> {
-					Platform.runLater(() -> mostrarAlerta("❌ Error de red", ex.getMessage()));
+					Platform.runLater(() -> mostrarAlerta("Error de red", ex.getMessage()));
 					return null;
 				});
 	}
@@ -255,7 +270,7 @@ public class SimuladorOperacionView extends VBox {
 
 		DialogPane pane = alerta.getDialogPane();
 		pane.getStylesheets().add(getClass().getResource("/styles/estilos-alerta.css").toExternalForm());
-		pane.getStyleClass().add(tipoCss); // Por ejemplo: "alerta-error" o "alerta-exito"
+		pane.getStyleClass().add(tipoCss); 
 
 		alerta.showAndWait();
 	}

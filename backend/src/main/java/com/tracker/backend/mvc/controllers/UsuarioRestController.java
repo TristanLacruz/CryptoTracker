@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,10 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.services.IUsuarioService;
-
 import org.springframework.web.bind.annotation.RequestBody;
 
 @CrossOrigin(origins = "*")
@@ -52,8 +49,6 @@ public class UsuarioRestController {
 	    }
 	}
 
-
-
 	@GetMapping("/perfil")
 	public Usuario perfilUsuario(Authentication auth) {
 		return (Usuario) auth.getPrincipal();
@@ -68,17 +63,13 @@ public class UsuarioRestController {
 	@PostMapping("/recover")
 	public ResponseEntity<?> recoverPassword(@RequestBody Map<String, String> payload) {
 		String email = payload.get("email");
-		// Aquí se debería generar un token de recuperación y enviarlo por email.
-		// Para este ejemplo, simulamos generando un token y retornándolo.
-		Optional<Usuario> optionalUser = usuarioService.findByEmail(email); // Asegúrate de implementar findByEmail en
-																			// tu servicio/DAO.
+		Optional<Usuario> optionalUser = usuarioService.findByEmail(email); 
+
 		if (optionalUser.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró usuario con ese email");
 		}
 		String resetToken = UUID.randomUUID().toString();
-		// En producción, guardar el token con su fecha de expiración y enviarlo por
-		// email.
-		// Por ahora, lo devolvemos en la respuesta.
+	
 		Map<String, String> response = new HashMap<>();
 		response.put("resetToken", resetToken);
 		return ResponseEntity.ok(response);
@@ -88,10 +79,7 @@ public class UsuarioRestController {
 	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> payload) {
 		String resetToken = payload.get("resetToken");
 		String newPassword = payload.get("newPassword");
-		// Aquí deberías validar el token recibido.
-		// Para el ejemplo, asumimos que el token es válido y está asociado a un email.
-		// En producción, deberás buscar el token almacenado y verificar su validez.
-		String email = "correo_asociado_al_token"; // Esto es simulado
+		String email = "correo_asociado_al_token"; 
 		Optional<Usuario> optionalUser = usuarioService.findByEmail(email);
 		if (optionalUser.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró usuario con ese email");
@@ -113,6 +101,4 @@ public class UsuarioRestController {
 
 	    return ResponseEntity.ok(optionalUsuario.get());
 	}
-
-
 }

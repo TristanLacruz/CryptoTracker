@@ -7,16 +7,18 @@ import javafx.application.Platform;
 import javafx.scene.chart.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+/**
+ * Clase que representa una vista de gráficos para una criptomoneda específica.
+ * Muestra gráficos de precios, RSI y MACD.
+ */
 public class CryptoChartsView extends VBox {
 
-	
     private final String cryptoId;
     private final Label rsiLabel = new Label("RSI: Cargando...");
     private final LineChart<Number, Number> priceChart;
@@ -26,7 +28,6 @@ public class CryptoChartsView extends VBox {
     public CryptoChartsView(String cryptoId) {
         this.cryptoId = cryptoId;
 
-        // Inicializar gráficos
         priceChart = crearChart("Histórico de Precio + SMA/EMA", "Día", "Precio (€)");
         rsiChart = crearChart("RSI (14)", "Día", "RSI");
         rsiChart.getYAxis().setAutoRanging(false);
@@ -43,6 +44,14 @@ public class CryptoChartsView extends VBox {
         cargarDatos();
     }
 
+    /**
+     * Crea un gráfico de líneas con los ejes y etiquetas especificadas.
+     *
+     * @param titulo  El título del gráfico.
+     * @param xLabel  La etiqueta del eje X.
+     * @param yLabel  La etiqueta del eje Y.
+     * @return Un objeto LineChart configurado.
+     */
     private LineChart<Number, Number> crearChart(String titulo, String xLabel, String yLabel) {
         NumberAxis x = new NumberAxis(); x.setLabel(xLabel);
         NumberAxis y = new NumberAxis(); y.setLabel(yLabel);
@@ -51,6 +60,9 @@ public class CryptoChartsView extends VBox {
         return chart;
     }
 
+    /**
+     * Carga los datos de precios, SMA, EMA, RSI y MACD desde el servidor y actualiza los gráficos.
+     */
     private void cargarDatos() {
         new Thread(() -> {
             try {
@@ -96,11 +108,19 @@ public class CryptoChartsView extends VBox {
                 });
 
             } catch (Exception e) {
-                System.err.println("❌ Error al cargar gráficos: " + e.getMessage());
+                System.err.println("Error al cargar gráficos: " + e.getMessage());
             }
         }).start();
     }
 
+    /**
+     * Crea una serie de datos para el gráfico.
+     *
+     * @param nombre       El nombre de la serie.
+     * @param datos        La lista de datos a agregar.
+     * @param desplazamiento El desplazamiento para el eje X.
+     * @return La serie creada.
+     */
     private XYChart.Series<Number, Number> crearSerie(String nombre, List<Double> datos, int desplazamiento) {
         XYChart.Series<Number, Number> serie = new XYChart.Series<>();
         serie.setName(nombre);

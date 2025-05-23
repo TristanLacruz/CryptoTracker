@@ -8,7 +8,6 @@ public class CompraRequestDTO {
 	private double cantidadCrypto;
 	private double precio;
 
-	// Constructor vacío requerido por Spring
 	public CompraRequestDTO() {}
 
 	public String getUsuarioId() {

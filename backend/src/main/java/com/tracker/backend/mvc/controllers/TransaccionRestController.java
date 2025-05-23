@@ -43,7 +43,7 @@ public class TransaccionRestController {
 	
 	@PostMapping("/comprar")
 	public Transaccion buyCrypto(@RequestBody CompraRequestDTO dto) {
-	    System.out.println("📥 Datos recibidos en compra:");
+	    System.out.println("Datos recibidos en compra:");
 	    System.out.println("usuarioId: " + dto.getUsuarioId());
 	    System.out.println("simbolo: " + dto.getSimbolo());
 	    System.out.println("nombreCrypto: " + dto.getNombreCrypto());
@@ -63,10 +63,6 @@ public class TransaccionRestController {
 	    );
 	}
 
-
-
-
-    
     @GetMapping("/usuario")
     public List<Transaccion> getByUsuario(@RequestParam String usuarioId) {
         return transaccionService.findByUsuarioId(usuarioId);
@@ -83,6 +79,4 @@ public class TransaccionRestController {
         double total = transaccionService.getTotalInvertido(usuarioId);
         return ResponseEntity.ok(total);
     }
-
-
 }
