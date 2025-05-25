@@ -21,7 +21,8 @@ import java.util.Map;
 
 /**
  * Clase que representa la vista del formulario de inicio de sesión.
- * Permite al usuario ingresar su correo electrónico y contraseña para iniciar sesión.
+ * Permite al usuario ingresar su correo electrónico y contraseña para iniciar
+ * sesión.
  */
 public class LoginFormView {
 
@@ -30,14 +31,15 @@ public class LoginFormView {
 	/**
 	 * Muestra la vista del formulario de inicio de sesión.
 	 *
-	 * @param parentStage La ventana principal desde la cual se abre el formulario de inicio de sesión.
+	 * @param parentStage La ventana principal desde la cual se abre el formulario
+	 *                    de inicio de sesión.
 	 */
 	public void mostrar(Stage parentStage) {
 		Stage stage = new Stage();
 
 		TextField emailField = new TextField();
-		emailField.setPrefWidth(300);  
-		emailField.setMaxWidth(300);     
+		emailField.setPrefWidth(300);
+		emailField.setMaxWidth(300);
 		emailField.getStyleClass().add("text-field");
 		PasswordField passwordField = new PasswordField();
 		passwordField.setPrefWidth(300);
@@ -48,21 +50,20 @@ public class LoginFormView {
 		Button btnLogin = new Button("Iniciar sesión");
 
 		VBox content = new VBox(10,
-			    new Label("Correo electrónico:"), emailField,
-			    new Label("Contraseña:"), passwordField,
-			    btnLogin, btnVolver, resultado
-			);
-			content.setPadding(new Insets(20));
-			content.setAlignment(Pos.CENTER);
+				new Label("Correo electrónico:"), emailField,
+				new Label("Contraseña:"), passwordField,
+				btnLogin, btnVolver, resultado);
+		content.setPadding(new Insets(20));
+		content.setAlignment(Pos.CENTER);
 
-			AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
+		AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
 
-			StackPane root = new StackPane(fondo, content);
+		StackPane root = new StackPane(fondo, content);
 
 		btnVolver.setOnAction(ev -> {
 			try {
 				new MainMenuView().mostrar(parentStage);
-				stage.close(); 
+				stage.close();
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -71,7 +72,7 @@ public class LoginFormView {
 		btnLogin.setOnAction(e -> {
 			String email = emailField.getText();
 			String password = passwordField.getText();
-			
+
 			btnLogin.setDisable(true);
 			resultado.setText("⏳ Iniciando sesión...");
 
@@ -126,7 +127,6 @@ public class LoginFormView {
 											break;
 									}
 
-
 									Platform.runLater(() -> {
 										resultado.setText("Error: " + mensajePersonalizado);
 										btnLogin.setDisable(false);
@@ -134,16 +134,67 @@ public class LoginFormView {
 									return;
 								}
 
-
 								String idToken = (String) datos.get("idToken");
-								String usuarioId = (String) datos.get("localId"); 
+								String usuarioId = (String) datos.get("localId");
 
 								Session.idToken = idToken;
 								Session.usuarioId = usuarioId;
 
+								// 🔁 Sincronizar usuario con el backend (solo si no existe)
+								try {
+									HttpClient httpClient = HttpClient.newHttpClient();
+									ObjectMapper backendMapper = new ObjectMapper();
+
+									HttpRequest checkRequest = HttpRequest.newBuilder()
+											.uri(URI.create(
+													"http://localhost:8080/api/usuarios/" + usuarioId + "/nombre"))
+											.header("Authorization", "Bearer " + idToken)
+											.GET()
+											.build();
+
+									httpClient.sendAsync(checkRequest, HttpResponse.BodyHandlers.ofString())
+											.thenAccept(checkResp -> {
+												if (checkResp.statusCode() == 404) {
+													// El usuario no existe → lo creamos
+													try {
+														Map<String, String> nuevoUsuario = new HashMap<>();
+														nuevoUsuario.put("uid", usuarioId);
+														nuevoUsuario.put("email", email);
+														nuevoUsuario.put("nombre", email.split("@")[0]);
+
+														String requestBody = backendMapper
+																.writeValueAsString(nuevoUsuario);
+
+														HttpRequest crearUsuarioRequest = HttpRequest.newBuilder()
+																.uri(URI.create("http://localhost:8080/api/usuarios"))
+																.header("Content-Type", "application/json")
+																.header("Authorization", "Bearer " + idToken)
+																.POST(HttpRequest.BodyPublishers.ofString(requestBody))
+																.build();
+
+														httpClient
+																.sendAsync(crearUsuarioRequest,
+																		HttpResponse.BodyHandlers.ofString())
+																.thenAccept(resp -> {
+																	System.out.println("📝 Usuario creado en MongoDB: "
+																			+ resp.body());
+																});
+													} catch (Exception ex) {
+														System.err.println(
+																"❌ Error al crear usuario: " + ex.getMessage());
+													}
+												} else {
+													System.out.println("👤 Usuario ya existe, no se sincroniza.");
+												}
+											});
+								} catch (Exception ex) {
+									System.err
+											.println("❌ Error al verificar existencia del usuario: " + ex.getMessage());
+								}
+
 								AuthContext.getInstance().setIdToken(idToken);
 								AuthContext.getInstance().setUsuarioId(usuarioId);
-								
+
 								Platform.runLater(() -> {
 									try {
 										Session.idToken = idToken;
@@ -169,7 +220,7 @@ public class LoginFormView {
 						}).exceptionally(error -> {
 							Platform.runLater(() -> {
 								resultado.setText("Error de conexión: " + error.getMessage());
-								btnLogin.setDisable(false); 
+								btnLogin.setDisable(false);
 							});
 							error.printStackTrace();
 							return null;
@@ -182,7 +233,7 @@ public class LoginFormView {
 		});
 
 		Scene scene = new Scene(root, 400, 400);
-		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm()); 
+		scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 		stage.setScene(scene);
 
 		stage.setTitle("Iniciar sesión");

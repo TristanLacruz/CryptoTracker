@@ -18,6 +18,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
+import com.tracker.frontend.session.Session;
 
 public class GraficoPrecioView extends VBox {
 
@@ -46,21 +47,32 @@ public class GraficoPrecioView extends VBox {
     }
 
     private void cargarDatos(String cryptoId) {
-        new Thread(() -> {
-            try {
-                String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
-                HttpClient client = HttpClient.newHttpClient();
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    new Thread(() -> {
+        try {
+            String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", "Bearer " + Session.idToken)
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode root = mapper.readTree(response.body());
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.body());
 
-                List<Double> precios = mapper.convertValue(root.get("precios"), new TypeReference<List<Double>>() {});
-                List<Double> sma = mapper.convertValue(root.get("sma"), new TypeReference<List<Double>>() {});
-                List<Double> ema = mapper.convertValue(root.get("ema"), new TypeReference<List<Double>>() {});
+            JsonNode preciosNode = root.get("precios");
+            JsonNode smaNode = root.get("sma");
+            JsonNode emaNode = root.get("ema");
 
-                // Calcular mínimo y máximo para eje Y
+            if (preciosNode == null || smaNode == null || emaNode == null) {
+                System.err.println("Alguno de los nodos (precios/sma/ema) es nulo");
+                return;
+            }
+
+            List<Double> precios = mapper.convertValue(preciosNode, new TypeReference<List<Double>>() {});
+            List<Double> sma = mapper.convertValue(smaNode, new TypeReference<List<Double>>() {});
+            List<Double> ema = mapper.convertValue(emaNode, new TypeReference<List<Double>>() {});
+            // Calcular mínimo y máximo para eje Y
                 double min = precios.stream().min(Double::compareTo).orElse(0.0);
                 double max = precios.stream().max(Double::compareTo).orElse(100.0);
 

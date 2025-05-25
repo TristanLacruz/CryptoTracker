@@ -25,7 +25,6 @@ import com.tracker.backend.security.FirebaseTokenFilter;
 
 import static org.springframework.security.config.Customizer.withDefaults;
 
-
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
@@ -33,10 +32,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
 	@Autowired
-	private FirebaseTokenFilter firebaseTokenFilter; 
+	private FirebaseTokenFilter firebaseTokenFilter;
 
 	/**
-	 * Configura el proveedor de autenticación utilizando el servicio de detalles de usuario y el codificador de contraseñas.
+	 * Configura el proveedor de autenticación utilizando el servicio de detalles de
+	 * usuario y el codificador de contraseñas.
 	 *
 	 * @param userDetailsService el servicio de detalles de usuario
 	 * @param passwordEncoder    el codificador de contraseñas
@@ -63,8 +63,10 @@ public class SecurityConfig {
 		return http.cors(withDefaults()) // Habilita CORS
 				.csrf(csrf -> csrf.disable()) // Desactiva CSRF
 				.sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.authorizeHttpRequests(auth -> auth.requestMatchers("/api/admin/**").hasRole("ADMIN")
-						.requestMatchers("/auth/me/details", "/", "/index.html", "/favicon.ico", "/js/**", "/css/**",
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers("/api/admin/**").hasRole("ADMIN")
+						.requestMatchers(
+								"/auth/me/details", "/", "/index.html", "/favicon.ico", "/js/**", "/css/**",
 								"/images/**",
 
 								// Endpoints públicos
@@ -73,14 +75,21 @@ public class SecurityConfig {
 
 								// APIs públicas
 								"/api/usuarios", "/api/usuarios/me", "/api/recover", "/api/reset", "/cryptos/**",
-								"/api/cryptos/**", "/precio/**", "/info/**", "/api/transacciones/**", "/alertas",
-								"/ordenes/**", "/notifications",
-						
-								// Endpoints protegidos	
+								"/api/cryptos/**", "/precio/**", "/info/**", "/api/transacciones",
+
+								// Swagger
 								"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
-						.permitAll().anyRequest().authenticated())
+						.permitAll()
+
+						// 🔐 Endpoints autenticados
+						.requestMatchers("/api/transacciones/**").authenticated()
+						.requestMatchers("/api/portafolio/**").authenticated() // ✅ añadido
+						.requestMatchers("/api/transacciones/test/actualizar-portafolio").authenticated()
+
+						.anyRequest().authenticated())
 				.exceptionHandling(e -> e.authenticationEntryPoint(restAuthEntryPoint()))
-				.addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class).build();
+				.addFilterBefore(firebaseTokenFilter, UsernamePasswordAuthenticationFilter.class)
+				.build();
 	}
 
 	/**
@@ -102,14 +111,14 @@ public class SecurityConfig {
 	 */
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
-	  CorsConfiguration cfg = new CorsConfiguration();
-	  cfg.setAllowedOrigins(List.of("http://localhost:4200")); // tu front
-	  cfg.setAllowedMethods(List.of("GET","POST", "PUT", "DELETE", "OPTIONS"));
-	  cfg.setAllowedHeaders(List.of("Authorization","Content-Type"));
-	  cfg.setExposedHeaders(List.of("Authorization"));
-	  UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
-	  src.registerCorsConfiguration("/**", cfg);
-	  return src;
+		CorsConfiguration cfg = new CorsConfiguration();
+		cfg.setAllowedOrigins(List.of("http://localhost:4200")); // tu front
+		cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+		cfg.setExposedHeaders(List.of("Authorization"));
+		UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
+		src.registerCorsConfiguration("/**", cfg);
+		return src;
 	}
 
 	/**
@@ -118,14 +127,15 @@ public class SecurityConfig {
 	 * @param http la configuración de seguridad HTTP
 	 * @throws Exception si ocurre un error durante la configuración
 	 */
-	protected void configure(HttpSecurity http) throws Exception {
-		http.cors() // habilita la CORS configurada arriba
-				.and().csrf().disable().authorizeRequests().requestMatchers("/api/portafolio/me/**").authenticated()
-				.anyRequest().permitAll().and().oauth2ResourceServer().jwt(); 
-	}
+	// protected void configure(HttpSecurity http) throws Exception {
+	// http.cors() // habilita la CORS configurada arriba
+	// .and().csrf().disable().authorizeRequests().requestMatchers("/api/portafolio/me/**").authenticated()
+	// .anyRequest().permitAll().and().oauth2ResourceServer().jwt();
+	// }
 
 	/**
-	 * Configura el punto de entrada de autenticación para manejar errores de autenticación.
+	 * Configura el punto de entrada de autenticación para manejar errores de
+	 * autenticación.
 	 *
 	 * @return el AuthenticationEntryPoint configurado
 	 */
@@ -137,7 +147,5 @@ public class SecurityConfig {
 			res.getWriter().write("{\"estado\":\"error\",\"mensaje\":\"No autorizado\"}");
 		};
 	}
-	
-	
 
 }

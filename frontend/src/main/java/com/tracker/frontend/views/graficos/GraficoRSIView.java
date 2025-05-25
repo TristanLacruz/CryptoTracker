@@ -3,6 +3,8 @@ package com.tracker.frontend.views.graficos;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tracker.frontend.session.Session;
+
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -58,13 +60,23 @@ public class GraficoRSIView extends VBox {
 			try {
 				String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
 				HttpClient client = HttpClient.newHttpClient();
-				HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+				HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("Authorization", "Bearer " + Session.idToken)
+					.build();
+
 				HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
 				ObjectMapper mapper = new ObjectMapper();
 				JsonNode root = mapper.readTree(response.body());
-				List<Double> rsi = mapper.convertValue(root.get("rsi"), new TypeReference<List<Double>>() {
-				});
+
+				JsonNode rsiNode = root.get("rsi");
+				if (rsiNode == null || !rsiNode.isArray()) {
+					System.err.println("Nodo 'rsi' no encontrado o no es un array en la respuesta JSON.");
+					return;
+				}
+
+				List<Double> rsi = mapper.convertValue(rsiNode, new TypeReference<List<Double>>() {});
 
 				XYChart.Series<Number, Number> rsiSeries = new XYChart.Series<>();
 				rsiSeries.setName("RSI");

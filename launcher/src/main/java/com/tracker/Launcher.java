@@ -34,7 +34,7 @@ public class Launcher {
             frontend.start();
 
         } catch (Exception e) {
-            System.err.println("❌ Error al lanzar la aplicación:");
+            System.err.println("Error al lanzar la aplicación:");
             e.printStackTrace();
         }
     }

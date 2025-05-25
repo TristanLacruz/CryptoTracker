@@ -42,11 +42,11 @@ public class UsuarioRestController {
 	@PostMapping("/usuarios")
 	@ResponseStatus(HttpStatus.CREATED)
 	public void createUser(@RequestBody Usuario usuario) {
-	    try {
-	        usuarioService.save(usuario); // ✅ no devuelve nada
-	    } catch (IllegalStateException | IllegalArgumentException ex) {
-	        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
-	    }
+		try {
+			usuarioService.save(usuario); // ✅ no devuelve nada
+		} catch (IllegalStateException | IllegalArgumentException ex) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
+		}
 	}
 
 	@GetMapping("/perfil")
@@ -56,20 +56,19 @@ public class UsuarioRestController {
 
 	@PutMapping("/usuarios/{id}")
 	public Usuario updateUsuario(@RequestBody Usuario usuario, @PathVariable String id) {
-	    return usuarioService.update(usuario, id);
+		return usuarioService.update(usuario, id);
 	}
-
 
 	@PostMapping("/recover")
 	public ResponseEntity<?> recoverPassword(@RequestBody Map<String, String> payload) {
 		String email = payload.get("email");
-		Optional<Usuario> optionalUser = usuarioService.findByEmail(email); 
+		Optional<Usuario> optionalUser = usuarioService.findByEmail(email);
 
 		if (optionalUser.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró usuario con ese email");
 		}
 		String resetToken = UUID.randomUUID().toString();
-	
+
 		Map<String, String> response = new HashMap<>();
 		response.put("resetToken", resetToken);
 		return ResponseEntity.ok(response);
@@ -79,7 +78,7 @@ public class UsuarioRestController {
 	public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> payload) {
 		String resetToken = payload.get("resetToken");
 		String newPassword = payload.get("newPassword");
-		String email = "correo_asociado_al_token"; 
+		String email = "correo_asociado_al_token";
 		Optional<Usuario> optionalUser = usuarioService.findByEmail(email);
 		if (optionalUser.isEmpty()) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No se encontró usuario con ese email");
@@ -89,16 +88,30 @@ public class UsuarioRestController {
 		usuarioService.save(user);
 		return ResponseEntity.ok("Contraseña actualizada exitosamente");
 	}
-	
+
 	@GetMapping("/usuarios/me")
 	public ResponseEntity<?> getUsuarioActual(Authentication authentication) {
-	    String uid = (String) authentication.getPrincipal();
-	    Optional<Usuario> optionalUsuario = usuarioService.findByUid(uid);
+		String uid = (String) authentication.getPrincipal();
+		Optional<Usuario> optionalUsuario = usuarioService.findByUid(uid);
 
-	    if (optionalUsuario.isEmpty()) {
-	        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
-	    }
+		if (optionalUsuario.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
+		}
 
-	    return ResponseEntity.ok(optionalUsuario.get());
+		return ResponseEntity.ok(optionalUsuario.get());
 	}
+
+	@GetMapping("/usuarios/{uid}/nombre")
+	public ResponseEntity<?> getNombreUsuario(@PathVariable String uid) {
+		Optional<Usuario> optionalUsuario = usuarioService.findByUid(uid);
+
+		if (optionalUsuario.isEmpty()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(Map.of("estado", "error", "mensaje", "Usuario no encontrado"));
+		}
+
+		Usuario usuario = optionalUsuario.get();
+		return ResponseEntity.ok(Map.of("nombre", usuario.getNombre()));
+	}
+
 }

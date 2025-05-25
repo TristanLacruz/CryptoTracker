@@ -13,7 +13,7 @@ public interface IUsuarioService extends UserDetailsService {
 
 	public void save(Usuario u);
 
-	public Usuario findById(String id);
+	public Optional<Usuario> findById(String id);
 
 	public void delete(Usuario u);
 
@@ -31,4 +31,5 @@ public interface IUsuarioService extends UserDetailsService {
     public Optional<Usuario> findByEmail(String email);
     
     boolean existsByEmail(String email);
+
 }

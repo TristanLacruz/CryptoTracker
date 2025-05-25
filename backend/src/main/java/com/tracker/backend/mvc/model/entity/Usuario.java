@@ -23,7 +23,6 @@ public class Usuario implements UserDetails {
 	private String apellido;
 	private String contrasena;
 	private String rol;
-	private double saldo = 100000.0;
 	private LocalDateTime creadoEl;
 	private LocalDateTime actualizadoEl;
 	private String uid;
@@ -31,7 +30,6 @@ public class Usuario implements UserDetails {
 	public Usuario() {
 		this.creadoEl = LocalDateTime.now();
 		this.actualizadoEl = LocalDateTime.now();
-		this.saldo = 0.0;
 	}
 
 	public Usuario(String id) {
@@ -44,7 +42,6 @@ public class Usuario implements UserDetails {
 		this.nombre = nombre;
 		this.apellido = apellido;
 		this.contrasena = contrasena;
-		this.saldo = 0.0;
 		this.creadoEl = LocalDateTime.now();
 		this.actualizadoEl = LocalDateTime.now();
 	}
@@ -113,14 +110,6 @@ public class Usuario implements UserDetails {
 		this.rol = rol;
 	}
 
-	public double getSaldo() {
-		return saldo;
-	}
-
-	public void setSaldo(double saldo) {
-		this.saldo = saldo;
-	}
-
 	public LocalDateTime getCreadoEl() {
 		return creadoEl;
 	}
@@ -177,7 +166,7 @@ public class Usuario implements UserDetails {
 	@Override
 	public String toString() {
 		return "Usuario{" + "id='" + id + '\'' + ", nombreUsuario='" + nombreUsuario + '\'' + ", email='" + email + '\''
-				+ ", nombre='" + nombre + '\'' + ", apellido='" + apellido + '\'' + ", saldo=" + saldo + ", creadoEl=" + creadoEl + ", actualizadoEl="
+				+ ", nombre='" + nombre + '\'' + ", apellido='" + apellido + '\'' + ", creadoEl=" + creadoEl + ", actualizadoEl="
 				+ actualizadoEl + '}';
 	}
 }

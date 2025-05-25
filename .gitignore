@@ -1,12 +1,18 @@
-# Ignorar archivos compilados
-/target/
-/*.jar
-/backend/target/
-# Ignorar credenciales
+# Ignorar carpetas de compilación
+*/target/
+target/
+
+# Ignorar binarios y ejecutables
+*.jar
+*.exe
+
+# Ignorar archivos sensibles y credenciales
 *.json
 *.pem
 *.key
-*/target/
-*/target/
-*.jar
-*.exe
+.env
+
+# Ignorar archivos de configuración local (opcional)
+*.iml
+.idea/
+*.log

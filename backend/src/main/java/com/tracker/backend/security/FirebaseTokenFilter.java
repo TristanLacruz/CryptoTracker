@@ -25,10 +25,12 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
-    	String header = request.getHeader("Authorization");
+        System.out.println("🛡️ [FirebaseTokenFilter] Interceptando petición a: " + path);
+
+        String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -36,35 +38,36 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
         }
 
         String token = header.replace("Bearer ", "");
-        //System.out.println("Token recibido: " + token);
+        // System.out.println("Token recibido: " + token);
 
         String idToken = header.substring(7);
         try {
             FirebaseToken decodedToken = firebaseService.verifyToken(idToken);
             String uid = decodedToken.getUid();
 
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                    		uid, 
-                    		null, 
-                            List.of(new SimpleGrantedAuthority("ROLE_USER"))
-                            );
-                            System.out.println("UID autenticado: " + uid);
-                           
-                            System.out.println("Token decodificado correctamente: UID=" + uid);
-                            System.out.println("Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    uid,
+                    null,
+                    List.of(new SimpleGrantedAuthority("ROLE_USER")));
+            System.out.println("UID autenticado: " + uid);
+
+            System.out.println("Token decodificado correctamente: UID=" + uid);
+            System.out.println("Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
 
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
-            //System.out.println("Auth in context: " + SecurityContextHolder.getContext().getAuthentication());
+            System.out.println("✅ Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
+
+            System.out.println("UID autenticado: " + uid);
+            System.out.println("Token decodificado correctamente: UID=" + uid);
+            System.out.println("✅ Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
 
         } catch (FirebaseAuthException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             System.out.println("Token inválido en FirebaseTokenFilter: " + e.getMessage());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o expirado");
             return;
-        } 
-
+        }
 
         filterChain.doFilter(request, response);
     }

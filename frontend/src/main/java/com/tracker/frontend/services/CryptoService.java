@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.common.dto.CryptoMarketDTO;
+import com.tracker.frontend.AuthContext;
+import com.tracker.frontend.session.Session;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -25,16 +27,16 @@ public class CryptoService {
      * @return Una lista de objetos CryptoMarketDTO.
      */
     public static CompletableFuture<List<CryptoMarketDTO>> getMarketData() {
-        // Paso 1: Codificar usuario y contraseña en Base64
-        String user = "admin";
-        String password = "admin";
-        String encodedAuth = java.util.Base64.getEncoder()
-                .encodeToString((user + ":" + password).getBytes());
+        String idToken = AuthContext.getInstance().getIdToken();
 
-        // Paso 2: Crear la solicitud con el header Authorization
+        if (idToken == null || idToken.isBlank()) {
+            throw new RuntimeException("Token no disponible para autenticar la solicitud.");
+        }
+
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL))
-                .header("Authorization", "Basic " + encodedAuth)
+                .header("Authorization", "Bearer " + idToken) // ✅ Autenticación con Firebase JWT
+                .header("Accept", "application/json")
                 .build();
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
@@ -42,15 +44,17 @@ public class CryptoService {
                     if (response.statusCode() == 200) {
                         return response.body();
                     } else {
-                        throw new RuntimeException("Error en la respuesta: " + response.statusCode());
+                        throw new RuntimeException("Error en la respuesta: HTTP " + response.statusCode());
                     }
                 })
                 .thenApply(body -> {
                     try {
-                        return mapper.readValue(body, new TypeReference<List<CryptoMarketDTO>>() {});
+                        return mapper.readValue(body, new TypeReference<List<CryptoMarketDTO>>() {
+                        });
                     } catch (Exception e) {
                         throw new RuntimeException("Error al parsear JSON", e);
                     }
                 });
     }
+
 }

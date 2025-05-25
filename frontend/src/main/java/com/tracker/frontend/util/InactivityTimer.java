@@ -15,7 +15,7 @@ public class InactivityTimer {
 
     public InactivityTimer(Stage stage, Runnable onTimeout) {
         this.stage = stage;
-        this.timeout = new PauseTransition(Duration.minutes(0.1)); // ⏱ 1 minuto
+        this.timeout = new PauseTransition(Duration.minutes(5)); // ⏱ 1 minuto
 
         // Acción tras el tiempo de inactividad
         timeout.setOnFinished(e -> {

@@ -7,6 +7,8 @@ import javafx.scene.layout.VBox;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tracker.frontend.session.Session;
+
 import javafx.application.Platform;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -46,58 +48,71 @@ public class GraficoMACDView extends VBox {
     }
 
     private void cargarDatos(String cryptoId) {
-        new Thread(() -> {
-            try {
-                String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
-                HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-                HttpClient client = HttpClient.newHttpClient();
-                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+    	new Thread(() -> {
+    		try {
+    			String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
+    			HttpClient client = HttpClient.newHttpClient();
+    			HttpRequest request = HttpRequest.newBuilder()
+    				.uri(URI.create(url))
+    				.header("Authorization", "Bearer " + Session.idToken)
+    				.build();
 
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode root = mapper.readTree(response.body());
+    			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-                List<Double> macd = mapper.convertValue(root.get("macd"), new TypeReference<List<Double>>() {});
-                List<Double> signal = mapper.convertValue(root.get("signal"), new TypeReference<List<Double>>() {});
+    			ObjectMapper mapper = new ObjectMapper();
+    			JsonNode root = mapper.readTree(response.body());
 
-                XYChart.Series<Number, Number> macdSeries = new XYChart.Series<>();
-                macdSeries.setName("MACD");
+    			JsonNode macdNode = root.get("macd");
+    			JsonNode signalNode = root.get("signal");
 
-                XYChart.Series<Number, Number> signalSeries = new XYChart.Series<>();
-                signalSeries.setName("Señal");
+    			if (macdNode == null || signalNode == null) {
+    				System.err.println("Nodo 'macd' o 'signal' no encontrado.");
+    				return;
+    			}
 
-                int offset = macd.size() - signal.size();
+    			List<Double> macd = mapper.convertValue(macdNode, new TypeReference<List<Double>>() {});
+    			List<Double> signal = mapper.convertValue(signalNode, new TypeReference<List<Double>>() {});
 
-                for (int i = 0; i < macd.size(); i++) {
-                    macdSeries.getData().add(new XYChart.Data<>(i + 1, macd.get(i)));
-                }
-                for (int i = 0; i < signal.size(); i++) {
-                    signalSeries.getData().add(new XYChart.Data<>(i + 1 + offset, signal.get(i)));
-                }
+    			XYChart.Series<Number, Number> macdSeries = new XYChart.Series<>();
+    			macdSeries.setName("MACD");
 
-                List<Double> combinados = new java.util.ArrayList<>();
-                combinados.addAll(macd);
-                combinados.addAll(signal);
+    			XYChart.Series<Number, Number> signalSeries = new XYChart.Series<>();
+    			signalSeries.setName("Señal");
 
-                double min = combinados.stream().min(Double::compareTo).orElse(-1.0);
-                double max = combinados.stream().max(Double::compareTo).orElse(1.0);
+    			int offset = macd.size() - signal.size();
 
-                Platform.runLater(() -> {
-                    yAxis.setAutoRanging(false);
-                    yAxis.setLowerBound(min * 0.95);
-                    yAxis.setUpperBound(max * 1.05);
-                    yAxis.setTickUnit((yAxis.getUpperBound() - yAxis.getLowerBound()) / 10);
+    			for (int i = 0; i < macd.size(); i++) {
+    				macdSeries.getData().add(new XYChart.Data<>(i + 1, macd.get(i)));
+    			}
+    			for (int i = 0; i < signal.size(); i++) {
+    				signalSeries.getData().add(new XYChart.Data<>(i + 1 + offset, signal.get(i)));
+    			}
 
-                    chart.getData().clear();
-                    chart.getData().addAll(macdSeries, signalSeries);
-                    chart.setTitle("MACD: " + String.format("%.2f", macd.get(macd.size() - 1)) + " | Señal: " + String.format("%.2f", signal.get(signal.size() - 1)));     
-                    
-                    macdSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2.5px;"); 
-                    signalSeries.getNode().setStyle("-fx-stroke: #448AFF; -fx-stroke-width: 2.5px;"); 
-                });
+    			List<Double> combinados = new java.util.ArrayList<>();
+    			combinados.addAll(macd);
+    			combinados.addAll(signal);
 
-            } catch (Exception e) {
-                System.err.println("Error al cargar MACD: " + e.getMessage());
-            }
-        }).start();
+    			double min = combinados.stream().min(Double::compareTo).orElse(-1.0);
+    			double max = combinados.stream().max(Double::compareTo).orElse(1.0);
+
+    			Platform.runLater(() -> {
+    				yAxis.setAutoRanging(false);
+    				yAxis.setLowerBound(min * 0.95);
+    				yAxis.setUpperBound(max * 1.05);
+    				yAxis.setTickUnit((yAxis.getUpperBound() - yAxis.getLowerBound()) / 10);
+
+    				chart.getData().clear();
+    				chart.getData().addAll(macdSeries, signalSeries);
+    				chart.setTitle("MACD: " + String.format("%.2f", macd.get(macd.size() - 1)) + " | Señal: " + String.format("%.2f", signal.get(signal.size() - 1)));     
+
+    				macdSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2.5px;"); 
+    				signalSeries.getNode().setStyle("-fx-stroke: #448AFF; -fx-stroke-width: 2.5px;"); 
+    			});
+
+    		} catch (Exception e) {
+    			System.err.println("Error al cargar MACD: " + e.getMessage());
+    		}
+    	}).start();
     }
+
 }

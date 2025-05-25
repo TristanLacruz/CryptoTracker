@@ -17,6 +17,7 @@ import com.google.firebase.auth.UserRecord;
 import com.tracker.backend.mvc.model.dao.IUsuarioDAO;
 import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.exceptions.UsuarioNoEncontradoException;
+import com.tracker.backend.mvc.model.services.IPortafolioService;
 import com.tracker.backend.mvc.model.services.IUsuarioService;
 
 import org.springframework.security.core.userdetails.User;
@@ -28,73 +29,81 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	@Autowired
 	private IUsuarioDAO usuarioDAO;
-	
+
+	@Autowired
+	private IPortafolioService portafolioService;
+
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
-	    
 	@Override
-	public List <Usuario> findAll(){
-		return (List<Usuario>)usuarioDAO.findAll();
+	public List<Usuario> findAll() {
+		return (List<Usuario>) usuarioDAO.findAll();
 	}
 
 	@Override
 	public void save(Usuario u) {
-		 if (u.getEmail() == null || u.getEmail().trim().isEmpty()) {
-		        throw new IllegalArgumentException("EMAIL_INVALID");
-		    }
+		if (u.getEmail() == null || u.getEmail().trim().isEmpty()) {
+			throw new IllegalArgumentException("EMAIL_INVALID");
+		}
 
-		    if (existsByEmail(u.getEmail())) {
-		        throw new IllegalStateException("EMAIL_EXISTS");
-		    }
-	    try {
-	        // Intentamos obtener el usuario en Firebase
-	        UserRecord firebaseUser;
-	        try {
-	            firebaseUser = FirebaseAuth.getInstance().getUserByEmail(u.getEmail());
-	        } catch (FirebaseAuthException ex) {
-	            if (ex.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-	            	if (u.getContrasena().length() < 6) {
-	            	    throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
-	            	}
+		if (existsByEmail(u.getEmail())) {
+			throw new IllegalStateException("EMAIL_EXISTS");
+		}
 
-	            	// Crear usuario en Firebase
-	                UserRecord.CreateRequest request = new UserRecord.CreateRequest()
-	                        .setEmail(u.getEmail())
-	                        .setPassword(u.getContrasena());
+		try {
+			// 🔍 1. Comprobar si ya existe en Firebase
+			UserRecord firebaseUser;
+			try {
+				firebaseUser = FirebaseAuth.getInstance().getUserByEmail(u.getEmail());
+			} catch (FirebaseAuthException ex) {
+				if (ex.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
+					// ✅ Crear nuevo usuario en Firebase solo si se pasa una contraseña
+					if (u.getContrasena() == null || u.getContrasena().isBlank()) {
+						throw new IllegalArgumentException("rawPassword cannot be null");
+					}
 
-	                firebaseUser = FirebaseAuth.getInstance().createUser(request);
-	            } else {
-	                throw new RuntimeException("Error al comprobar usuario en Firebase: " + ex.getMessage(), ex);
-	            }
-	        }
+					if (u.getContrasena().length() < 6) {
+						throw new IllegalArgumentException("La contraseña debe tener al menos 6 caracteres.");
+					}
 
+					UserRecord.CreateRequest request = new UserRecord.CreateRequest().setEmail(u.getEmail())
+							.setPassword(u.getContrasena());
 
-	        // Seteamos UID
-	        u.setUid(firebaseUser.getUid());
+					firebaseUser = FirebaseAuth.getInstance().createUser(request);
+				} else {
+					throw new RuntimeException("Error al comprobar usuario en Firebase: " + ex.getMessage(), ex);
+				}
+			}
 
-	        // Verificamos si ya está en Mongo
-	        if (!usuarioDAO.findByUid(u.getUid()).isPresent()) {
-	            u.setContrasena(passwordEncoder.encode(u.getContrasena()));
-	            usuarioDAO.save(u);
-	        }
+			// 🔐 2. Asignar UID (si viene de Firebase también)
+			u.setUid(firebaseUser.getUid());
 
-	    } catch (Exception e) {
-	        throw new RuntimeException("Error al guardar el usuario: " + e.getMessage(), e);
-	    }
+			// 🧠 3. Insertar en Mongo solo si no existe
+			if (!usuarioDAO.findByUid(u.getUid()).isPresent()) {
+				// ⚠️ Evita codificar contraseña si viene vacío desde frontend con Firebase
+				if (u.getContrasena() != null && !u.getContrasena().isBlank()) {
+					u.setContrasena(passwordEncoder.encode(u.getContrasena()));
+				} else {
+					u.setContrasena("firebase"); // dummy password
+				}
+				portafolioService.getPortafolioDeUsuarioId(u.getUid()); // ya lo crea con 10.000 si no existe
+				usuarioDAO.save(u);
+			}
+
+		} catch (Exception e) {
+			throw new RuntimeException("Error al guardar el usuario: " + e.getMessage(), e);
+		}
 	}
 
-
-
 	@Override
-	public Usuario findById(String id) {
-		return usuarioDAO.findById(id)
-				.orElseThrow(() -> new UsuarioNoEncontradoException(id));
+	public Optional<Usuario> findById(String id) {
+		return usuarioDAO.findById(id);
 	}
 
 	public Usuario findByFirebaseUid(String uid) {
-	    return usuarioDAO.findByUid(uid)
-	        .orElseThrow(() -> new UsuarioNoEncontradoException("Usuario " + uid + " no encontrado"));
+		return usuarioDAO.findByUid(uid)
+				.orElseThrow(() -> new UsuarioNoEncontradoException("Usuario " + uid + " no encontrado"));
 	}
 
 	@Override
@@ -104,16 +113,17 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	@Override
 	public Usuario update(Usuario u, String id) {
-		Usuario usuarioActual = this.findById(id);
+		Usuario usuarioActual = this.findById(id).orElseThrow(() -> new UsuarioNoEncontradoException(id));
+
 		usuarioActual.setNombreUsuario(u.getNombreUsuario());
 		usuarioActual.setEmail(u.getEmail());
 		usuarioActual.setNombre(u.getNombre());
 		usuarioActual.setApellido(u.getApellido());
 		usuarioActual.setContrasena(u.getContrasena());
 		usuarioActual.setRol(u.getRol());
-		usuarioActual.setSaldo(u.getSaldo());
 		usuarioActual.setCreadoEl(u.getCreadoEl());
 		usuarioActual.setActualizadoEl(u.getActualizadoEl());
+
 		this.save(usuarioActual);
 		return usuarioActual;
 	}
@@ -123,31 +133,29 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		return usuarioDAO.findByNombreUsuario(nombreUsuario)
 				.orElseThrow(() -> new UsuarioNoEncontradoException(nombreUsuario));
 	}
-	
+
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-	    Usuario usuario = findByNombreUsuario(username);
-	    return User.builder()
-	            .username(usuario.getNombreUsuario())
-	            .password(usuario.getContrasena())
-	            .roles(usuario.getRol()) // asegúrate que `getRol()` devuelve el rol en formato correcto (ej: "USER")
-	            .build();
+		Usuario usuario = findByNombreUsuario(username);
+		return User.builder().username(usuario.getNombreUsuario()).password(usuario.getContrasena())
+				.roles(usuario.getRol()) // asegúrate que `getRol()` devuelve el rol en formato correcto (ej: "USER")
+				.build();
 	}
-	
+
 	public Usuario getOrCreateByUid(String firebaseUid) {
-	    return usuarioDAO.findByUid(firebaseUid)
-	            .orElseGet(() -> {
-	                Usuario nuevo = new Usuario();
-	                nuevo.setUid(firebaseUid);
-	                // Asigna un nombre de usuario predeterminado, por ejemplo:
-	                nuevo.setNombreUsuario("user_" + firebaseUid.substring(0, 6)); // ejemplo
-	                nuevo.setRol("USER");
-	                // Puedes asignar una contraseña predeterminada cifrada (no se usará para login, ya que se autentica en Firebase)
-	                nuevo.setContrasena(passwordEncoder.encode("firebase_default"));
-	                nuevo.setCreadoEl(LocalDateTime.now());
-	                nuevo.setActualizadoEl(LocalDateTime.now());
-	                return usuarioDAO.save(nuevo);
-	            });
+		return usuarioDAO.findByUid(firebaseUid).orElseGet(() -> {
+			Usuario nuevo = new Usuario();
+			nuevo.setUid(firebaseUid);
+			// Asigna un nombre de usuario predeterminado, por ejemplo:
+			nuevo.setNombreUsuario("user_" + firebaseUid.substring(0, 6)); // ejemplo
+			nuevo.setRol("USER");
+			// Puedes asignar una contraseña predeterminada cifrada (no se usará para login,
+			// ya que se autentica en Firebase)
+			nuevo.setContrasena(passwordEncoder.encode("firebase_default"));
+			nuevo.setCreadoEl(LocalDateTime.now());
+			nuevo.setActualizadoEl(LocalDateTime.now());
+			return usuarioDAO.save(nuevo);
+		});
 	}
 
 	@Override
@@ -158,14 +166,12 @@ public class UsuarioServiceImpl implements IUsuarioService {
 
 	@Override
 	public Optional<Usuario> findByUid(String uid) {
-	    return usuarioDAO.findByUid(uid);
+		return usuarioDAO.findByUid(uid);
 	}
 
 	@Override
 	public boolean existsByEmail(String email) {
-	    return usuarioDAO.existsByEmail(email);
+		return usuarioDAO.existsByEmail(email);
 	}
 
-	
-	
 }

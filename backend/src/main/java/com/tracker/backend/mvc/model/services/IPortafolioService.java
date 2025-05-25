@@ -5,6 +5,7 @@ import com.tracker.common.dto.EvolucionCompletaDTO;
 import com.tracker.common.dto.RendimientoDiarioDTO;
 import com.tracker.common.dto.ValorDiarioDTO;
 import com.tracker.backend.mvc.model.entity.Portafolio;
+import com.tracker.backend.mvc.model.entity.Transaccion;
 
 public interface IPortafolioService {
 
@@ -37,4 +38,7 @@ public interface IPortafolioService {
 	List<EvolucionCompletaDTO> calcularEvolucionCompleta(String usuarioId);
 
 	List<RendimientoDiarioDTO> calcularRendimiento(String usuarioId);
+
+	void actualizarPortafolioConTransaccion(Transaccion transaccion);
+
 }

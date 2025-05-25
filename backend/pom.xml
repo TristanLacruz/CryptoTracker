@@ -25,6 +25,18 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
+    
+    <dependency>
+	  <groupId>io.github.cdimascio</groupId>
+	  <artifactId>java-dotenv</artifactId>
+	  <version>5.2.2</version>
+	</dependency>
+
+    <dependency>
+	    <groupId>org.hibernate.validator</groupId>
+	    <artifactId>hibernate-validator</artifactId>
+	</dependency>
+
   
     <!-- MongoDB -->
     <dependency>
@@ -92,10 +104,17 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-maven-plugin</artifactId>
+		  <configuration>
+		    <environmentVariables>
+		      <MONGODB_URI>${env.MONGODB_URI}</MONGODB_URI>
+		      <COINGECKO_API_KEY>${env.COINGECKO_API_KEY}</COINGECKO_API_KEY>
+		      <APP_USER>${env.APP_USER}</APP_USER>
+		      <APP_PASSWORD>${env.APP_PASSWORD}</APP_PASSWORD>
+		    </environmentVariables>
+		  </configuration>
+		</plugin>
     </plugins>
   </build>
-
 </project>

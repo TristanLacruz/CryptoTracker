@@ -2,6 +2,8 @@ package com.tracker.backend.mvc.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,12 +17,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import com.tracker.backend.mvc.model.entity.Portafolio;
+import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.services.IPortafolioService;
+import com.tracker.backend.mvc.model.services.IUsuarioService;
 import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.common.dto.EvolucionCompletaDTO;
 import com.tracker.common.dto.RendimientoDiarioDTO;
 import com.tracker.common.dto.ValorDiarioDTO;
-import com.tracker.common.dto.OperacionDTO;
 import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 
 @RestController
@@ -34,6 +37,9 @@ public class PortafolioRestController {
     @Autowired
     private ICriptomonedaService cryptoService;
 
+    @Autowired
+    private IUsuarioService usuarioService;
+
     @GetMapping("")
     public List<Portafolio> getUsuarios() {
         return portafolioService.findAll();
@@ -46,42 +52,56 @@ public class PortafolioRestController {
         return portafolio;
     }
 
+    @GetMapping("/{usuarioId}/saldo")
+    public ResponseEntity<Double> getSaldoActual(@PathVariable String usuarioId) {
+        Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
+        return ResponseEntity.ok(portafolio.getSaldo());
+    }
+
     @GetMapping("/{usuarioId}")
     public ResponseEntity<?> getPortafolio(@PathVariable String usuarioId) {
         Portafolio p = portafolioService.getPortafolioDeUsuarioId(usuarioId);
         System.out.println("Endpoint /portafolios llamado con usuarioId: " + usuarioId);
         if (p == null) {
             return ResponseEntity.status(404)
-                  .body(Map.of("estado","error","mensaje","Portafolio no encontrado"));
+                    .body(Map.of("estado", "error", "mensaje", "Portafolio no encontrado"));
         }
-        Map<String,Object> resp = Map.of(
-            "saldo", p.getSaldo(),
-            "criptomonedas", p.getCriptomonedas()
-        );
+        Map<String, Object> resp = Map.of(
+                "saldo", p.getSaldo(),
+                "criptomonedas", p.getCriptomonedas());
         return ResponseEntity.ok(resp);
     }
-    
+
+    @GetMapping("/api/usuarios/{usuarioId}/nombre")
+    public ResponseEntity<?> obtenerNombreUsuario(@PathVariable String usuarioId) {
+        Optional<Usuario> usuarioOpt = usuarioService.findById(usuarioId);
+        if (usuarioOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("estado", "error", "mensaje", "Usuario no encontrado"));
+        }
+        return ResponseEntity.ok(Map.of("nombre", usuarioOpt.get().getNombre()));
+    }
+
     @GetMapping("/{usuarioId}/resumen")
     public List<CriptoPosesionDTO> getResumenPortafolio(@PathVariable String usuarioId) {
         Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
         System.out.println("Criptomonedas en portafolio de " + usuarioId + ": " + portafolio.getCriptomonedas());
         return portafolio.getCriptomonedas().entrySet().stream()
-            .map(entry -> {
-                CriptoPosesionDTO dto = new CriptoPosesionDTO();
-                dto.setSimbolo(entry.getKey());
-                dto.setCantidad(entry.getValue());
+                .map(entry -> {
+                    CriptoPosesionDTO dto = new CriptoPosesionDTO();
+                    dto.setSimbolo(entry.getKey());
+                    dto.setCantidad(entry.getValue());
 
-                try {
-                    double precio = cryptoService.getPrecioActual(entry.getKey());
-                    dto.setValorTotal(entry.getValue() * precio);
-                } catch (Exception e) {
-                    dto.setValorTotal(0);
-                }
+                    try {
+                        double precio = cryptoService.getPrecioActual(entry.getKey());
+                        dto.setValorTotal(entry.getValue() * precio);
+                    } catch (Exception e) {
+                        dto.setValorTotal(0);
+                    }
 
-                return dto;
-            }).toList();
+                    return dto;
+                }).toList();
     }
-
 
     @GetMapping("/{usuarioId}/evolucion")
     public List<ValorDiarioDTO> getEvolucion(@PathVariable String usuarioId) {
@@ -96,15 +116,15 @@ public class PortafolioRestController {
     @GetMapping("/me")
     public ResponseEntity<?> getMiPortafolio(Authentication auth) {
         String userId = auth.getName();
-    	System.out.println("[DEBUG] getMiPortafolio para userId=" + userId);
-    	Portafolio p = portafolioService.getPortafolioDeUsuarioId(auth.getName());
+        System.out.println("[DEBUG] getMiPortafolio para userId=" + userId);
+        Portafolio p = portafolioService.getPortafolioDeUsuarioId(auth.getName());
         if (p == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("estado","error","mensaje","Portafolio no encontrado"));
+                    .body(Map.of("estado", "error", "mensaje", "Portafolio no encontrado"));
         }
         return ResponseEntity.ok(p);
     }
-    
+
     @GetMapping("/me/resumen")
     public List<CriptoPosesionDTO> getMiResumen(Authentication auth) {
         return getResumenPortafolio(auth.getName());

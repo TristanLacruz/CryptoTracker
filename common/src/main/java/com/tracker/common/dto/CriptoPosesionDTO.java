@@ -5,6 +5,15 @@ public class CriptoPosesionDTO {
     private double cantidad;
     private double valorTotal; 
 
+    public CriptoPosesionDTO() {
+	}
+    
+    public CriptoPosesionDTO(String simbolo, double cantidad, double valorTotal) {
+        this.simbolo = simbolo;
+        this.cantidad = cantidad;
+        this.valorTotal = valorTotal;
+    }
+
     public String getSimbolo() {
         return simbolo;
     }

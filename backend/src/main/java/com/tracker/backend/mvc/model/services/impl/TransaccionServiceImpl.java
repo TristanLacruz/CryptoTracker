@@ -27,13 +27,13 @@ public class TransaccionServiceImpl implements ITransaccionService {
 
 	@Autowired
 	private ITransaccionDAO transaccionDAO;
-	
+
 	@Autowired
 	private IUsuarioService usuarioService;
-	
+
 	@Autowired
 	private ICriptomonedaService cryptoService;
-	
+
 	@Autowired
 	private IPortafolioService portafolioService;
 
@@ -42,7 +42,7 @@ public class TransaccionServiceImpl implements ITransaccionService {
 
 	@Autowired
 	private IPortafolioDAO portafolioDAO;
-	
+
 	@Autowired
 	private ICriptomonedaService coingeckoService;
 
@@ -80,31 +80,36 @@ public class TransaccionServiceImpl implements ITransaccionService {
 	}
 
 	@Override
-	public Transaccion comprarCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto, double precioUnitario) {
+	public Transaccion comprarCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto,
+			double precioUnitario) {
 
+		// Validación defensiva
+		if (cantidadCrypto <= 0 || precioUnitario <= 0) {
+			throw new IllegalArgumentException("La cantidad y el precio deben ser mayores que cero.");
+		}
+
+		// Obtener portafolio (crear si no existe)
 		Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
-		double totalCompra = cantidadCrypto * precioUnitario;
 
-		System.out.println("UsuarioId del portafolio: " + portafolio.getUsuarioId());
-		System.out.println("ID del portafolio: " + portafolio.getId());
-		
 		if (portafolio == null) {
 			System.out.println("Portafolio no encontrado. Creando nuevo...");
 			portafolio = new Portafolio();
 			portafolio.setUsuarioId(usuarioId);
-			portafolio.setSaldo(10000.0); // o el saldo inicial que manejes
+			portafolio.setSaldo(10000.0); 
 		}
 
+		double totalCompra = cantidadCrypto * precioUnitario;
+
+		System.out.println("UsuarioId del portafolio: " + portafolio.getUsuarioId());
+		System.out.println("ID del portafolio: " + portafolio.getId());
 		System.out.println("Saldo del portafolio: " + portafolio.getSaldo());
 		System.out.println("Total compra: " + totalCompra);
-		System.out.println("ID del portafolio: " + portafolio.getId());
-		System.out.println("UsuarioId del portafolio: " + portafolio.getUsuarioId());
 
 		if (portafolio.getSaldo() < totalCompra) {
 			throw new RuntimeException("Saldo insuficiente para realizar la compra.");
 		}
 
-		// 1. Crear la transacción
+		// Crear la transacción
 		Transaccion transaccion = new Transaccion();
 		transaccion.setUsuarioId(usuarioId);
 		transaccion.setCryptoId(simbolo);
@@ -118,7 +123,7 @@ public class TransaccionServiceImpl implements ITransaccionService {
 		transaccionDAO.save(transaccion);
 		System.out.println("Transacción guardada.");
 
-		// 2. Actualizar el portafolio
+		// Actualizar el portafolio
 		portafolio.agregarCripto(simbolo, cantidadCrypto);
 		portafolio.setSaldo(portafolio.getSaldo() - totalCompra);
 		System.out.println("Nuevo saldo: " + portafolio.getSaldo());
@@ -130,66 +135,75 @@ public class TransaccionServiceImpl implements ITransaccionService {
 
 	@Override
 	public double getTotalInvertido(String usuarioId) {
-	    List<Transaccion> compras = transaccionDAO.findByUsuarioIdAndTipoTransaccion(usuarioId, TransactionType.COMPRAR);
-	    return compras.stream()
-	                  .mapToDouble(Transaccion::getValorTotal)
-	                  .sum();
+		List<Transaccion> compras = transaccionDAO.findByUsuarioIdAndTipoTransaccion(usuarioId,
+				TransactionType.COMPRAR);
+		return compras.stream()
+				.mapToDouble(Transaccion::getValorTotal)
+				.sum();
 	}
 
 	@Override
 	public List<Transaccion> findByUsuarioId(String usuarioId) {
-	    return transaccionDAO.findByUsuarioIdOrderByFechaTransaccionDesc(usuarioId);
+		return transaccionDAO.findByUsuarioIdOrderByFechaTransaccionDesc(usuarioId);
 	}
 
 	@Override
-	public Transaccion venderCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto, double precioUnitario) {
+	public Transaccion venderCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto,
+			double precioUnitario) {
 
-	    Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
-	    System.out.println("Portafolio obtenido para venta: " + portafolio.getId());
-	    System.out.println("Criptos antes de venta: " + portafolio.getCriptomonedas());
+		if (cantidadCrypto <= 0 || precioUnitario <= 0) {
+			throw new IllegalArgumentException("La cantidad y el precio deben ser mayores que cero.");
+		}
 
-	    // 1. Verificar que tiene suficiente cantidad
-	    if (!portafolioService.tieneSuficienteCrypto(usuarioId, simbolo, cantidadCrypto)) {
-	        throw new RuntimeException("No tienes suficiente " + simbolo + " para vender.");
-	    }
+		Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
+		if (portafolio == null) {
+			throw new RuntimeException("No se encontró el portafolio del usuario.");
+		}
 
-	    double totalVenta = cantidadCrypto * precioUnitario;
+		System.out.println("Portafolio obtenido para venta: " + portafolio.getId());
+		System.out.println("Criptos antes de venta: " + portafolio.getCriptomonedas());
 
-	    // 2. Crear y guardar la transacción
-	    Transaccion transaccion = new Transaccion();
-	    transaccion.setUsuarioId(usuarioId);
-	    transaccion.setCryptoId(simbolo);
-	    transaccion.setTipoTransaccion(TransactionType.VENDER);
-	    transaccion.setCantidadCrypto(cantidadCrypto);
-	    transaccion.setPrecioTransaccion(precioUnitario);
-	    transaccion.setValorTotal(totalVenta);
-	    transaccion.setFechaTransaccion(LocalDateTime.now());
+		if (!portafolioService.tieneSuficienteCrypto(usuarioId, simbolo, cantidadCrypto)) {
+			throw new RuntimeException("No tienes suficiente " + simbolo + " para vender.");
+		}
 
-	    transaccionDAO.save(transaccion);
-	    System.out.println("Transacción de venta guardada");
+		double totalVenta = cantidadCrypto * precioUnitario;
 
-	    // 3. ACTUALIZAR el mismo portafolio directamente
-	    Map<String, Double> cryptos = portafolio.getCriptomonedas();
-	    double actual = cryptos.getOrDefault(simbolo, 0.0);
-	    double restante = actual - cantidadCrypto;
+		// Crear y guardar la transacción
+		Transaccion transaccion = new Transaccion();
+		transaccion.setUsuarioId(usuarioId);
+		transaccion.setCryptoId(simbolo);
+		transaccion.setTipoTransaccion(TransactionType.VENDER);
+		transaccion.setCantidadCrypto(cantidadCrypto);
+		transaccion.setPrecioTransaccion(precioUnitario);
+		transaccion.setValorTotal(totalVenta);
+		transaccion.setFechaTransaccion(LocalDateTime.now());
 
-	    if (restante <= 0) {
-	        cryptos.remove(simbolo);
-	        System.out.println("Cripto eliminada del portafolio");
-	    } else {
-	        cryptos.put(simbolo, restante);
-	        System.out.println("Nueva cantidad de " + simbolo + ": " + restante);
-	    }
+		transaccionDAO.save(transaccion);
+		System.out.println("Transacción de venta guardada");
 
-	    // 4. Sumar el saldo
-	    double nuevoSaldo = portafolio.getSaldo() + totalVenta;
-	    portafolio.setSaldo(nuevoSaldo);
-	    System.out.println("Nuevo saldo del portafolio: " + nuevoSaldo);
+		// Actualizar portafolio
+		Map<String, Double> cryptos = portafolio.getCriptomonedas();
+		double actual = cryptos.getOrDefault(simbolo, 0.0);
+		double restante = actual - cantidadCrypto;
 
-	    // 5. Guardar el portafolio actualizado
-	    portafolioService.save(portafolio);
-	    System.out.println("Portafolio actualizado y guardado correctamente");
+		if (restante <= 0) {
+			cryptos.remove(simbolo);
+			System.out.println("Cripto eliminada del portafolio");
+		} else {
+			cryptos.put(simbolo, restante);
+			System.out.println("Nueva cantidad de " + simbolo + ": " + restante);
+		}
 
-	    return transaccion;
+		// Sumar el saldo
+		double nuevoSaldo = portafolio.getSaldo() + totalVenta;
+		portafolio.setSaldo(nuevoSaldo);
+		System.out.println("Nuevo saldo del portafolio: " + nuevoSaldo);
+
+		portafolioService.save(portafolio);
+		System.out.println("Portafolio actualizado y guardado correctamente");
+
+		return transaccion;
 	}
+
 }

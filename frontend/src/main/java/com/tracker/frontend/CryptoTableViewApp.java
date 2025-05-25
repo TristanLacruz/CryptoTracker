@@ -62,8 +62,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Clase principal de la aplicación JavaFX que muestra una tabla de criptomonedas.
- * Permite al usuario ver información sobre criptomonedas y realizar acciones como
+ * Clase principal de la aplicación JavaFX que muestra una tabla de
+ * criptomonedas.
+ * Permite al usuario ver información sobre criptomonedas y realizar acciones
+ * como
  * agregar a favoritos y ver detalles.
  */
 public class CryptoTableViewApp extends Application {
@@ -97,75 +99,81 @@ public class CryptoTableViewApp extends Application {
 
 		TableColumn<CryptoMarketDTO, String> nameCol = new TableColumn<>("Nombre");
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-		nameCol.setMaxWidth(1f * Integer.MAX_VALUE * 20); 
-		
+		nameCol.setMaxWidth(1f * Integer.MAX_VALUE * 20);
+
 		TableColumn<CryptoMarketDTO, String> symbolCol = new TableColumn<>("Símbolo");
 		symbolCol.setCellValueFactory(new PropertyValueFactory<>("symbol"));
-		symbolCol.setMaxWidth(1f * Integer.MAX_VALUE * 10); 
+		symbolCol.setMaxWidth(1f * Integer.MAX_VALUE * 10);
 
 		TableColumn<CryptoMarketDTO, Boolean> favCol = new TableColumn<>("⭐");
-		favCol.setSortable(true); 
-		favCol.setPrefWidth(40); 
+		favCol.setSortable(true);
+		favCol.setPrefWidth(40);
 		favCol.setMinWidth(40);
 		favCol.setMaxWidth(40);
 
 		favCol.setCellValueFactory(cellData -> {
-		    CryptoMarketDTO crypto = cellData.getValue();
-		    return new javafx.beans.property.SimpleBooleanProperty(crypto.isFavorito());
+			CryptoMarketDTO crypto = cellData.getValue();
+			return new javafx.beans.property.SimpleBooleanProperty(crypto.isFavorito());
 		});
 
-		favCol.setCellFactory(new Callback<TableColumn<CryptoMarketDTO, Boolean>, TableCell<CryptoMarketDTO, Boolean>>() {
-		    @Override
-		    public TableCell<CryptoMarketDTO, Boolean> call(TableColumn<CryptoMarketDTO, Boolean> param) {
-		        return new TableCell<CryptoMarketDTO, Boolean>() {
-		            private final ImageView starView = new ImageView();
-		            private final Image starEmpty = new Image(getClass().getResourceAsStream("/images/star_empty.png"), 20, 20, true, true);
-		            private final Image starFilled = new Image(getClass().getResourceAsStream("/images/star_filled.png"), 20, 20, true, true);
+		favCol.setCellFactory(
+				new Callback<TableColumn<CryptoMarketDTO, Boolean>, TableCell<CryptoMarketDTO, Boolean>>() {
+					@Override
+					public TableCell<CryptoMarketDTO, Boolean> call(TableColumn<CryptoMarketDTO, Boolean> param) {
+						return new TableCell<CryptoMarketDTO, Boolean>() {
+							private final ImageView starView = new ImageView();
+							private final Image starEmpty = new Image(
+									getClass().getResourceAsStream("/images/star_empty.png"), 20, 20, true, true);
+							private final Image starFilled = new Image(
+									getClass().getResourceAsStream("/images/star_filled.png"), 20, 20, true, true);
 
-		            {
-		                setGraphic(starView);
-		                setOnMouseClicked(e -> {
-		                    CryptoMarketDTO crypto = getTableView().getItems().get(getIndex());
-		                    ScaleTransition st = new ScaleTransition(Duration.millis(150), starView);
-		                    st.setFromX(1.0);
-		                    st.setFromY(1.0);
-		                    st.setToX(1.3);
-		                    st.setToY(1.3);
-		                    st.setAutoReverse(true);
-		                    st.setCycleCount(2);
-		                    st.play();
+							{
+								setGraphic(starView);
+								setOnMouseClicked(e -> {
+									CryptoMarketDTO crypto = getTableView().getItems().get(getIndex());
+									ScaleTransition st = new ScaleTransition(Duration.millis(150), starView);
+									st.setFromX(1.0);
+									st.setFromY(1.0);
+									st.setToX(1.3);
+									st.setToY(1.3);
+									st.setAutoReverse(true);
+									st.setCycleCount(2);
+									st.play();
 
-		                    crypto.setFavorito(!crypto.isFavorito());
-		                    starView.setImage(crypto.isFavorito() ? starFilled : starEmpty);
-		                    tableView.sort(); 
-		                    if (crypto.isFavorito()) {
-		                        favoritosGuardados.add(crypto.getId());
-		                    } else {
-		                        favoritosGuardados.remove(crypto.getId());
-		                    }
-		                    FavoritosStorage.guardarFavoritos(favoritosGuardados);
-		                });
-		            }
+									crypto.setFavorito(!crypto.isFavorito());
+									starView.setImage(crypto.isFavorito() ? starFilled : starEmpty);
+									tableView.sort();
+									if (crypto.isFavorito()) {
+										favoritosGuardados.add(crypto.getId());
+									} else {
+										favoritosGuardados.remove(crypto.getId());
+									}
+									FavoritosStorage.guardarFavoritos(favoritosGuardados);
+								});
+							}
 
-		            @Override
-		            protected void updateItem(Boolean isFav, boolean empty) {
-		                super.updateItem(isFav, empty);
-		                starView.setOnMouseEntered(e -> starView.setOpacity(0.7));
-		                starView.setOnMouseExited(e -> starView.setOpacity(1.0));
+							@Override
+							protected void updateItem(Boolean isFav, boolean empty) {
+								super.updateItem(isFav, empty);
+								starView.setOnMouseEntered(e -> starView.setOpacity(0.7));
+								starView.setOnMouseExited(e -> starView.setOpacity(1.0));
 
-		                if (empty || isFav == null) {
-		                    setGraphic(null);
-		                } else {
-		                    starView.setImage(isFav ? starFilled : starEmpty);
-		                    setGraphic(starView);
-		                    setAlignment(Pos.CENTER); 
-		                }
-		            }
-		        };
-		    }
-		});
+								if (empty || isFav == null) {
+									setGraphic(null);
+								} else {
+									starView.setImage(isFav ? starFilled : starEmpty);
+									setGraphic(starView);
+									setAlignment(Pos.CENTER);
+								}
+							}
+						};
+					}
+				});
 
-		TableColumn<CryptoMarketDTO, String> imageCol = new TableColumn<>("Icono");
+		TableColumn<CryptoMarketDTO, String> imageCol = new TableColumn<>("Img");
+		imageCol.setPrefWidth(60);
+		imageCol.setMinWidth(60);
+		imageCol.setMaxWidth(60);
 		imageCol.setCellValueFactory(new PropertyValueFactory<>("image"));
 		imageCol.setCellFactory(tc -> new TableCell<CryptoMarketDTO, String>() {
 			private final ImageView imageView = new ImageView();
@@ -221,7 +229,7 @@ public class CryptoTableViewApp extends Application {
 		});
 
 		TableColumn<CryptoMarketDTO, Double> volumeCol = new TableColumn<>("Volumen 24h");
-		volumeCol.setSortable(true); 
+		volumeCol.setSortable(true);
 		volumeCol.setCellValueFactory(new PropertyValueFactory<>("totalVolume"));
 		volumeCol.setCellFactory(tc -> new TableCell<CryptoMarketDTO, Double>() {
 			@Override
@@ -242,7 +250,8 @@ public class CryptoTableViewApp extends Application {
 			}
 		});
 
-		tableView.getColumns().addAll(imageCol, favCol, nameCol, symbolCol, priceCol, changeCol, volumeCol, marketCapCol);
+		tableView.getColumns().addAll(imageCol, favCol, nameCol, symbolCol, priceCol, changeCol, volumeCol,
+				marketCapCol);
 		tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 		tableView.setMaxWidth(Double.MAX_VALUE);
 
@@ -252,9 +261,9 @@ public class CryptoTableViewApp extends Application {
 
 		FilteredList<CryptoMarketDTO> filteredData = new FilteredList<>(cryptoList, p -> true);
 		buscador.textProperty().addListener((obs, oldVal, newVal) -> {
-		    String lower = newVal.toLowerCase();
-		    filteredData.setPredicate(crypto -> crypto.getName().toLowerCase().contains(lower)
-		            || crypto.getSymbol().toLowerCase().contains(lower));
+			String lower = newVal.toLowerCase();
+			filteredData.setPredicate(crypto -> crypto.getName().toLowerCase().contains(lower)
+					|| crypto.getSymbol().toLowerCase().contains(lower));
 		});
 
 		SortedList<CryptoMarketDTO> sortedData = new SortedList<>(filteredData);
@@ -263,12 +272,13 @@ public class CryptoTableViewApp extends Application {
 		favCol.setSortType(TableColumn.SortType.DESCENDING);
 		tableView.getSortOrder().setAll(favCol);
 
-		tableView.getSortOrder().addListener((javafx.collections.ListChangeListener<? super TableColumn<?, ?>>) change -> {
-		    System.out.println("Orden solicitado:");
-		    for (TableColumn<?, ?> col : tableView.getSortOrder()) {
-		        System.out.println(" - Columna: " + col.getText() + " | Orden: " + col.getSortType());
-		    }
-		});
+		tableView.getSortOrder()
+				.addListener((javafx.collections.ListChangeListener<? super TableColumn<?, ?>>) change -> {
+					System.out.println("Orden solicitado:");
+					for (TableColumn<?, ?> col : tableView.getSortOrder()) {
+						System.out.println(" - Columna: " + col.getText() + " | Orden: " + col.getSortType());
+					}
+				});
 
 		tableView.setFixedCellSize(40); // Altura fija por fila
 		tableView.setPrefHeight(Region.USE_COMPUTED_SIZE);
@@ -335,10 +345,10 @@ public class CryptoTableViewApp extends Application {
 		/*
 		 * SCHEDULER COMENTADO PARA EVITAR PETICIONES CONSTANTES
 		 */
-//		scheduler = Executors.newSingleThreadScheduledExecutor();
-//		scheduler.scheduleAtFixedRate(() -> {
-//		    javafx.application.Platform.runLater(this::fetchCryptoData);
-//		}, 60, 60, TimeUnit.SECONDS); // espera 60s y luego repite cada 60s
+		scheduler = Executors.newSingleThreadScheduledExecutor();
+		scheduler.scheduleAtFixedRate(() -> {
+			javafx.application.Platform.runLater(this::fetchCryptoData);
+		}, 20, 20, TimeUnit.SECONDS); // espera 20s y luego repite cada 20s
 		// NO ELIMNAR EL SCHEDULER, SOLO COMENTAR
 
 		fetchCryptoData();
@@ -361,11 +371,11 @@ public class CryptoTableViewApp extends Application {
 				System.out.println("Datos recibidos: " + list.size() + " criptos.");
 				cryptoList.clear();
 				for (CryptoMarketDTO crypto : list) {
-				    crypto.setFavorito(favoritosGuardados.contains(crypto.getId()));
-				    cryptoList.add(crypto);
+					crypto.setFavorito(favoritosGuardados.contains(crypto.getId()));
+					cryptoList.add(crypto);
 				}
 
-				tableView.setPrefHeight(cryptoList.size() * 35 + 35); 
+				tableView.setPrefHeight(cryptoList.size() * 35 + 35);
 			});
 		}).exceptionally(e -> {
 			System.err.println("Error al obtener criptos: " + e.getMessage());
@@ -405,41 +415,50 @@ public class CryptoTableViewApp extends Application {
 	}
 
 	private List<Double> getHistoricalPrices(String cryptoId) {
-		String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/historical";
-
 		if (cryptoId == null || cryptoId.isBlank()) {
 			throw new IllegalArgumentException("ID de criptomoneda no puede ser nulo o vacío.");
 		}
 
+		String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/historical";
 		System.out.println("Solicitando históricos desde frontend para ID: " + cryptoId);
 
 		try {
 			HttpClient client = HttpClient.newHttpClient();
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("accept", "application/json")
+					.build();
 
 			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+			if (response.statusCode() != 200) {
+				System.err.println("Error al obtener históricos: HTTP " + response.statusCode());
+				return List.of(); // Devuelve lista vacía para que el gráfico no pete
+			}
 
 			ObjectMapper mapper = new ObjectMapper();
 			JsonNode root = mapper.readTree(response.body());
 			JsonNode prices = root.get("prices");
 
-			System.out.println("📦 JSON de históricos:\n" + response.body());
+			System.out.println("JSON de históricos:\n" + response.body());
 
 			if (prices == null || !prices.isArray()) {
 				System.err.println("No se encontraron datos históricos para: " + cryptoId);
-				return List.of(); 
+				return List.of();
 			}
 
 			List<Double> priceList = new ArrayList<>();
 			for (JsonNode point : prices) {
-				priceList.add(point.get(1).asDouble()); 
+				if (point.isArray() && point.size() >= 2) {
+					priceList.add(point.get(1).asDouble()); // Solo el precio
+				}
 			}
 
 			return priceList;
 
 		} catch (Exception e) {
 			System.err.println("Error al obtener precios históricos para " + cryptoId + ": " + e.getMessage());
-			return List.of();
+			return List.of(); // Devuelve vacío, no null
 		}
 	}
 

@@ -42,6 +42,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 	private final RestTemplate restTemplate = new RestTemplate();
 
+	private final Map<String, CachedPrice> cache = new HashMap<>();
 	@Autowired
 	private ICriptomonedaDAO cryptoDAO;
 
@@ -92,42 +93,78 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		return currentCrypto;
 	}
 
+	private static class CachedPrice {
+		double precio;
+		long timestamp;
+
+		CachedPrice(double precio, long timestamp) {
+			this.precio = precio;
+			this.timestamp = timestamp;
+		}
+	}
+
 	@Override
 	public double getPrecioActual(String simbolo) {
-	    Map<String, String> simboloToId = Map.ofEntries(
-	        Map.entry("BTC", "bitcoin"),
-	        Map.entry("ETH", "ethereum"),
-	        Map.entry("BNB", "binancecoin"),
-	        Map.entry("ADA", "cardano"),
-	        Map.entry("XRP", "ripple"),
-	        Map.entry("USDT", "tether"),
-	        Map.entry("DOGE", "dogecoin"),
-	        Map.entry("DOT", "polkadot"),
-	        Map.entry("SOL", "solana"),
-	        Map.entry("USDC", "usd-coin")
-	    );
+		Map<String, String> simboloToId = Map.ofEntries(
+				Map.entry("BTC", "bitcoin"),
+				Map.entry("ETH", "ethereum"),
+				Map.entry("BNB", "binancecoin"),
+				Map.entry("ADA", "cardano"),
+				Map.entry("XRP", "ripple"),
+				Map.entry("USDT", "tether"),
+				Map.entry("DOGE", "dogecoin"),
+				Map.entry("DOT", "polkadot"),
+				Map.entry("SOL", "solana"),
+				Map.entry("USDC", "usd-coin"));
 
-	    String id = simboloToId.getOrDefault(simbolo.toUpperCase(), simbolo.toLowerCase());
-	    String url = "https://api.coingecko.com/api/v3/simple/price?ids=" + id + "&vs_currencies=eur";
+		String id = simboloToId.getOrDefault(simbolo.toUpperCase(), simbolo.toLowerCase());
 
-	    try {
-	        HttpClient client = HttpClient.newHttpClient();
-	        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+		// ⏳ Verificar si hay precio en caché
+		CachedPrice cached = cache.get(id);
+		long now = System.currentTimeMillis();
+		if (cached != null && (now - cached.timestamp) < 60_000) {
+			return cached.precio;
+		}
 
-	        JSONObject json = new JSONObject(response.body());
-	        return json.getJSONObject(id).getDouble("eur");
-	    } catch (Exception e) {
-	        System.err.println("Error al obtener precio para " + simbolo + " (ID: " + id + "): " + e.getMessage());
-	        return 0.0;
-	    }
+		String url = "https://api.coingecko.com/api/v3/simple/price?ids=" + id + "&vs_currencies=eur";
+
+		try {
+			HttpClient client = HttpClient.newHttpClient();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("accept", "application/json")
+					.header("x-cg-demo-api-key", "CG-Scvsy3fknroJfMkawrMffRv8n") // 🔑 Demo key
+					.build();
+
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+			if (response.statusCode() != 200) {
+				System.err.println("❌ CoinGecko rechazó la petición: " + response.statusCode());
+				System.err.println("🧾 Respuesta: " + response.body());
+				return 1.0;
+			}
+
+			JSONObject json = new JSONObject(response.body());
+			double precio = json.getJSONObject(id).getDouble("eur");
+
+			// ✅ Guardar en caché
+			cache.put(id, new CachedPrice(precio, now));
+			return precio;
+
+		} catch (Exception e) {
+			System.err.println("❌ Error al obtener precio para " + simbolo + " (ID: " + id + "): " + e.getMessage());
+			return 1.0;
+		}
 	}
 
 	@Override
 	public Map<String, Object> getCryptoInfo(String simbolo) {
 		String url = BASE_URL + "/simple/price?ids=" + simbolo + "&vs_currencies=usd";
 
-		HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
+		HttpRequest request = HttpRequest.newBuilder()
+				.uri(URI.create(url))
+				.header("accept", "application/json")
+				.build();
 
 		try {
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -146,31 +183,30 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		}
 	}
 
-	private List<CryptoMarketDTO> cache = new ArrayList<>();
+	private List<CryptoMarketDTO> marketCache  = new ArrayList<>();
 	private long lastUpdate = 0;
 
 	@Override
 	public List<CryptoMarketDTO> getMarketData() {
 		long now = System.currentTimeMillis();
-		if (!cache.isEmpty() && (now - lastUpdate) < 60_000) {
-			return cache;
+		if (!marketCache.isEmpty() && (now - lastUpdate) < 60_000) {
+			return marketCache;
 		}
 
 		try {
 			String url = BASE_URL
-					+ "/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=25&page=1&sparkline=false";
+					+ "/coins/markets?vs_currency=eur&order=market_cap_desc&per_page=10&page=1&sparkline=false";
 
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("accept", "application/json")
+					.header("x-cg-demo-api-key", apiKey)
+					.build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-			if (response.statusCode() == 401) {
-				System.err.println("Clave API rechazada. Usando datos vacíos de emergencia.");
-				return Collections.emptyList(); 
-			}
-
-			System.out.println("📶 Código HTTP: " + response.statusCode());
-			//System.out.println("Respuesta raw de CoinGecko:\n" + response.body());
+			System.out.println("Llamando a CoinGecko: " + url);
+			System.out.println("Código de respuesta: " + response.statusCode());
 
 			if (response.statusCode() != 200) {
 				System.err.println("Error: CoinGecko devolvió código " + response.statusCode());
@@ -181,10 +217,10 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 			CryptoMarketDTO[] body = mapper.readValue(response.body(), CryptoMarketDTO[].class);
-			cache = Arrays.asList(body);
+			marketCache = Arrays.asList(body);
 			lastUpdate = now;
 
-			return cache;
+			return marketCache;
 
 		} catch (Exception e) {
 			System.err.println("Excepción al obtener datos del mercado: " + e.getMessage());
@@ -200,28 +236,45 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		if (historicalCache.containsKey(id)) {
 			long lastFetch = cacheTimestamps.getOrDefault(id, 0L);
 			if (now - lastFetch < CACHE_TTL) {
-				System.out.println("Usando precios históricos en caché para: " + id);
+				System.out.println("✅ Usando precios históricos en caché para: " + id);
 				return historicalCache.get(id);
 			}
 		}
 
 		try {
 			String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=50&interval=daily";
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("accept", "application/json")
+					.header("x-cg-demo-api-key", apiKey) // Asegúrate de incluir tu API key
+					.build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-			//System.out.println("Respuesta CoinGecko:\n" + response.body());
+
+			// Control de respuesta HTTP
+			if (response.statusCode() != 200) {
+				System.err.println("CoinGecko devolvió código " + response.statusCode() + " para " + id);
+				return historicalCache.getOrDefault(id, Collections.emptyList());
+			}
 
 			JSONObject json = new JSONObject(response.body());
-			//System.out.println("JSON recibido: " + response.body());
-			JSONArray priceArray = json.getJSONArray("prices");
 
+			// Comprobación segura del campo "prices"
+			if (!json.has("prices")) {
+				System.err.println("El JSON de CoinGecko no contiene el campo 'prices' para " + id);
+				System.err.println("Respuesta completa: " + json.toString(2));
+				return historicalCache.getOrDefault(id, Collections.emptyList());
+			}
+
+			JSONArray priceArray = json.getJSONArray("prices");
 			List<List<Double>> historicalPrices = new ArrayList<>();
+
 			for (int i = 0; i < priceArray.length(); i++) {
 				JSONArray priceEntry = priceArray.getJSONArray(i);
-				List<Double> pricePoint = new ArrayList<>();
-				pricePoint.add(priceEntry.getDouble(0)); // fecha
-				pricePoint.add(priceEntry.getDouble(1)); // precio
+				List<Double> pricePoint = List.of(
+						priceEntry.getDouble(0), // timestamp
+						priceEntry.getDouble(1) // precio
+				);
 				historicalPrices.add(pricePoint);
 			}
 
@@ -232,9 +285,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 			return historicalPrices;
 
 		} catch (Exception e) {
-			System.out.println("Error al obtener precios históricos para " + id + ": " + e.getMessage());
-
-			// Si hubo error, devolver datos anteriores en caché si los hay
+			System.err.println("Error al obtener precios históricos para " + id + ": " + e.getMessage());
 			return historicalCache.getOrDefault(id, Collections.emptyList());
 		}
 	}
@@ -245,7 +296,11 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		try {
 			String url = BASE_URL + "/coins/" + id + "/market_chart?vs_currency=eur&days=30&interval=daily";
 
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("accept", "application/json")
+					.header("x-cg-demo-api-key", apiKey) // Añadir esto
+					.build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 			System.out.println("Respuesta CoinGecko:\n" + response.body());
@@ -256,7 +311,7 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 			List<Double> prices = new ArrayList<>();
 			for (JsonNode price : pricesNode) {
-				prices.add(price.get(1).asDouble()); 
+				prices.add(price.get(1).asDouble());
 			}
 
 			return RSIUtil.calculateRSIList(prices, 14);
@@ -272,13 +327,17 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 		try {
 			String url = BASE_URL + "/coins/" + cryptoId + "/market_chart?vs_currency=eur&days=7&interval=daily";
 
-			HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).header("accept", "application/json").build();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("accept", "application/json")
+					.header("x-cg-demo-api-key", apiKey) // Añadir esto
+					.build();
 
 			HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 			System.out.println("Respuesta CoinGecko:\n" + response.body());
 
 			JSONObject json = new JSONObject(response.body());
-			//System.out.println("JSON recibido: " + response.body());
+			// System.out.println("JSON recibido: " + response.body());
 			JSONArray priceArray = json.getJSONArray("prices");
 
 			for (int i = 0; i < priceArray.length(); i++) {
@@ -295,35 +354,37 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 
 	@Override
 	public double getPrecioEnFecha(String cryptoId, LocalDate fecha) {
-	    try {
-	        long timestamp = fecha.atStartOfDay(ZoneId.of("UTC")).toEpochSecond();
-	        String url = "https://api.coingecko.com/api/v3/coins/" + cryptoId +
-	                "/market_chart/range?vs_currency=eur&from=" + timestamp + "&to=" + (timestamp + 86400);
+		try {
+			long timestamp = fecha.atStartOfDay(ZoneId.of("UTC")).toEpochSecond();
+			String url = "https://api.coingecko.com/api/v3/coins/" + cryptoId +
+					"/market_chart/range?vs_currency=eur&from=" + timestamp + "&to=" + (timestamp + 86400);
 
-	        HttpClient client = HttpClient.newHttpClient();
-	        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).build();
-	        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-	        //System.out.println("JSON recibido: " + response.body());
+			HttpClient client = HttpClient.newHttpClient();
+			HttpRequest request = HttpRequest.newBuilder()
+					.uri(URI.create(url))
+					.header("x-cg-demo-api-key", apiKey) // Añadir esto
+					.build();
+			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+			// System.out.println("JSON recibido: " + response.body());
 
-	        JSONObject json = new JSONObject(response.body());
+			JSONObject json = new JSONObject(response.body());
 
-	        if (!json.has("prices")) {
-	            throw new RuntimeException("La respuesta no contiene 'prices':\n" + json.toString(2));
-	        }
+			if (!json.has("prices")) {
+				throw new RuntimeException("La respuesta no contiene 'prices':\n" + json.toString(2));
+			}
 
-	        JSONArray prices = json.getJSONArray("prices");
+			JSONArray prices = json.getJSONArray("prices");
 
-	        if (prices.length() > 0) {
-	            return prices.getJSONArray(0).getDouble(1);
-	        }
+			if (prices.length() > 0) {
+				return prices.getJSONArray(0).getDouble(1);
+			}
 
-	    } catch (Exception e) {
-	        System.err.println("Error obteniendo precio histórico de " + cryptoId + ": " + e.getMessage());
-	    }
+		} catch (Exception e) {
+			System.err.println("Error obteniendo precio histórico de " + cryptoId + ": " + e.getMessage());
+		}
 
-	    return 0;
+		return 0;
 	}
-
 
 	@Override
 	public double obtenerPrecioActual(String simbolo) {
