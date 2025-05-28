@@ -151,54 +151,49 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		LocalDate hoy = LocalDate.now();
 		long dias = ChronoUnit.DAYS.between(inicio, hoy);
 
-		if (dias < 6) { // Garantiza al menos 7 días de datos para el gráfico
+		if (dias < 6) {
 			inicio = hoy.minusDays(6);
 			dias = 6;
 		}
 
 		Map<String, Double> cantidades = new HashMap<>();
 		List<ValorDiarioDTO> evolucion = new ArrayList<>();
+		double saldo = 10000.0;
 
 		for (int i = 0; i <= dias; i++) {
 			LocalDate fecha = inicio.plusDays(i);
-			System.out.printf("Día %d (%s)\n", i, fecha);
 
-			// Aplicar transacciones del día
+			// Aplica transacciones del día y ajusta saldo
 			for (Transaccion tx : transacciones) {
-				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
+				if (tx.getFechaTransaccion().toLocalDate().isEqual(fecha)) {
 					cantidades.putIfAbsent(tx.getCryptoId(), 0.0);
-					double cantidadActual = cantidades.get(tx.getCryptoId());
-					double cantidadNueva = tx.getTipoTransaccion() == TransactionType.COMPRAR
-							? cantidadActual + tx.getCantidadCrypto()
-							: cantidadActual - tx.getCantidadCrypto();
-					cantidades.put(tx.getCryptoId(), cantidadNueva);
+					double actual = cantidades.get(tx.getCryptoId());
+
+					if (tx.getTipoTransaccion() == TransactionType.COMPRAR) {
+						cantidades.put(tx.getCryptoId(), actual + tx.getCantidadCrypto());
+						saldo -= tx.getValorTotal();
+					} else {
+						cantidades.put(tx.getCryptoId(), actual - tx.getCantidadCrypto());
+						saldo += tx.getValorTotal();
+					}
 				}
 			}
 
-			// Calcular valor total del portafolio ese día
-			double valorDia = 0;
+			// Calcula valor total de criptos ese día
+			double valorCripto = 0;
 			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
-				String criptoId = entry.getKey();
-				double cantidad = entry.getValue();
-
-				if (cantidad <= 0)
+				if (entry.getValue() <= 0)
 					continue;
 
-				double precio = cryptoService.getPrecioEnFecha(criptoId, fecha);
-				if (precio <= 0) {
-					System.out.printf("Precio histórico no disponible para %s en %s. Usando precio actual.%n", criptoId,
-							fecha);
-					precio = cryptoService.getPrecioActual(criptoId);
-				}
+				double precio = cryptoService.getPrecioEnFecha(entry.getKey(), fecha);
+				if (precio <= 0)
+					precio = cryptoService.getPrecioActual(entry.getKey());
 
-				double subtotal = precio * cantidad;
-				System.out.printf("%s: %.4f × %.4f€ = %.2f€\n", criptoId, cantidad, precio, subtotal);
-				valorDia += subtotal;
+				valorCripto += entry.getValue() * precio;
 			}
 
-			System.out.printf("Valor total día %d: %.2f€\n\n", i, valorDia);
-			ValorDiarioDTO dto = new ValorDiarioDTO(fecha, valorDia);
-			evolucion.add(dto);
+			double total = saldo + valorCripto;
+			evolucion.add(new ValorDiarioDTO(fecha, total));
 		}
 
 		return evolucion;
@@ -293,23 +288,40 @@ public class PortafolioServiceImpl implements IPortafolioService {
 	@Override
 	public List<EvolucionCompletaDTO> calcularEvolucionCompleta(String usuarioId) {
 		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
+		if (transacciones.isEmpty())
+			return List.of();
 
-		if (transacciones.isEmpty()) {
-			return Collections.emptyList();
-		}
-
-		Map<String, Double> cantidades = new HashMap<>(); // cantidad acumulada por cripto
+		Map<String, Double> cantidades = new HashMap<>();
 		List<EvolucionCompletaDTO> evolucion = new ArrayList<>();
+		double saldoDisponible = 10000.0;
 
 		LocalDate inicio = transacciones.get(0).getFechaTransaccion().toLocalDate();
 		LocalDate fin = LocalDate.now();
-		double capitalInvertido = 0;
 
 		for (LocalDate fecha = inicio; !fecha.isAfter(fin); fecha = fecha.plusDays(1)) {
-			// Procesar transacciones hasta esta fecha
+
+			// 🧮 Calcula valorCriptos ANTES de aplicar movimientos del día
+			double valorCriptos = 0;
+			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
+				double cantidad = entry.getValue();
+				if (cantidad <= 0)
+					continue;
+
+				try {
+					double precio = cryptoService.getPrecioEnFecha(entry.getKey(), fecha);
+					valorCriptos += cantidad * precio;
+				} catch (Exception e) {
+					System.err.println("❌ No se pudo obtener precio de " + entry.getKey() + " para " + fecha);
+				}
+			}
+
+			double total = saldoDisponible + valorCriptos;
+			int dia = (int) ChronoUnit.DAYS.between(inicio, fecha);
+			evolucion.add(new EvolucionCompletaDTO(dia, total, saldoDisponible, valorCriptos));
+
+			// 🔁 Aplica transacciones DESPUÉS
 			for (Transaccion tx : transacciones) {
-				LocalDate fechaTx = tx.getFechaTransaccion().toLocalDate();
-				if (fechaTx.isEqual(fecha)) {
+				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
 					String cripto = tx.getCryptoId();
 					double cantidad = tx.getCantidadCrypto();
 					double valor = tx.getValorTotal();
@@ -317,34 +329,13 @@ public class PortafolioServiceImpl implements IPortafolioService {
 					cantidades.putIfAbsent(cripto, 0.0);
 					if (tx.getTipoTransaccion() == TransactionType.COMPRAR) {
 						cantidades.put(cripto, cantidades.get(cripto) + cantidad);
-						capitalInvertido += valor;
+						saldoDisponible -= valor;
 					} else if (tx.getTipoTransaccion() == TransactionType.VENDER) {
 						cantidades.put(cripto, cantidades.get(cripto) - cantidad);
-						capitalInvertido -= valor;
+						saldoDisponible += valor;
 					}
 				}
 			}
-
-			// Calcular valor total del portafolio ese día
-			double valorTotal = 0;
-			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
-				String criptoId = entry.getKey();
-				double cantidad = entry.getValue();
-				if (cantidad <= 0)
-					continue;
-
-				try {
-					double precio = cryptoService.getPrecioEnFecha(criptoId, fecha); // método que deberías tener
-					valorTotal += cantidad * precio;
-				} catch (Exception e) {
-					System.err.println("No se pudo obtener precio de " + criptoId + " para " + fecha);
-				}
-			}
-
-			int dia = (int) ChronoUnit.DAYS.between(inicio, fecha);
-			double ganancia = valorTotal - capitalInvertido;
-
-			evolucion.add(new EvolucionCompletaDTO(dia, valorTotal, ganancia));
 		}
 
 		return evolucion;

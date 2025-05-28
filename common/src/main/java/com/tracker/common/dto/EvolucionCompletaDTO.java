@@ -4,14 +4,17 @@ public class EvolucionCompletaDTO {
 
     private int dia;
     private double valorTotal;
-    private double ganancia;
+    private double saldoEuros;
+    private double valorCriptos;
 
-    public EvolucionCompletaDTO() {}
+    public EvolucionCompletaDTO() {
+    }
 
-    public EvolucionCompletaDTO(int dia, double valorTotal, double ganancia) {
+    public EvolucionCompletaDTO(int dia, double valorTotal, double saldoEuros, double valorCriptos) {
         this.dia = dia;
         this.valorTotal = valorTotal;
-        this.ganancia = ganancia;
+        this.saldoEuros = saldoEuros;
+        this.valorCriptos = valorCriptos;
     }
 
     public int getDia() {
@@ -30,11 +33,11 @@ public class EvolucionCompletaDTO {
         this.valorTotal = valorTotal;
     }
 
-    public double getGanancia() {
-        return ganancia;
+    public double getSaldoEuros() {
+        return saldoEuros;
     }
 
-    public void setGanancia(double ganancia) {
-        this.ganancia = ganancia;
+    public void setSaldoEuros(double saldoEuros) {
+        this.saldoEuros = saldoEuros;
     }
 }
