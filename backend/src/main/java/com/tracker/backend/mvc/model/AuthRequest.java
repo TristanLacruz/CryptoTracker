@@ -1,5 +1,9 @@
 package com.tracker.backend.mvc.model;
 
+/**
+ * Clase que representa una solicitud de autenticación.
+ * Contiene los campos necesarios para autenticar a un usuario.
+ */
 public class AuthRequest {
     private String email;
     private String password;

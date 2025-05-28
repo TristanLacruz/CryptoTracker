@@ -26,8 +26,12 @@ import com.tracker.backend.mvc.model.entity.Criptomoneda;
 import com.tracker.backend.mvc.model.entity.Transaccion;
 import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 import com.tracker.backend.mvc.model.services.ITransaccionService;
-import com.tracker.backend.mvc.model.services.impl.TransaccionServiceImpl;
 
+/**
+ * Controlador REST para manejar las operaciones relacionadas con criptomonedas.
+ * Proporciona endpoints para obtener información de criptomonedas, realizar transacciones,
+ * y calcular indicadores técnicos.
+ */
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/cryptos")
@@ -43,6 +47,9 @@ public class CriptomonedaRestController {
 		this.criptomonedaService = criptomonedaService;
 	}
 
+	/**
+	 * Obtiene todas las criptomonedas disponibles.
+	 */
 	@GetMapping("")
 	public List<Criptomoneda> getCryptos() {
 		return criptomonedaService.findAll();
@@ -55,21 +62,41 @@ public class CriptomonedaRestController {
 		return crypto;
 	}
 
+	/**
+	 * Obtiene el precio actual de una criptomoneda por su símbolo.
+	 * @param simbolo el símbolo de la criptomoneda
+	 * @return el precio actual de la criptomoneda
+	 */
 	@GetMapping("/precio/{simbolo}")
 	public double getPrice(@PathVariable String simbolo) {
 		return criptomonedaService.getPrecioActual(simbolo.toLowerCase());
 	}
 
+	/**
+	 * Obtiene información detallada de una criptomoneda por su símbolo.
+	 * @param simbolo el símbolo de la criptomoneda
+	 * @return un mapa con la información de la criptomoneda
+	 */
 	@GetMapping("/info/{simbolo}")
 	public Map<String, Object> getInfo(@PathVariable String simbolo) {
 		return criptomonedaService.getCryptoInfo(simbolo.toLowerCase());
 	}
 
+	/**
+	 * Obtiene el precio histórico de una criptomoneda por su símbolo.
+	 * @param simbolo el símbolo de la criptomoneda
+	 * @return una lista de listas con los precios históricos
+	 */
 	@GetMapping("/market")
 	public List<CryptoMarketDTO> getMarketCryptos() {
 		return criptomonedaService.getMarketData();
 	}
 
+	/**
+	 * Obtiene el precio histórico de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return un mapa con los precios históricos
+	 */
 	@GetMapping("/{id}/historical")
 	public ResponseEntity<Map<String, Object>> getHistoricalPrices(@PathVariable String id) {
 		List<List<Double>> prices = criptomonedaService.getHistoricalPrices(id);
@@ -80,6 +107,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(response);
 	}
 
+	/**
+	 * Obtiene el precio actual de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return el precio actual de la criptomoneda
+	 */
 	@GetMapping("/{id}/rsi")
 	public ResponseEntity<?> getRSI(@PathVariable String id) {
 		List<Double> precios = criptomonedaService.getHistoricalPrices(id)
@@ -98,6 +130,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(rsi);
 	}
 
+	/**
+	 * Obtiene el RSI histórico de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return una lista con los valores del RSI
+	 */
 	@GetMapping("/{id}/sma")
 	public ResponseEntity<List<Double>> getSMA(@PathVariable String id) {
 		List<Double> precios = criptomonedaService.getHistoricalPrices(id)
@@ -113,6 +150,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(sma);
 	}
 
+	/**
+	 * Obtiene el SMA (Simple Moving Average) de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return una lista con los valores del SMA
+	 */
 	@GetMapping("/{id}/ema")
 	public ResponseEntity<List<Double>> getEMA(@PathVariable String id) {
 		List<Double> precios = criptomonedaService.getHistoricalPrices(id)
@@ -128,6 +170,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(ema);
 	}
 
+	/**
+	 * Obtiene el MACD (Moving Average Convergence Divergence) de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return un mapa con los valores del MACD y la señal
+	 */
 	@GetMapping("/{id}/macd")
 	public ResponseEntity<Map<String, List<Double>>> getMACD(@PathVariable String id) {
 		List<Double> precios = criptomonedaService.getHistoricalPrices(id)
@@ -148,6 +195,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(macdData);
 	}
 
+	/**
+	 * Obtiene los indicadores técnicos de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return un mapa con los indicadores técnicos
+	 */
 	@GetMapping("/{id}/indicadores")
 	public ResponseEntity<Map<String, Object>> getIndicadores(@PathVariable String id) {
 		List<List<Double>> historicalPrices = criptomonedaService.getHistoricalPrices(id);
@@ -197,6 +249,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(indicadores);
 	}
 
+	/**
+	 * Obtiene el RSI (Relative Strength Index) histórico de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return una lista con los valores del RSI
+	 */
 	@GetMapping("/{id}/rsi/history")
 	public ResponseEntity<List<Double>> getRsiHistory(@PathVariable String id) {
 		List<Double> precios = criptomonedaService.getHistoricalPrices(id)
@@ -207,6 +264,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(rsi);
 	}
 
+	/**
+	 * Obtiene el precio histórico de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return una lista de listas con los precios históricos
+	 */
 	@GetMapping("/{id}/price/history")
 	public ResponseEntity<List<List<Double>>> getPriceHistory(@PathVariable String id) {
 		List<List<Double>> historicalPrices = criptomonedaService.getHistoricalPrices(id);
@@ -218,6 +280,11 @@ public class CriptomonedaRestController {
 		return ResponseEntity.ok(historicalPrices);
 	}
 
+	/**
+	 * Obtiene el precio actual de una criptomoneda por su ID.
+	 * @param id el ID de la criptomoneda
+	 * @return el precio actual de la criptomoneda
+	 */
 	@PostMapping("/comprar")
 	public ResponseEntity<?> comprarCrypto(@RequestBody CompraRequestDTO compra) {
 		System.out.println("Entrando a /comprar");
@@ -262,6 +329,11 @@ public class CriptomonedaRestController {
 		}
 	}
 
+	/**
+	 * Vende una criptomoneda.
+	 * @param venta el objeto que contiene los detalles de la venta
+	 * @return una respuesta con el estado de la transacción
+	 */	
 	@PostMapping("/vender")
 	public ResponseEntity<?> venderCrypto(@RequestBody VentaRequestDTO venta) {
 		System.out.println("Entrando a /vender");

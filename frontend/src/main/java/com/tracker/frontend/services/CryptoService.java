@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.common.dto.CryptoMarketDTO;
 import com.tracker.frontend.AuthContext;
-import com.tracker.frontend.session.Session;
-
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -14,6 +12,10 @@ import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/*
+ * Clase de servicio para obtener datos del mercado de criptomonedas.
+ * Utiliza una API REST para obtener información sobre criptomonedas.
+ */
 public class CryptoService {
 
     private static final String API_URL = "http://localhost:8080/api/cryptos/market";
@@ -23,7 +25,6 @@ public class CryptoService {
 
     /**
      * Obtiene los datos del mercado de criptomonedas.
-     *
      * @return Una lista de objetos CryptoMarketDTO.
      */
     public static CompletableFuture<List<CryptoMarketDTO>> getMarketData() {
@@ -35,7 +36,7 @@ public class CryptoService {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL))
-                .header("Authorization", "Bearer " + idToken) // ✅ Autenticación con Firebase JWT
+                .header("Authorization", "Bearer " + idToken) 
                 .header("Accept", "application/json")
                 .build();
 

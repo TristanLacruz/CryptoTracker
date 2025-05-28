@@ -1,5 +1,9 @@
 package com.tracker.common.dto;
 
+/**
+ * Clase DTO para representar una solicitud de compra de criptomonedas.
+ * Contiene información sobre el usuario, la criptomoneda, la cantidad y el precio.
+ */
 public class VentaRequestDTO {
 
 	private String usuarioId;

@@ -9,6 +9,10 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
+/**
+ * Clase que representa un usuario del sistema.
+ * Implementa la interfaz UserDetails para la autenticación y autorización.
+ */
 @Document(collection = "usuarios")
 public class Usuario implements UserDetails {
 
@@ -141,7 +145,7 @@ public class Usuario implements UserDetails {
 		return nombreUsuario;
 	}
 
-	// METODOS IMPLEMENTADOS DE LA INTERFAZ USERDETAILS
+	// Métodos de la interfaz UserDetails
 	// Estos métodos son necesarios para la autenticación y autorización
 	@Override
 	public boolean isAccountNonExpired() {

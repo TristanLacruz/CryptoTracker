@@ -4,11 +4,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Circle;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.frontend.session.Session;
-
 import javafx.application.Platform;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -20,11 +20,20 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+/**
+ * Clase que representa la vista del gráfico MACD (Moving Average Convergence Divergence).
+ */
 public class GraficoMACDView extends VBox {
 
     private final NumberAxis yAxis;
     private final LineChart<Number, Number> chart;
 
+    /**
+     * Constructor de la clase GraficoMACDView.
+     * Inicializa el gráfico y carga los datos del MACD para la criptomoneda especificada.
+     *
+     * @param cryptoId El ID de la criptomoneda para la cual se desea mostrar el gráfico MACD.
+     */
     public GraficoMACDView(String cryptoId) {
         super(10);
         setPadding(new Insets(10));
@@ -32,87 +41,112 @@ public class GraficoMACDView extends VBox {
         NumberAxis xAxis = new NumberAxis();
         yAxis = new NumberAxis();
 
-        this.chart = new LineChart<>(xAxis, yAxis); 
+        this.chart = new LineChart<>(xAxis, yAxis);
         chart.setMinHeight(250);
         chart.setPrefHeight(300);
 
         Label ejeXLabel = new Label("Días");
-		ejeXLabel.setStyle("-fx-text-fill: #00FF00; -fx-font-family: Consolas; -fx-font-size: 10px;");
-		HBox labelContainer = new HBox(ejeXLabel);
-		labelContainer.setAlignment(Pos.CENTER_RIGHT);
-		labelContainer.setPadding(new Insets(0, 10, 0, 0));
+        ejeXLabel.setStyle("-fx-text-fill: #00FF00; -fx-font-family: Consolas; -fx-font-size: 10px;");
+        HBox labelContainer = new HBox(ejeXLabel);
+        labelContainer.setAlignment(Pos.CENTER_RIGHT);
+        labelContainer.setPadding(new Insets(0, 10, 0, 0));
 
         this.getChildren().addAll(chart, labelContainer);
 
         cargarDatos(cryptoId);
     }
 
+    /**
+     * Carga los datos del MACD para la criptomoneda especificada.
+     *
+     * @param cryptoId El ID de la criptomoneda para la cual se cargan los datos.
+     */
     private void cargarDatos(String cryptoId) {
-    	new Thread(() -> {
-    		try {
-    			String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
-    			HttpClient client = HttpClient.newHttpClient();
-    			HttpRequest request = HttpRequest.newBuilder()
-    				.uri(URI.create(url))
-    				.header("Authorization", "Bearer " + Session.idToken)
-    				.build();
+        new Thread(() -> {
+            try {
+                String url = "http://localhost:8080/api/cryptos/" + cryptoId + "/indicadores";
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(url))
+                        .header("Authorization", "Bearer " + Session.idToken)
+                        .build();
 
-    			HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-    			ObjectMapper mapper = new ObjectMapper();
-    			JsonNode root = mapper.readTree(response.body());
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(response.body());
 
-    			JsonNode macdNode = root.get("macd");
-    			JsonNode signalNode = root.get("signal");
+                JsonNode macdNode = root.get("macd");
+                JsonNode signalNode = root.get("signal");
 
-    			if (macdNode == null || signalNode == null) {
-    				System.err.println("Nodo 'macd' o 'signal' no encontrado.");
-    				return;
-    			}
+                if (macdNode == null || signalNode == null) {
+                    System.err.println("Nodo 'macd' o 'signal' no encontrado.");
+                    return;
+                }
 
-    			List<Double> macd = mapper.convertValue(macdNode, new TypeReference<List<Double>>() {});
-    			List<Double> signal = mapper.convertValue(signalNode, new TypeReference<List<Double>>() {});
+                List<Double> macd = mapper.convertValue(macdNode, new TypeReference<List<Double>>() {
+                });
+                List<Double> signal = mapper.convertValue(signalNode, new TypeReference<List<Double>>() {
+                });
 
-    			XYChart.Series<Number, Number> macdSeries = new XYChart.Series<>();
-    			macdSeries.setName("MACD");
+                XYChart.Series<Number, Number> macdSeries = new XYChart.Series<>();
+                macdSeries.setName("MACD");
 
-    			XYChart.Series<Number, Number> signalSeries = new XYChart.Series<>();
-    			signalSeries.setName("Señal");
+                XYChart.Series<Number, Number> signalSeries = new XYChart.Series<>();
+                signalSeries.setName("Señal");
 
-    			int offset = macd.size() - signal.size();
+                int offset = macd.size() - signal.size();
 
-    			for (int i = 0; i < macd.size(); i++) {
-    				macdSeries.getData().add(new XYChart.Data<>(i + 1, macd.get(i)));
-    			}
-    			for (int i = 0; i < signal.size(); i++) {
-    				signalSeries.getData().add(new XYChart.Data<>(i + 1 + offset, signal.get(i)));
-    			}
+                for (int i = 0; i < macd.size(); i++) {
+                    macdSeries.getData().add(new XYChart.Data<>(i + 1, macd.get(i)));
+                }
+                for (int i = 0; i < signal.size(); i++) {
+                    signalSeries.getData().add(new XYChart.Data<>(i + 1 + offset, signal.get(i)));
+                }
 
-    			List<Double> combinados = new java.util.ArrayList<>();
-    			combinados.addAll(macd);
-    			combinados.addAll(signal);
+                List<Double> combinados = new java.util.ArrayList<>();
+                combinados.addAll(macd);
+                combinados.addAll(signal);
 
-    			double min = combinados.stream().min(Double::compareTo).orElse(-1.0);
-    			double max = combinados.stream().max(Double::compareTo).orElse(1.0);
+                double min = combinados.stream().min(Double::compareTo).orElse(-1.0);
+                double max = combinados.stream().max(Double::compareTo).orElse(1.0);
 
-    			Platform.runLater(() -> {
-    				yAxis.setAutoRanging(false);
-    				yAxis.setLowerBound(min * 0.95);
-    				yAxis.setUpperBound(max * 1.05);
-    				yAxis.setTickUnit((yAxis.getUpperBound() - yAxis.getLowerBound()) / 10);
+                Platform.runLater(() -> {
+                    yAxis.setAutoRanging(false);
+                    yAxis.setLowerBound(min * 0.95);
+                    yAxis.setUpperBound(max * 1.05);
+                    yAxis.setTickUnit((yAxis.getUpperBound() - yAxis.getLowerBound()) / 10);
 
-    				chart.getData().clear();
-    				chart.getData().addAll(macdSeries, signalSeries);
-    				chart.setTitle("MACD: " + String.format("%.2f", macd.get(macd.size() - 1)) + " | Señal: " + String.format("%.2f", signal.get(signal.size() - 1)));     
+                    chart.getData().clear();
+                    chart.getData().addAll(macdSeries, signalSeries);
 
-    				macdSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2.5px;"); 
-    				signalSeries.getNode().setStyle("-fx-stroke: #448AFF; -fx-stroke-width: 2.5px;"); 
-    			});
+                    HBox macdTitleBox = new HBox(10);
+                    macdTitleBox.setAlignment(Pos.CENTER_LEFT);
+                    macdTitleBox.setPadding(new Insets(0, 0, 0, 10));
 
-    		} catch (Exception e) {
-    			System.err.println("Error al cargar MACD: " + e.getMessage());
-    		}
-    	}).start();
+                    Circle macdDot = new Circle(6, javafx.scene.paint.Color.web("#00FF00")); 
+                    Circle signalDot = new Circle(6, javafx.scene.paint.Color.web("#448AFF")); 
+
+                    Label macdLabel = new Label("MACD");
+                    Label signalLabel = new Label("Señal");
+
+                    List<Label> macdLabels = List.of(macdLabel, signalLabel);
+                    macdLabels.forEach(label -> label
+                            .setStyle("-fx-text-fill: #00FF00; -fx-font-family: Consolas; -fx-font-size: 12px;"));
+
+                    macdTitleBox.getChildren().addAll(macdDot, macdLabel, signalDot, signalLabel);
+                    getChildren().add(getChildren().size() - 1, macdTitleBox);
+
+                    chart.setTitle("MACD: " + String.format("%.2f", macd.get(macd.size() - 1)) + " | Señal: "
+                            + String.format("%.2f", signal.get(signal.size() - 1)));
+
+
+                    macdSeries.getNode().setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2.5px;");
+                    signalSeries.getNode().setStyle("-fx-stroke: #448AFF; -fx-stroke-width: 2.5px;");
+                });
+            } catch (Exception e) {
+                System.err.println("Error al cargar MACD: " + e.getMessage());
+            }
+        }).start();
     }
-
 }

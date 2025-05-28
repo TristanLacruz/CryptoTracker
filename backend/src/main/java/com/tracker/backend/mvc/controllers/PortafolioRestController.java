@@ -3,7 +3,6 @@ package com.tracker.backend.mvc.controllers;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
-
 import com.tracker.backend.mvc.model.entity.Portafolio;
 import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.services.IPortafolioService;
@@ -27,11 +25,14 @@ import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.common.dto.EvolucionCompletaDTO;
 import com.tracker.common.dto.RendimientoDiarioDTO;
 import com.tracker.common.dto.ValorDiarioDTO;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 
+/**
+ * Controlador REST para manejar las operaciones relacionadas con los
+ * portafolios de criptomonedas.
+ * Permite crear, obtener y gestionar portafolios de usuarios.
+ */
 @RestController
 @RequestMapping("/api/portafolio")
 @CrossOrigin(origins = "*")
@@ -46,11 +47,22 @@ public class PortafolioRestController {
 	@Autowired
 	private IUsuarioService usuarioService;
 
+	/**
+	 * Obtiene todos los portafolios de usuarios.
+	 * 
+	 * @return una lista de portafolios
+	 */
 	@GetMapping("")
 	public List<Portafolio> getUsuarios() {
 		return portafolioService.findAll();
 	}
 
+	/**
+	 * Crea un nuevo portafolio para un usuario.
+	 * 
+	 * @param portafolio el portafolio a crear
+	 * @return el portafolio creado
+	 */
 	@PostMapping("")
 	@ResponseStatus(HttpStatus.CREATED)
 	public Portafolio crearPortafolio(@RequestBody Portafolio portafolio) {
@@ -58,12 +70,24 @@ public class PortafolioRestController {
 		return portafolio;
 	}
 
+	/**
+	 * Obtiene el saldo actual del portafolio de un usuario.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @return el saldo actual del portafolio
+	 */
 	@GetMapping("/{usuarioId}/saldo")
 	public ResponseEntity<Double> getSaldoActual(@PathVariable String usuarioId) {
 		Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
 		return ResponseEntity.ok(portafolio.getSaldo());
 	}
 
+	/**
+	 * Obtiene el portafolio de un usuario por su ID.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @return el portafolio del usuario o un error si no se encuentra
+	 */
 	@GetMapping("/{usuarioId}")
 	public ResponseEntity<?> getPortafolio(@PathVariable String usuarioId) {
 		Portafolio p = portafolioService.getPortafolioDeUsuarioId(usuarioId);
@@ -75,6 +99,14 @@ public class PortafolioRestController {
 		return ResponseEntity.ok(resp);
 	}
 
+	/**
+	 * Obtiene la evolución completa del portafolio de un usuario.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @param request   la solicitud HTTP
+	 * @return una lista de EvolucionCompletaDTO con la evolución completa del
+	 *         portafolio
+	 */
 	@GetMapping("/portafolio/{usuarioId}/evolucion-completa")
 	public List<EvolucionCompletaDTO> obtenerEvolucionCompleta(@PathVariable String usuarioId,
 			HttpServletRequest request) {
@@ -87,6 +119,12 @@ public class PortafolioRestController {
 		return portafolioService.calcularEvolucionCompleta(usuarioId);
 	}
 
+	/**
+	 * Obtiene el nombre del usuario por su ID.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @return el nombre del usuario o un error si no se encuentra
+	 */
 	@GetMapping("/api/usuarios/{usuarioId}/nombre")
 	public ResponseEntity<?> obtenerNombreUsuario(@PathVariable String usuarioId) {
 		Optional<Usuario> usuarioOpt = usuarioService.findById(usuarioId);
@@ -97,6 +135,13 @@ public class PortafolioRestController {
 		return ResponseEntity.ok(Map.of("nombre", usuarioOpt.get().getNombre()));
 	}
 
+	/**
+	 * Obtiene un resumen del portafolio de un usuario, incluyendo las criptomonedas
+	 * y su valor total.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @return una lista de CriptoPosesionDTO con el resumen del portafolio
+	 */
 	@GetMapping("/{usuarioId}/resumen")
 	public List<CriptoPosesionDTO> getResumenPortafolio(@PathVariable String usuarioId) {
 		Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
@@ -117,16 +162,35 @@ public class PortafolioRestController {
 		}).toList();
 	}
 
+	/**
+	 * Obtiene la evolución diaria del portafolio de un usuario.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @return una lista de ValorDiarioDTO con la evolución diaria del portafolio
+	 */
 	@GetMapping("/{usuarioId}/evolucion")
 	public List<ValorDiarioDTO> getEvolucion(@PathVariable String usuarioId) {
 		return portafolioService.calcularEvolucion(usuarioId);
 	}
 
+	/**
+	 * Obtiene el rendimiento diario del portafolio de un usuario.
+	 * 
+	 * @param usuarioId el ID del usuario
+	 * @return una lista de RendimientoDiarioDTO con el rendimiento diario del
+	 *         portafolio
+	 */
 	@GetMapping("/{usuarioId}/rendimiento")
 	public List<RendimientoDiarioDTO> getRendimiento(@PathVariable String usuarioId) {
 		return portafolioService.calcularRendimiento(usuarioId);
 	}
 
+	/**
+	 * Obtiene el portafolio del usuario autenticado.
+	 * 
+	 * @param auth la autenticación del usuario
+	 * @return el portafolio del usuario o un error si no se encuentra
+	 */
 	@GetMapping("/me")
 	public ResponseEntity<?> getMiPortafolio(Authentication auth) {
 		String userId = auth.getName();
@@ -139,11 +203,24 @@ public class PortafolioRestController {
 		return ResponseEntity.ok(p);
 	}
 
+	/**
+	 * Obtiene un resumen del portafolio del usuario autenticado.
+	 * 
+	 * @param auth la autenticación del usuario
+	 * @return una lista de CriptoPosesionDTO con el resumen del portafolio
+	 */
 	@GetMapping("/me/resumen")
 	public List<CriptoPosesionDTO> getMiResumen(Authentication auth) {
 		return getResumenPortafolio(auth.getName());
 	}
 
+	/**
+	 * Obtiene la evolución completa del portafolio del usuario autenticado.
+	 * 
+	 * @param auth la autenticación del usuario
+	 * @return una lista de EvolucionCompletaDTO con la evolución completa del
+	 *         portafolio
+	 */
 	@GetMapping("/{usuarioId}/evolucion-completa")
 	public List<EvolucionCompletaDTO> getEvolucionCompleta(@PathVariable String usuarioId) {
 		return portafolioService.calcularEvolucionCompleta(usuarioId);

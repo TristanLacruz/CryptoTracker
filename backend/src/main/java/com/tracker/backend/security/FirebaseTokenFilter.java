@@ -14,21 +14,29 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
+/*
+ * Filtro para verificar el token de Firebase en las peticiones HTTP.
+ */
 @Component
 public class FirebaseTokenFilter extends OncePerRequestFilter {
 
     @Autowired
     private FirebaseService firebaseService;
 
+    /*
+     * Método que se ejecuta para filtrar las peticiones HTTP.
+     * Verifica el token de Firebase en la cabecera Authorization.
+     * Si el token es válido, establece la autenticación en el contexto de seguridad.
+     * Si el token es inválido, devuelve un error 401 (Unauthorized).
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         String path = request.getRequestURI();
-        System.out.println("🛡️ [FirebaseTokenFilter] Interceptando petición a: " + path);
+        System.out.println("[FirebaseTokenFilter] Interceptando petición a: " + path);
 
         String header = request.getHeader("Authorization");
 
@@ -36,9 +44,6 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-
-        String token = header.replace("Bearer ", "");
-        // System.out.println("Token recibido: " + token);
 
         String idToken = header.substring(7);
         try {
@@ -56,11 +61,11 @@ public class FirebaseTokenFilter extends OncePerRequestFilter {
 
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(auth);
-            System.out.println("✅ Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
+            System.out.println("Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
 
             System.out.println("UID autenticado: " + uid);
             System.out.println("Token decodificado correctamente: UID=" + uid);
-            System.out.println("✅ Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
+            System.out.println("Contexto actual: " + SecurityContextHolder.getContext().getAuthentication());
 
         } catch (FirebaseAuthException e) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

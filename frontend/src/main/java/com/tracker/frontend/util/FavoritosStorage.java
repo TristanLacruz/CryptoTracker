@@ -2,15 +2,14 @@ package com.tracker.frontend.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Clase para manejar el almacenamiento de favoritos en un archivo JSON.
+/*
+ * Clase para manejar el almacenamiento de favoritos de los usuarios.
  */
 public class FavoritosStorage {
     private static final String FILE_PATH = "src/main/resources/favoritos.json";
@@ -18,6 +17,8 @@ public class FavoritosStorage {
 
     /**
      * Carga los favoritos de un usuario desde el archivo.
+     * @param usuarioId El ID del usuario.
+     * @return Un conjunto de favoritos del usuario, o un conjunto vacío si no hay favoritos.
      */
     public static Set<String> cargarFavoritos(String usuarioId) {
         try {
@@ -35,6 +36,8 @@ public class FavoritosStorage {
 
     /**
      * Guarda los favoritos de un usuario en el archivo.
+     * @param usuarioId El ID del usuario.
+     * @param favoritos El conjunto de favoritos a guardar.
      */
     public static void guardarFavoritos(String usuarioId, Set<String> favoritos) {
         try {

@@ -8,9 +8,19 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.util.Map;
 
+/**
+ * Manejador global de excepciones para la aplicación.
+ * Captura y maneja excepciones comunes, proporcionando respuestas estandarizadas.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Maneja excepciones de tipo ResponseStatusException.
+     * 
+     * @param ex la excepción capturada
+     * @return una respuesta con el estado y mensaje de error
+     */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity
@@ -22,6 +32,12 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    /**
+     * Maneja excepciones de tipo HttpMessageNotReadableException.
+     * 
+     * @param ex la excepción capturada
+     * @return una respuesta con el estado y mensaje de error
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, Object>> handleJsonParseError(HttpMessageNotReadableException ex) {
         return ResponseEntity
@@ -33,6 +49,12 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    /**
+     * Maneja excepciones de tipo MethodArgumentTypeMismatchException.
+     * 
+     * @param ex la excepción capturada
+     * @return una respuesta con el estado y mensaje de error
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         return ResponseEntity
@@ -44,6 +66,12 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    /**
+     * Maneja excepciones de tipo CriptomonedaNoEncontradaException.
+     * 
+     * @param ex la excepción capturada
+     * @return una respuesta con el estado y mensaje de error
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         return ResponseEntity

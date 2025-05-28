@@ -1,13 +1,15 @@
 package com.tracker.backend.mvc.model.entity;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+/**
+ * Clase que representa un portafolio de criptomonedas de un usuario.
+ * Contiene información sobre las criptomonedas poseídas y el saldo disponible.
+ */
 @Document(collection = "portafolios")
 public class Portafolio {
 

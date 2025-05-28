@@ -225,3 +225,21 @@
 .table-view .column-header .sort-descending .arrow { /* Estilo para la flecha de orden descendente */
     -fx-shape: "M 0 0 L 4 4 L 8 0 Z"; 
 }
+
+.scroll-pane { /* Estilo para el ScrollPane */
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+
+.scroll-pane .viewport { /* Estilo para el viewport del ScrollPane */
+    -fx-background-color: transparent;
+}
+
+
+.chart-horizontal-grid-lines,
+.chart-vertical-grid-lines { /* Estilo para las líneas de la cuadrícula del gráfico */
+    -fx-stroke: #00FF00; 
+    -fx-stroke-dash-array: 2 2; 
+    -fx-opacity: 0.5;          
+}

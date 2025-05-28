@@ -1,5 +1,8 @@
 package com.tracker.common.dto;
 
+/*
+ * Clase DTO para representar un usuario.
+ */
 public class UsuarioDTO {
     private String uid;
     private String email;

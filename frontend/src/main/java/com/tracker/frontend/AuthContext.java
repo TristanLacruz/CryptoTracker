@@ -9,7 +9,6 @@ import com.tracker.common.dto.UsuarioDTO;
 public class AuthContext {
 
     private static AuthContext instancia;
-
     private String idToken;
     private String usuarioId;
     private UsuarioDTO usuario;

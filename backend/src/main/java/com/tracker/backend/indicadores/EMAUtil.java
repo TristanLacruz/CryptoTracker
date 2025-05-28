@@ -25,7 +25,7 @@ public class EMAUtil {
 	        sma += precios.get(i);
 	    }
 	    sma /= periodos;
-	    ema.add(sma); // Primer valor de EMA
+	    ema.add(sma);
 
 	    double k = 2.0 / (periodos + 1);
 

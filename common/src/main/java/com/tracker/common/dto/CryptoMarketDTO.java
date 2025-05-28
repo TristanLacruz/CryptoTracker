@@ -2,6 +2,11 @@ package com.tracker.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Clase DTO para representar información del mercado de criptomonedas.
+ * Contiene detalles como el ID, símbolo, nombre, imagen, precio actual,
+ * cambio de precio en 24 horas, capitalización de mercado y volumen total.
+ */
 public class CryptoMarketDTO {
 	private String id;
 	private String symbol;

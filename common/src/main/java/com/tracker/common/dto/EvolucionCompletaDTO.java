@@ -1,5 +1,11 @@
 package com.tracker.common.dto;
 
+/**
+ * Clase DTO para representar la evolución completa de un usuario en términos de
+ * saldo en euros, valor total de criptomonedas y valor total.
+ * Contiene información sobre el día, el valor total, el saldo en euros y el
+ * valor de criptomonedas.
+ */
 public class EvolucionCompletaDTO {
 
     private int dia;

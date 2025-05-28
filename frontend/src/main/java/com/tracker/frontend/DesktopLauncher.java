@@ -1,7 +1,6 @@
 package com.tracker.frontend;
 
 import com.tracker.frontend.views.MainMenuView;
-
 import javafx.application.Application;
 import javafx.stage.Stage;
 

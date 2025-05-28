@@ -74,7 +74,7 @@ public class LoginFormView {
 			String password = passwordField.getText();
 
 			btnLogin.setDisable(true);
-			resultado.setText("⏳ Iniciando sesión...");
+			resultado.setText("Iniciando sesión...");
 
 			Map<String, String> credenciales = new HashMap<>();
 			credenciales.put("email", email);
@@ -140,7 +140,6 @@ public class LoginFormView {
 								Session.idToken = idToken;
 								Session.usuarioId = usuarioId;
 
-								// 🔁 Sincronizar usuario con el backend (solo si no existe)
 								try {
 									HttpClient httpClient = HttpClient.newHttpClient();
 									ObjectMapper backendMapper = new ObjectMapper();
@@ -155,7 +154,6 @@ public class LoginFormView {
 									httpClient.sendAsync(checkRequest, HttpResponse.BodyHandlers.ofString())
 											.thenAccept(checkResp -> {
 												if (checkResp.statusCode() == 404) {
-													// El usuario no existe → lo creamos
 													try {
 														Map<String, String> nuevoUsuario = new HashMap<>();
 														nuevoUsuario.put("uid", usuarioId);
@@ -176,20 +174,20 @@ public class LoginFormView {
 																.sendAsync(crearUsuarioRequest,
 																		HttpResponse.BodyHandlers.ofString())
 																.thenAccept(resp -> {
-																	System.out.println("📝 Usuario creado en MongoDB: "
+																	System.out.println("Usuario creado en MongoDB: "
 																			+ resp.body());
 																});
 													} catch (Exception ex) {
 														System.err.println(
-																"❌ Error al crear usuario: " + ex.getMessage());
+																"Error al crear usuario: " + ex.getMessage());
 													}
 												} else {
-													System.out.println("👤 Usuario ya existe, no se sincroniza.");
+													System.out.println("Usuario ya existe, no se sincroniza.");
 												}
 											});
 								} catch (Exception ex) {
 									System.err
-											.println("❌ Error al verificar existencia del usuario: " + ex.getMessage());
+											.println("Error al verificar existencia del usuario: " + ex.getMessage());
 								}
 
 								AuthContext.getInstance().setIdToken(idToken);

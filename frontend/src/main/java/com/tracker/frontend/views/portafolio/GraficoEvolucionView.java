@@ -17,6 +17,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+/**
+ * Clase que representa la vista del gráfico de evolución del portafolio de un usuario.
+ * Muestra el valor del portafolio a lo largo del tiempo en un gráfico de líneas.
+ */
 public class GraficoEvolucionView {
 
     private final String usuarioId;

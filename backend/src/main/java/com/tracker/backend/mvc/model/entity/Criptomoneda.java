@@ -4,6 +4,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
+/**
+ * Clase que representa una criptomoneda.
+ * Contiene información sobre el símbolo, nombre, precio actual y la última actualización de la criptomoneda.
+ */
 @Document(collection = "criptomonedas")
 public class Criptomoneda {
 

@@ -26,7 +26,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.util.Callback;
@@ -35,8 +34,6 @@ import javafx.scene.layout.VBox;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
 import javafx.stage.Stage;
-
-import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.common.dto.CryptoMarketDTO;
 import com.tracker.frontend.services.CryptoService;
 import com.tracker.frontend.util.FavoritosStorage;
@@ -46,7 +43,6 @@ import com.tracker.frontend.views.CryptoDetailView;
 import com.tracker.frontend.views.LoginFormView;
 import com.tracker.frontend.views.PortfolioView;
 import com.tracker.frontend.session.Session;
-
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import java.io.IOException;
@@ -281,7 +277,7 @@ public class CryptoTableViewApp extends Application {
 					}
 				});
 
-		tableView.setFixedCellSize(40); // Altura fija por fila
+		tableView.setFixedCellSize(40);
 		tableView.setPrefHeight(Region.USE_COMPUTED_SIZE);
 		tableView.setMinHeight(Region.USE_COMPUTED_SIZE);
 		tableView.setMaxHeight(Region.USE_COMPUTED_SIZE);
@@ -322,7 +318,7 @@ public class CryptoTableViewApp extends Application {
 		tituloWrapper.setPadding(new Insets(10));
 		tituloWrapper.setStyle("-fx-background-color: #111111; -fx-background-radius: 10;");
 
-		VBox.setMargin(tituloWrapper, new Insets(10, 0, 0, 0)); // Espacio superior
+		VBox.setMargin(tituloWrapper, new Insets(10, 0, 0, 0)); 
 
 		VBox topContent = new VBox(10, topBar, tituloWrapper, buscador);
 
@@ -358,19 +354,22 @@ public class CryptoTableViewApp extends Application {
 		primaryStage.setTitle("Listado de Criptomonedas");
 		primaryStage.show();
 
-		/*
-		 * SCHEDULER COMENTADO PARA EVITAR PETICIONES CONSTANTES
-		 */
+		
 		scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler.scheduleAtFixedRate(() -> {
 			javafx.application.Platform.runLater(this::fetchCryptoData);
-		}, 30, 30, TimeUnit.SECONDS); // espera 30s y luego repite cada 30s
-		// NO ELIMNAR EL SCHEDULER, SOLO COMENTAR
+		}, 30, 30, TimeUnit.SECONDS); 
 
 		fetchCryptoData();
 
 	}
 
+	/**
+	 * Método que se ejecuta al cerrar la aplicación.
+	 * Detiene el scheduler y cierra la ventana principal.
+	 *
+	 * @throws Exception Si ocurre un error al detener el scheduler.
+	 */
 	@Override
 	public void stop() throws Exception {
 		if (scheduler != null && !scheduler.isShutdown()) {
@@ -379,6 +378,10 @@ public class CryptoTableViewApp extends Application {
 		super.stop();
 	}
 
+	/**
+	 * Método que obtiene los datos de criptomonedas desde el servicio.
+	 * Actualiza la lista de criptomonedas y la tabla en la interfaz gráfica.
+	 */
 	private void fetchCryptoData() {
 		System.out.println("Intentando conectarse a CryptoService...");
 
@@ -400,6 +403,11 @@ public class CryptoTableViewApp extends Application {
 		});
 	}
 
+	/**
+	 * Método que parsea la respuesta JSON y actualiza la lista de criptomonedas.
+	 *
+	 * @param responseBody El cuerpo de la respuesta JSON.
+	 */
 	private void parseJson(String responseBody) {
 		System.out.println("Entrando a parseJson()");
 		System.out.println("Respuesta recibida:\n" + responseBody);
@@ -430,6 +438,13 @@ public class CryptoTableViewApp extends Application {
 		}
 	}
 
+	/**
+	 * Método que obtiene los precios históricos de una criptomoneda.
+	 * Utiliza una API REST para obtener los datos históricos.
+	 *
+	 * @param cryptoId El ID de la criptomoneda para la cual se obtienen los precios históricos.
+	 * @return Una lista de precios históricos.
+	 */
 	private List<Double> getHistoricalPrices(String cryptoId) {
 		if (cryptoId == null || cryptoId.isBlank()) {
 			throw new IllegalArgumentException("ID de criptomoneda no puede ser nulo o vacío.");
@@ -449,7 +464,7 @@ public class CryptoTableViewApp extends Application {
 
 			if (response.statusCode() != 200) {
 				System.err.println("Error al obtener históricos: HTTP " + response.statusCode());
-				return List.of(); // Devuelve lista vacía para que el gráfico no pete
+				return List.of(); 
 			}
 
 			ObjectMapper mapper = new ObjectMapper();
@@ -466,7 +481,7 @@ public class CryptoTableViewApp extends Application {
 			List<Double> priceList = new ArrayList<>();
 			for (JsonNode point : prices) {
 				if (point.isArray() && point.size() >= 2) {
-					priceList.add(point.get(1).asDouble()); // Solo el precio
+					priceList.add(point.get(1).asDouble()); 
 				}
 			}
 
@@ -474,10 +489,15 @@ public class CryptoTableViewApp extends Application {
 
 		} catch (Exception e) {
 			System.err.println("Error al obtener precios históricos para " + cryptoId + ": " + e.getMessage());
-			return List.of(); // Devuelve vacío, no null
+			return List.of(); 
 		}
 	}
 
+	/**
+	 * Método principal que inicia la aplicación JavaFX.
+	 *
+	 * @param args Argumentos de línea de comandos (no se utilizan).
+	 */
 	public static void main(String[] args) {
 		launch();
 	}

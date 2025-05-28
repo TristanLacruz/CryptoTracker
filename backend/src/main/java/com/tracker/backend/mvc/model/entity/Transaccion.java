@@ -4,6 +4,11 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
+/**
+ * Clase que representa una transacción de compra o venta de criptomonedas.
+ * Contiene información sobre el usuario, la criptomoneda, el tipo de transacción,
+ * la cantidad de criptomonedas, el precio de la transacción, el valor total y la fecha de la transacción.
+ */
 @Document(collection = "transacciones")
 public class Transaccion {
 

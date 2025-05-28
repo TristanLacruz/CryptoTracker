@@ -1,5 +1,9 @@
 package com.tracker.common.dto;
 
+/**
+ * Clase DTO para representar el rendimiento diario de una criptomoneda.
+ * Contiene información sobre el día y la ganancia obtenida.
+ */
 public class RendimientoDiarioDTO {
     private int dia;
     private double ganancia;

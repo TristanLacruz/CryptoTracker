@@ -1,8 +1,5 @@
 package com.tracker.frontend.views;
 
-import com.tracker.frontend.util.InactivityTimer;
-
-import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -17,6 +14,10 @@ import javafx.stage.Stage;
  */
 public class MainMenuView {
 
+	/**
+	 * Muestra la vista del menú principal.
+	 * @param primaryStage El escenario principal de la aplicación.
+	 */
 	public void mostrar(Stage primaryStage) {
 		Label titulo = new Label("CryptoTracker");
 		titulo.getStyleClass().add("titulo-app");

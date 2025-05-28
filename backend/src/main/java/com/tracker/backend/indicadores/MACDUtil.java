@@ -14,7 +14,7 @@ public class MACDUtil {
      * @return un mapa con las líneas MACD y de señal
      */
     public static Map<String, List<Double>> calcularMACD(List<Double> precios) {
-        if (precios == null || precios.size() < 35) { // 26 + 9 mínimo recomendado
+        if (precios == null || precios.size() < 35) { 
             throw new IllegalArgumentException("Se necesitan al menos 35 precios para calcular el MACD.");
         }
 

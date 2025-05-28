@@ -3,25 +3,20 @@ package com.tracker.backend.mvc.model.services.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Optional;
-
-import com.tracker.backend.mvc.model.dao.IPortafolioDAO;
 import com.tracker.backend.mvc.model.dao.ITransaccionDAO;
-import com.tracker.backend.mvc.model.dao.IUsuarioDAO;
 import com.tracker.backend.mvc.model.entity.Portafolio;
 import com.tracker.backend.mvc.model.entity.Transaccion;
 import com.tracker.backend.mvc.model.entity.TransactionType;
-import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.exceptions.TransaccionNoEncontradaException;
-import com.tracker.backend.mvc.model.exceptions.UsuarioNoEncontradoException;
-import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 import com.tracker.backend.mvc.model.services.IPortafolioService;
 import com.tracker.backend.mvc.model.services.ITransaccionService;
-import com.tracker.backend.mvc.model.services.IUsuarioService;
 
+/**
+ * Implementación del servicio de transacciones.
+ * Proporciona métodos para manejar transacciones de compra y venta de criptomonedas.
+ */
 @Service
 public class TransaccionServiceImpl implements ITransaccionService {
 
@@ -29,43 +24,46 @@ public class TransaccionServiceImpl implements ITransaccionService {
 	private ITransaccionDAO transaccionDAO;
 
 	@Autowired
-	private IUsuarioService usuarioService;
+	private IPortafolioService portafolioService;;
 
-	@Autowired
-	private ICriptomonedaService cryptoService;
-
-	@Autowired
-	private IPortafolioService portafolioService;
-
-	@Autowired
-	private IUsuarioDAO usuarioDAO;
-
-	@Autowired
-	private IPortafolioDAO portafolioDAO;
-
-	@Autowired
-	private ICriptomonedaService coingeckoService;
-
+	/*
+	 * Método para obtener todas las transacciones.
+	 */
 	@Override
 	public List<Transaccion> findAll() {
 		return (List<Transaccion>) transaccionDAO.findAll();
 	}
 
+	/*
+	 * Método para guardar una transacción
+	 */
 	@Override
 	public void save(Transaccion t) {
 		transaccionDAO.save(t);
 	}
 
+	/*
+	 * Método para buscar una transacción por su ID.
+	 * Si no se encuentra, lanza una excepción TransaccionNoEncontradaException.
+	 */
 	@Override
 	public Transaccion findById(String id) {
 		return transaccionDAO.findById(id).orElseThrow(() -> new TransaccionNoEncontradaException(id));
 	}
 
+	/*
+	 * Método para eliminar una transacción.
+	 */
 	@Override
 	public void delete(Transaccion t) {
 		transaccionDAO.delete(t);
 	}
 
+	/*
+	 * Método para actualizar una transacción.
+	 * Actualiza los campos de la transacción existente con los valores de la nueva transacción.
+	 * @return currentTransaccion
+	 */ 
 	@Override
 	public Transaccion update(Transaccion t, String id) {
 		Transaccion currentTransaccion = this.findById(id);
@@ -79,16 +77,18 @@ public class TransaccionServiceImpl implements ITransaccionService {
 		return currentTransaccion;
 	}
 
+	/*
+	 * Método para comprar criptomonedas.
+	 * Valida la cantidad y el precio, obtiene o crea el portafolio del usuario,
+	 */
 	@Override
 	public Transaccion comprarCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto,
 			double precioUnitario) {
 
-		// Validación defensiva
 		if (cantidadCrypto <= 0 || precioUnitario <= 0) {
 			throw new IllegalArgumentException("La cantidad y el precio deben ser mayores que cero.");
 		}
 
-		// Obtener portafolio (crear si no existe)
 		Portafolio portafolio = portafolioService.getPortafolioDeUsuarioId(usuarioId);
 
 		if (portafolio == null) {
@@ -109,7 +109,6 @@ public class TransaccionServiceImpl implements ITransaccionService {
 			throw new RuntimeException("Saldo insuficiente para realizar la compra.");
 		}
 
-		// Crear la transacción
 		Transaccion transaccion = new Transaccion();
 		transaccion.setUsuarioId(usuarioId);
 		transaccion.setCryptoId(simbolo);
@@ -123,7 +122,6 @@ public class TransaccionServiceImpl implements ITransaccionService {
 		transaccionDAO.save(transaccion);
 		System.out.println("Transacción guardada.");
 
-		// Actualizar el portafolio
 		portafolio.agregarCripto(simbolo, cantidadCrypto);
 		portafolio.setSaldo(portafolio.getSaldo() - totalCompra);
 		System.out.println("Nuevo saldo: " + portafolio.getSaldo());
@@ -133,6 +131,10 @@ public class TransaccionServiceImpl implements ITransaccionService {
 		return transaccion;
 	}
 
+	/**
+	 * Método para obtener el total invertido por un usuario.
+	 * Suma el valor total de todas las transacciones de compra del usuario.
+	 */
 	@Override
 	public double getTotalInvertido(String usuarioId) {
 		List<Transaccion> compras = transaccionDAO.findByUsuarioIdAndTipoTransaccion(usuarioId,
@@ -142,11 +144,20 @@ public class TransaccionServiceImpl implements ITransaccionService {
 				.sum();
 	}
 
+	/*
+	 * Método para obtener las transacciones de un usuario por su ID.
+	 * Ordena las transacciones por fecha de transacción en orden descendente.
+	 */
 	@Override
 	public List<Transaccion> findByUsuarioId(String usuarioId) {
 		return transaccionDAO.findByUsuarioIdOrderByFechaTransaccionDesc(usuarioId);
 	}
 
+	/**
+	 * Método para vender criptomonedas.
+	 * Valida la cantidad y el precio, verifica si el usuario tiene suficiente criptomoneda,
+	 * actualiza el portafolio y guarda la transacción.
+	 */
 	@Override
 	public Transaccion venderCrypto(String usuarioId, String simbolo, String nombreCrypto, double cantidadCrypto,
 			double precioUnitario) {
@@ -169,7 +180,6 @@ public class TransaccionServiceImpl implements ITransaccionService {
 
 		double totalVenta = cantidadCrypto * precioUnitario;
 
-		// Crear y guardar la transacción
 		Transaccion transaccion = new Transaccion();
 		transaccion.setUsuarioId(usuarioId);
 		transaccion.setCryptoId(simbolo);
@@ -182,7 +192,6 @@ public class TransaccionServiceImpl implements ITransaccionService {
 		transaccionDAO.save(transaccion);
 		System.out.println("Transacción de venta guardada");
 
-		// Actualizar portafolio
 		Map<String, Double> cryptos = portafolio.getCriptomonedas();
 		double actual = cryptos.getOrDefault(simbolo, 0.0);
 		double restante = actual - cantidadCrypto;
@@ -195,7 +204,6 @@ public class TransaccionServiceImpl implements ITransaccionService {
 			System.out.println("Nueva cantidad de " + simbolo + ": " + restante);
 		}
 
-		// Sumar el saldo
 		double nuevoSaldo = portafolio.getSaldo() + totalVenta;
 		portafolio.setSaldo(nuevoSaldo);
 		System.out.println("Nuevo saldo del portafolio: " + nuevoSaldo);

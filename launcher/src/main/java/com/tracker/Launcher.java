@@ -2,14 +2,23 @@ package com.tracker;
 
 import java.io.File;
 
+/**
+ * Clase principal para iniciar el backend y frontend de la aplicación.
+ * Asegúrate de que los archivos JAR del backend y frontend estén en el mismo directorio que este launcher.
+ */
 public class Launcher {
+
+    /**
+     * Método principal que inicia el backend y frontend de la aplicación.
+     * Asegúrate de que los archivos JAR del backend y frontend estén en el mismo directorio que este launcher.
+     *
+     * @param args Argumentos de línea de comandos (no se utilizan en este launcher).
+     */
     public static void main(String[] args) {
         try {
-            // Ruta base desde donde se ejecutan los JARs
-            String basePath = "."; // o "app" si los mueves a una subcarpeta
-            String javafxPath = "C:\\Program Files\\javafx-sdk-21.0.6\\lib"; // actualiza si usas otra ruta
+            String basePath = "."; 
+            String javafxPath = "C:\\Program Files\\javafx-sdk-21.0.6\\lib";
 
-            // Lanzar backend
             System.out.println("Iniciando backend...");
             ProcessBuilder backend = new ProcessBuilder(
                 "java", "-jar", "backend-0.0.1-SNAPSHOT.jar"
@@ -18,10 +27,8 @@ public class Launcher {
             backend.inheritIO();
             backend.start();
 
-            // Esperar unos segundos antes de lanzar el frontend
             Thread.sleep(3000);
 
-            // Lanzar frontend con JavaFX
             System.out.println("Iniciando frontend...");
             ProcessBuilder frontend = new ProcessBuilder(
                 "java",
@@ -34,7 +41,7 @@ public class Launcher {
             frontend.start();
 
         } catch (Exception e) {
-            System.err.println("❌ Error al lanzar la aplicación:");
+            System.err.println("Error al lanzar la aplicación:");
             e.printStackTrace();
         }
     }

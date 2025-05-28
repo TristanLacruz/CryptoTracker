@@ -1,8 +1,6 @@
 package com.tracker.backend.mvc.model.services.impl;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +22,10 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+/**
+ * Implementación del servicio de usuarios.
+ * Proporciona métodos para manejar usuarios, incluyendo creación, actualización y búsqueda.
+ */
 @Service
 public class UsuarioServiceImpl implements IUsuarioService {
 
@@ -36,11 +38,20 @@ public class UsuarioServiceImpl implements IUsuarioService {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	/*
+	 * Método para obtener todos los usuarios.
+	 */
 	@Override
 	public List<Usuario> findAll() {
 		return (List<Usuario>) usuarioDAO.findAll();
 	}
 
+	/*
+	 * Método para guardar un usuario.
+	 * Si el email es nulo o vacío, lanza IllegalArgumentException.
+	 * Si el email ya existe, lanza IllegalStateException.
+	 * Si el usuario no existe en Firebase, lo crea.
+	 */
 	@Override
 	public void save(Usuario u) {
 		if (u.getEmail() == null || u.getEmail().trim().isEmpty()) {
@@ -52,13 +63,11 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		}
 
 		try {
-			// 🔍 1. Comprobar si ya existe en Firebase
 			UserRecord firebaseUser;
 			try {
 				firebaseUser = FirebaseAuth.getInstance().getUserByEmail(u.getEmail());
 			} catch (FirebaseAuthException ex) {
 				if (ex.getAuthErrorCode() == AuthErrorCode.USER_NOT_FOUND) {
-					// ✅ Crear nuevo usuario en Firebase solo si se pasa una contraseña
 					if (u.getContrasena() == null || u.getContrasena().isBlank()) {
 						throw new IllegalArgumentException("rawPassword cannot be null");
 					}
@@ -76,18 +85,15 @@ public class UsuarioServiceImpl implements IUsuarioService {
 				}
 			}
 
-			// 🔐 2. Asignar UID (si viene de Firebase también)
 			u.setUid(firebaseUser.getUid());
 
-			// 🧠 3. Insertar en Mongo solo si no existe
 			if (!usuarioDAO.findByUid(u.getUid()).isPresent()) {
-				// ⚠️ Evita codificar contraseña si viene vacío desde frontend con Firebase
 				if (u.getContrasena() != null && !u.getContrasena().isBlank()) {
 					u.setContrasena(passwordEncoder.encode(u.getContrasena()));
 				} else {
-					u.setContrasena("firebase"); // dummy password
+					u.setContrasena("firebase");
 				}
-				portafolioService.getPortafolioDeUsuarioId(u.getUid()); // ya lo crea con 10.000 si no existe
+				portafolioService.getPortafolioDeUsuarioId(u.getUid()); 
 				usuarioDAO.save(u);
 			}
 
@@ -96,21 +102,35 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		}
 	}
 
+	/*
+	 * Método para buscar un usuario por su ID.
+	 * Si no se encuentra, lanza UsuarioNoEncontradoException.
+	 */
 	@Override
 	public Optional<Usuario> findById(String id) {
 		return usuarioDAO.findById(id);
 	}
 
+	/*
+	 * Método para buscar un usuario por su UID de Firebase.
+	 */
 	public Usuario findByFirebaseUid(String uid) {
 		return usuarioDAO.findByUid(uid)
 				.orElseThrow(() -> new UsuarioNoEncontradoException("Usuario " + uid + " no encontrado"));
 	}
 
+	/**
+	 * Método para eliminar un usuario.
+	 */	
 	@Override
 	public void delete(Usuario u) {
 		usuarioDAO.delete(u);
 	}
 
+	/*
+	 * Método para actualizar un usuario.
+	 * Busca el usuario por ID, si no se encuentra, lanza UsuarioNoEncontradoException.
+	 */
 	@Override
 	public Usuario update(Usuario u, String id) {
 		Usuario usuarioActual = this.findById(id).orElseThrow(() -> new UsuarioNoEncontradoException(id));
@@ -128,29 +148,35 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		return usuarioActual;
 	}
 
+	/*
+	 * Método para buscar un usuario por su nombre de usuario.
+	 */
 	@Override
 	public Usuario findByNombreUsuario(String nombreUsuario) {
 		return usuarioDAO.findByNombreUsuario(nombreUsuario)
 				.orElseThrow(() -> new UsuarioNoEncontradoException(nombreUsuario));
 	}
 
+	/*
+	 * Método para cargar un usuario por su nombre de usuario.
+	 */
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		Usuario usuario = findByNombreUsuario(username);
 		return User.builder().username(usuario.getNombreUsuario()).password(usuario.getContrasena())
-				.roles(usuario.getRol()) // asegúrate que `getRol()` devuelve el rol en formato correcto (ej: "USER")
+				.roles(usuario.getRol()) 
 				.build();
 	}
 
+	/*
+	 * Método para obtener o crear un usuario por su UID de Firebase.
+	 */
 	public Usuario getOrCreateByUid(String firebaseUid) {
 		return usuarioDAO.findByUid(firebaseUid).orElseGet(() -> {
 			Usuario nuevo = new Usuario();
 			nuevo.setUid(firebaseUid);
-			// Asigna un nombre de usuario predeterminado, por ejemplo:
-			nuevo.setNombreUsuario("user_" + firebaseUid.substring(0, 6)); // ejemplo
+			nuevo.setNombreUsuario("user_" + firebaseUid.substring(0, 6)); 
 			nuevo.setRol("USER");
-			// Puedes asignar una contraseña predeterminada cifrada (no se usará para login,
-			// ya que se autentica en Firebase)
 			nuevo.setContrasena(passwordEncoder.encode("firebase_default"));
 			nuevo.setCreadoEl(LocalDateTime.now());
 			nuevo.setActualizadoEl(LocalDateTime.now());
@@ -158,17 +184,25 @@ public class UsuarioServiceImpl implements IUsuarioService {
 		});
 	}
 
+	/*
+	 * Método para buscar un usuario por su email.
+	 */
 	@Override
 	public Optional<Usuario> findByEmail(String email) {
-		// TODO Auto-generated method stub
 		return Optional.empty();
 	}
 
+	/*
+	 * Método para buscar un usuario por su UID de Firebase.
+	 */
 	@Override
 	public Optional<Usuario> findByUid(String uid) {
 		return usuarioDAO.findByUid(uid);
 	}
 
+	/*
+	 * Método para verificar si un usuario existe por su email.
+	 */
 	@Override
 	public boolean existsByEmail(String email) {
 		return usuarioDAO.existsByEmail(email);

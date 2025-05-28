@@ -6,6 +6,10 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 
+/**
+ * Servicio para manejar la verificación de tokens de Firebase.
+ * Proporciona métodos para verificar tokens de ID de Firebase.
+ */
 @Service
 public class FirebaseService {
 

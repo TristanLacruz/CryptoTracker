@@ -1,9 +1,12 @@
 package com.tracker.common.dto;
 
 import java.time.LocalDate;
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+/**
+ * Clase DTO para representar el valor diario de una criptomoneda.
+ * Contiene información sobre el día, el valor, la fecha y el saldo total.
+ */
 public class ValorDiarioDTO {
     private int dia;
     private double valor;

@@ -3,7 +3,6 @@ package com.tracker.backend.mvc.model.services.impl;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,10 @@ import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Implementación del servicio de portafolio que maneja las operaciones relacionadas
+ * con los portafolios de criptomonedas de los usuarios.
+ */
 @Service
 public class PortafolioServiceImpl implements IPortafolioService {
 	private final IPortafolioDAO portafolioDAO;
@@ -39,26 +42,50 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		this.cryptoService = cryptoService;
 	}
 
+	/*
+	 * Método que devuelve una lista de todos los portafolios.
+	 * @return Lista de portafolios.
+	 */
 	@Override
 	public List<Portafolio> findAll() {
 		return (List<Portafolio>) portafolioDAO.findAll();
 	}
 
+	/*
+	 * Método que guarda un portafolio en la base de datos.
+	 * @param p Portafolio a guardar.
+	 */
 	@Override
 	public void save(Portafolio p) {
 		portafolioDAO.save(p);
 	}
 
+	/*
+	 * Método que busca un portafolio por su ID.
+	 * @param id ID del portafolio a buscar.
+	 * @return Portafolio encontrado.
+	 * @throws PortafolioNoEncontradoException Si no se encuentra el portafolio.
+	 */
 	@Override
 	public Portafolio findById(String id) {
 		return portafolioDAO.findById(id).orElseThrow(() -> new PortafolioNoEncontradoException(id));
 	}
 
+	/*
+	 * Método que elimina un portafolio de la base de datos.
+	 * @param p Portafolio a eliminar.
+	 */
 	@Override
 	public void delete(Portafolio p) {
 		portafolioDAO.delete(p);
 	}
 
+	/*
+	 * Método que actualiza un portafolio.
+	 * @param p Portafolio a actualizar.
+	 * @param id ID del portafolio a actualizar.
+	 * @return Portafolio actualizado.
+	 */
 	@Override
 	public Portafolio update(Portafolio p, String id) {
 		Portafolio portafolioActual = this.findById(id);
@@ -67,6 +94,11 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		return portafolioActual;
 	}
 
+	/*
+	 * Método que busca un portafolio por el ID de usuario.
+	 * @param usuarioId ID del usuario.
+	 * @return Portafolio encontrado.
+	 */
 	@Override
 	public void anadirCrypto(String usuarioId, String simbolo, double quantity) {
 		Portafolio Portafolio = portafolioDAO.findByUsuarioId(usuarioId).orElse(new Portafolio(usuarioId));
@@ -76,6 +108,12 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		portafolioDAO.save(Portafolio);
 	}
 
+	/*
+	 * Método que elimina una criptomoneda del portafolio de un usuario.
+	 * @param usuarioId ID del usuario.
+	 * @param simbolo Símbolo de la criptomoneda a eliminar.
+	 * @param quantity Cantidad de criptomonedas a eliminar.
+	 */
 	@Override
 	public void eliminarCrypto(String usuarioId, String simbolo, double quantity) {
 		Portafolio Portafolio = portafolioDAO.findByUsuarioId(usuarioId)
@@ -99,6 +137,13 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		portafolioDAO.save(Portafolio);
 	}
 
+	/*
+	 * Método que verifica si un usuario tiene suficiente cantidad de una criptomoneda.
+	 * @param usuarioId ID del usuario.
+	 * @param simbolo Símbolo de la criptomoneda.
+	 * @param quantity Cantidad a verificar.
+	 * @return true si tiene suficiente, false en caso contrario.
+	 */
 	@Override
 	public boolean tieneSuficienteCrypto(String usuarioId, String simbolo, double quantity) {
 		Portafolio Portafolio = portafolioDAO.findByUsuarioId(usuarioId).orElse(new Portafolio(usuarioId));
@@ -106,6 +151,12 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		return Portafolio.getCriptomonedas().getOrDefault(simbolo, 0.0) >= quantity;
 	}
 
+	/*
+	 * Método que obtiene el portafolio de un usuario por su ID.
+	 * Si no existe, crea uno nuevo con saldo inicial de 10.000 €.
+	 * @param usuarioId ID del usuario.
+	 * @return Portafolio del usuario.
+	 */
 	@Override
 	public Portafolio getPortafolioDeUsuarioId(String usuarioId) {
 		return portafolioDAO.findByUsuarioId(usuarioId).orElseGet(() -> {
@@ -119,6 +170,12 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		});
 	}
 
+	/*
+	 * Método que actualiza el portafolio después de una compra.
+	 * @param usuarioId ID del usuario.
+	 * @param cryptoId ID de la criptomoneda comprada.
+	 * @param cantidadCrypto Cantidad de criptomonedas compradas.
+	 */
 	@Override
 	public void updatePortafolioDespuesDeCompra(String usuarioId, String cryptoId, double cantidadCrypto) {
 		Portafolio Portafolio = portafolioDAO.findById(usuarioId).orElseGet(() -> {
@@ -130,7 +187,6 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 		Map<String, Double> criptomonedas = Portafolio.getCriptomonedas();
 
-		// Sumar la cantidad nueva a la ya existente (si existe)
 		double cantidadActual = criptomonedas.getOrDefault(cryptoId, 0.0);
 		criptomonedas.put(cryptoId, cantidadActual + cantidadCrypto);
 
@@ -138,6 +194,12 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		portafolioDAO.save(Portafolio);
 	}
 
+	/*
+	 * Método que actualiza el portafolio después de una venta.
+	 * @param usuarioId ID del usuario.
+	 * @param cryptoId ID de la criptomoneda vendida.
+	 * @param cantidadCrypto Cantidad de criptomonedas vendidas.
+	 */
 	@Override
 	public List<ValorDiarioDTO> calcularEvolucion(String usuarioId) {
 		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
@@ -161,7 +223,6 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		for (int i = 0; i <= dias; i++) {
 			LocalDate fecha = inicio.plusDays(i);
 
-			// Aplica transacciones del día y ajusta saldo
 			for (Transaccion tx : transacciones) {
 				if (tx.getFechaTransaccion().toLocalDate().isEqual(fecha)) {
 					cantidades.putIfAbsent(tx.getCryptoId(), 0.0);
@@ -177,7 +238,6 @@ public class PortafolioServiceImpl implements IPortafolioService {
 				}
 			}
 
-			// Calcula valor total de criptos ese día
 			double valorCripto = 0;
 			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
 				if (entry.getValue() <= 0)
@@ -197,6 +257,13 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		return evolucion;
 	}
 
+	/*
+	 * Método que actualiza el portafolio después de una compra.
+	 * @param uid ID del usuario.
+	 * @param cryptoId ID de la criptomoneda comprada.
+	 * @param cantidad Cantidad de criptomonedas compradas.
+	 * @param precioCompra Precio de compra de la criptomoneda.
+	 */
 	@Override
 	public void actualizarPortafolio(String uid, String cryptoId, double cantidad, double precioCompra) {
 		Portafolio portafolio = portafolioDAO.findByUsuarioId(uid).orElseGet(() -> {
@@ -214,6 +281,13 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		portafolioDAO.save(portafolio);
 	}
 
+	/*
+	 * Método que actualiza el portafolio después de una venta.
+	 * @param uid ID del usuario.
+	 * @param cryptoId ID de la criptomoneda vendida.
+	 * @param cantidad Cantidad de criptomonedas vendidas.
+	 * @param precioVenta Precio de venta de la criptomoneda.
+	 */
 	@Override
 	public List<RendimientoDiarioDTO> calcularRendimiento(String usuarioId) {
 		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
@@ -238,7 +312,6 @@ public class PortafolioServiceImpl implements IPortafolioService {
 			LocalDate fecha = inicio.plusDays(i);
 			System.out.printf("Día %d (%s)\n", i, fecha);
 
-			// Aplicar transacciones del día
 			for (Transaccion tx : transacciones) {
 				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
 					double cantidad = cantidades.getOrDefault(tx.getCryptoId(), 0.0);
@@ -282,6 +355,11 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		return lista;
 	}
 
+	/**
+	 * Método que calcula la evolución completa del portafolio de un usuario.
+	 * @param usuarioId ID del usuario.
+	 * @return Lista de EvolucionCompletaDTO con la evolución diaria del portafolio.
+	 */
 	@Override
 	public List<EvolucionCompletaDTO> calcularEvolucionCompleta(String usuarioId) {
 		List<Transaccion> transacciones = transaccionDAO.findByUsuarioIdOrderByFechaTransaccionAsc(usuarioId);
@@ -326,15 +404,14 @@ public class PortafolioServiceImpl implements IPortafolioService {
 					if (precio <= 0)
 						throw new RuntimeException("Precio no válido");
 				} catch (Exception e) {
-					System.err.println("❌ Precio histórico no disponible para " + entry.getKey() + " el " + fecha
+					System.err.println("Precio histórico no disponible para " + entry.getKey() + " el " + fecha
 							+ ". Usando precio actual.");
 					precio = cryptoService.getPrecioActual(entry.getKey());
 				}
 
 				double subtotal = cantidad * precio;
 
-				// 🔍 Debug opcional para confirmar que el precio actual realmente se usa
-				System.out.printf("🧮 [%s] Cantidad: %.6f | Precio: %.2f | Subtotal: %.2f\n", entry.getKey(), cantidad,
+				System.out.printf("[%s] Cantidad: %.6f | Precio: %.2f | Subtotal: %.2f\n", entry.getKey(), cantidad,
 						precio, subtotal);
 
 				valorCriptos += subtotal;
@@ -358,6 +435,10 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		return evolucion;
 	}
 
+	/**
+	 * Método que actualiza el portafolio de un usuario con una transacción.
+	 * @param transaccion Transacción a procesar.
+	 */
 	@Override
 	public void actualizarPortafolioConTransaccion(Transaccion transaccion) {
 		String usuarioId = transaccion.getUsuarioId();
@@ -365,7 +446,7 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		double cantidad = transaccion.getCantidadCrypto();
 		boolean esCompra = transaccion.getTipoTransaccion() == TransactionType.COMPRAR;
 
-		Portafolio portafolio = getPortafolioDeUsuarioId(usuarioId); // ✅ usa el método que garantiza saldo
+		Portafolio portafolio = getPortafolioDeUsuarioId(usuarioId); 
 
 		Map<String, Double> criptos = portafolio.getCriptomonedas();
 		double cantidadActual = criptos.getOrDefault(cryptoId, 0.0);
@@ -379,12 +460,22 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		portafolioDAO.save(portafolio);
 	}
 
+	/**
+	 * Método que busca un portafolio por el ID de usuario.
+	 * @param usuarioId ID del usuario.
+	 * @return Portafolio encontrado.
+	 */
 	@Override
 	public Portafolio findByUsuarioId(String usuarioId) {
 		return portafolioDAO.findByUsuarioId(usuarioId)
 				.orElseThrow(() -> new RuntimeException("Portafolio no encontrado para el usuario: " + usuarioId));
 	}
 
+	/**
+	 * Método que obtiene el saldo del portafolio de un usuario.
+	 * @param usuarioId ID del usuario.
+	 * @return Saldo del portafolio.
+	 */
 	@Override
 	public double obtenerSaldo(String usuarioId) {
 		return getPortafolioDeUsuarioId(usuarioId).getSaldo();

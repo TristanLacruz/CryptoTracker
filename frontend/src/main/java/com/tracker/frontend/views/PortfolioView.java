@@ -4,8 +4,6 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.checkerframework.checker.units.qual.t;
-
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
@@ -14,7 +12,6 @@ import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +19,6 @@ import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.frontend.CryptoTableViewApp;
 import com.tracker.frontend.session.Session;
 import com.tracker.frontend.util.InactivityTimer;
-
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -37,21 +33,18 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.StreamSupport;
 
+/**
+ * Clase que representa la vista del portafolio de un usuario.
+ * Muestra el saldo disponible, balance total, activos y un gráfico de evolución del portafolio.
+ */
 public class PortfolioView {
 
     private final String usuarioId;
@@ -60,6 +53,10 @@ public class PortfolioView {
         this.usuarioId = usuarioId;
     }
 
+    /**
+     * Muestra la vista del portafolio.
+     * Crea una ventana con el saldo disponible, balance total, activos y un gráfico de evolución.
+     */
     public void mostrar() {
         Circle puntoSaldo = new Circle(6, Color.LIME);
         Label textoSaldo = new Label("Saldo disponible (€)");
@@ -102,17 +99,17 @@ public class PortfolioView {
 
         Button btnVolver = new Button("Volver");
         btnVolver.setOnAction(e -> {
-            new CryptoTableViewApp().mostrarAppPrincipal(new Stage()); // Muestra CryptoTableViewApp
-            stage.close(); // Cierra la ventana actual (PortfolioView)
+            new CryptoTableViewApp().mostrarAppPrincipal(new Stage());
+            stage.close(); 
         });
 
         TableColumn<CriptoPosesionDTO, String> simboloCol = new TableColumn<>("Criptomoneda");
         simboloCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("simbolo"));
-        simboloCol.setMaxWidth(1f * Integer.MAX_VALUE * 33); // 33%
+        simboloCol.setMaxWidth(1f * Integer.MAX_VALUE * 33); 
 
         TableColumn<CriptoPosesionDTO, Double> cantidadCol = new TableColumn<>("Cantidad");
         cantidadCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("cantidad"));
-        cantidadCol.setMaxWidth(1f * Integer.MAX_VALUE * 33); // 33%
+        cantidadCol.setMaxWidth(1f * Integer.MAX_VALUE * 33); 
         cantidadCol.setCellFactory(tc -> new TableCell<CriptoPosesionDTO, Double>() {
             @Override
             protected void updateItem(Double cantidad, boolean empty) {
@@ -136,7 +133,6 @@ public class PortfolioView {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setItems(data);
 
-        // Gráfico de evolución del saldo
         final NumberAxis xAxis = new NumberAxis();
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Días");
@@ -196,19 +192,19 @@ public class PortfolioView {
 
         Node saldoLine = saldoSeries.getNode().lookup(".chart-series-line");
         if (saldoLine != null) {
-            saldoLine.setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2px;"); // verde brillante
+            saldoLine.setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2px;"); 
         }
 
         Node balanceLine = balanceSeries.getNode().lookup(".chart-series-line");
         if (balanceLine != null) {
-            balanceLine.setStyle("-fx-stroke: #FF00FF; -fx-stroke-width: 2px;"); // fucsia
+            balanceLine.setStyle("-fx-stroke: #FF00FF; -fx-stroke-width: 2px;"); 
         }
 
         VBox contenedorTabla = new VBox(10, contenedorTituloActivos, tableView);
         contenedorTabla.setAlignment(Pos.TOP_CENTER);
         contenedorTabla.setPrefWidth(400);
         contenedorTabla.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(contenedorTabla, Priority.ALWAYS); // Esto en vez de tableView
+        HBox.setHgrow(contenedorTabla, Priority.ALWAYS); 
 
         contenedorTabla.setPrefWidth(400);
         contenedorTabla.setAlignment(Pos.CENTER_LEFT);
@@ -246,7 +242,6 @@ public class PortfolioView {
         contenidoInferior.setPadding(new Insets(10));
         contenidoInferior.setAlignment(Pos.CENTER);
 
-        // Contenedor final con el gráfico arriba y el resto abajo
         VBox rootContent = new VBox(10, lineChart, leyendaPersonalizada, contenidoInferior);
         rootContent.setPadding(new Insets(10));
         rootContent.setStyle("-fx-background-color: transparent;");
@@ -257,7 +252,6 @@ public class PortfolioView {
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 
-        // Si existe inactividad, cerrar sesión y volver al login
         InactivityTimer timer = new InactivityTimer(stage, () -> {
             Session.idToken = null;
             stage.close();
@@ -294,7 +288,6 @@ public class PortfolioView {
                 String nombreFinal = (nombre != null) ? nombre : "Nombre no disponible";
                 String textoFinal = "Portafolio de: " + nombreFinal;
 
-                // 🔁 Obtener saldo en euros del portafolio
                 String urlSaldo = "http://localhost:8080/api/portafolio/" + usuarioId + "/saldo";
                 HttpRequest saldoRequest = HttpRequest.newBuilder()
                         .uri(URI.create(urlSaldo))
@@ -308,7 +301,6 @@ public class PortfolioView {
                     nombreUsuarioLabel.setText(textoFinal);
                 });
 
-                // 🔁 Obtener transacciones completas del usuario
                 String urlTransacciones = "http://localhost:8080/api/transacciones/usuario?usuarioId=" + usuarioId;
                 HttpRequest transaccionesRequest = HttpRequest.newBuilder()
                         .uri(URI.create(urlTransacciones))
@@ -321,7 +313,6 @@ public class PortfolioView {
                         new TypeReference<List<JsonNode>>() {
                         });
 
-                // 🔁 Obtener valor actual en criptos
                 String urlActivos = "http://localhost:8080/api/transacciones/" + usuarioId + "/activos";
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(urlActivos))
@@ -486,6 +477,12 @@ public class PortfolioView {
         }).start();
     }
 
+    /**
+     * Crea un punto de color para la leyenda del gráfico.
+     *
+     * @param color El color del punto.
+     * @return Un nodo que representa el punto de color.
+     */
     private Node createColorDot(Color color) {
         Circle circle = new Circle(6);
         circle.setFill(color);

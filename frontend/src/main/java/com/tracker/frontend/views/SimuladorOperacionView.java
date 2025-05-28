@@ -9,8 +9,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import com.tracker.frontend.AuthContext;
@@ -30,6 +28,14 @@ public class SimuladorOperacionView extends VBox {
 	private final TextField cantidadField;
 	private final Label resultadoLabel;
 
+	/**
+	 * Constructor de la clase SimuladorOperacionView.
+	 * Inicializa los componentes de la vista y establece el estilo.
+	 *
+	 * @param cryptoId     El ID de la criptomoneda.
+	 * @param nombreCrypto El nombre de la criptomoneda.
+	 * @param precioActual El precio actual de la criptomoneda.
+	 */
 	public SimuladorOperacionView(String cryptoId, String nombreCrypto, double precioActual) {
 		this.cryptoId = cryptoId;
 		this.nombreCrypto = nombreCrypto;
@@ -53,7 +59,7 @@ public class SimuladorOperacionView extends VBox {
 		ejecutarBtn.setOnAction(e -> ejecutarOperacion());
 
 		HBox form = new HBox(10, tipoCombo, cantidadField, ejecutarBtn);
-		form.setAlignment(javafx.geometry.Pos.CENTER); // <- AÑADE ESTA LÍNEA
+		form.setAlignment(javafx.geometry.Pos.CENTER); 
 
 		this.getChildren().addAll(lblOperacion, form, resultadoLabel);
 		this.setPadding(new Insets(10));
@@ -62,6 +68,10 @@ public class SimuladorOperacionView extends VBox {
 
 	}
 
+	/**
+	 * Ejecuta la operación de compra o venta según el tipo seleccionado.
+	 * Valida la cantidad ingresada y realiza la solicitud al servidor.
+	 */
 	private void ejecutarOperacion() {
 		String tipo = tipoCombo.getValue();
 		String cantidadStr = cantidadField.getText();
@@ -87,6 +97,12 @@ public class SimuladorOperacionView extends VBox {
 		}
 	}
 
+	/**
+	 * Muestra una alerta con un mensaje específico.
+	 *
+	 * @param titulo  El título de la alerta.
+	 * @param mensaje El mensaje a mostrar en la alerta.
+	 */
 	private void mostrarAlerta(String titulo, String mensaje) {
 		Alert alert = new Alert(Alert.AlertType.INFORMATION);
 		alert.setTitle(titulo);
@@ -94,6 +110,14 @@ public class SimuladorOperacionView extends VBox {
 		alert.showAndWait();
 	}
 
+	/**
+	 * Realiza una solicitud al servidor para comprar una criptomoneda.
+	 *
+	 * @param simbolo      El símbolo de la criptomoneda.
+	 * @param nombreCrypto El nombre de la criptomoneda.
+	 * @param cantidad     La cantidad de criptomonedas a comprar.
+	 * @param precio       El precio actual de la criptomoneda.
+	 */
 	private void realizarCompra(String simbolo, String nombreCrypto, double cantidad, double precio) {
 		String usuarioId = AuthContext.getInstance().getUsuarioId();
 		String idToken = AuthContext.getInstance().getIdToken();
@@ -268,6 +292,13 @@ public class SimuladorOperacionView extends VBox {
 				});
 	}
 
+	/**
+	 * Muestra una alerta estilizada con un mensaje específico.
+	 *
+	 * @param titulo  El título de la alerta.
+	 * @param mensaje El mensaje a mostrar en la alerta.
+	 * @param tipoCss El tipo de CSS para aplicar a la alerta (ej. "alerta-error").
+	 */
 	private void mostrarAlertaEstilizada(String titulo, String mensaje, String tipoCss) {
 		Alert alerta = new Alert(Alert.AlertType.NONE);
 		alerta.setTitle(titulo);

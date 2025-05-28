@@ -1,12 +1,10 @@
 package com.tracker.frontend.views;
 
 import javafx.animation.AnimationTimer;
-import javafx.beans.binding.Bindings;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 
 /**
  * Clase que representa una vista de fondo animado.
@@ -17,7 +15,6 @@ public class AnimatedBackgroundView extends Pane {
 
 	private final Canvas canvas;
 	private final Image backgroundImage;
-	private double angle = 0;
 
 	/**
 	 * Constructor de la clase AnimatedBackgroundView.
@@ -78,5 +75,4 @@ public class AnimatedBackgroundView extends Pane {
 	        }
 	    }.start();
 	}
-
 }

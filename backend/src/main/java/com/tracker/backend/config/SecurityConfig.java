@@ -81,9 +81,8 @@ public class SecurityConfig {
 								"/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
 						.permitAll()
 
-						// 🔐 Endpoints autenticados
 						.requestMatchers("/api/transacciones/**").authenticated()
-						.requestMatchers("/api/portafolio/**").authenticated() // ✅ añadido
+						.requestMatchers("/api/portafolio/**").authenticated()
 						.requestMatchers("/api/transacciones/test/actualizar-portafolio").authenticated()
 
 						.anyRequest().authenticated())
@@ -112,7 +111,7 @@ public class SecurityConfig {
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration cfg = new CorsConfiguration();
-		cfg.setAllowedOrigins(List.of("http://localhost:4200")); // tu front
+		cfg.setAllowedOrigins(List.of("http://localhost:4200"));
 		cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		cfg.setExposedHeaders(List.of("Authorization"));
@@ -120,18 +119,6 @@ public class SecurityConfig {
 		src.registerCorsConfiguration("/**", cfg);
 		return src;
 	}
-
-	/**
-	 * Configura la seguridad HTTP.
-	 *
-	 * @param http la configuración de seguridad HTTP
-	 * @throws Exception si ocurre un error durante la configuración
-	 */
-	// protected void configure(HttpSecurity http) throws Exception {
-	// http.cors() // habilita la CORS configurada arriba
-	// .and().csrf().disable().authorizeRequests().requestMatchers("/api/portafolio/me/**").authenticated()
-	// .anyRequest().permitAll().and().oauth2ResourceServer().jwt();
-	// }
 
 	/**
 	 * Configura el punto de entrada de autenticación para manejar errores de

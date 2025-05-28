@@ -1,23 +1,22 @@
 package com.tracker.backend.mvc.controllers;
 
-import com.google.firebase.auth.FirebaseAuthException;
-import com.google.firebase.auth.FirebaseToken;
 import com.tracker.backend.mvc.model.AuthRequest;
 import com.tracker.backend.mvc.model.entity.Usuario;
 import com.tracker.backend.mvc.model.services.IUsuarioService;
-import com.tracker.backend.security.FirebaseService;
 import com.tracker.common.dto.UsuarioDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controlador para manejar la autenticación de usuarios.
+ * Este controlador proporciona endpoints para obtener detalles del usuario autenticado
+ * y para iniciar sesión.
+ */
 @RestController
 @RequestMapping("/auth")
 @CrossOrigin(origins = "*")
 public class AuthController {
-
-	@Autowired
-	private FirebaseService firebaseService;
 
 	@Autowired
 	private IUsuarioService usuarioService;

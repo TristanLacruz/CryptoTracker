@@ -1,44 +1,44 @@
-/* estilos-alerta.css */
-
-/* Estilo general para los diálogos */
-.dialog-pane {
+.dialog-pane { /* Estilo para el diálogo */
     -fx-background-color: #2b2b2b;
     -fx-text-fill: white;
 }
 
-/* Botón Aceptar */
-.button {
+.button { /* Estilo para los botones */
     -fx-background-color: #3c3f41;
     -fx-text-fill: white;
     -fx-font-weight: bold;
 }
-.button:hover {
+
+.button:hover { /* Efecto hover para los botones */
     -fx-background-color: #5c5f61;
 }
 
-/* Alerta de éxito */
-.alerta-exito .content {
-    -fx-text-fill: #4CAF50; /* Verde */
+
+.alerta-exito .content { /* Alerta de éxito */
+    -fx-text-fill: #4CAF50; 
 }
+
 .alerta-exito .header-panel,
-.alerta-exito .content {
+.alerta-exito .content { /* Estilo para el encabezado y contenido de la alerta de éxito */
     -fx-font-size: 14px;
 }
-.alerta-exito .dialog-pane {
+
+.alerta-exito .dialog-pane { /* Estilo para el diálogo de alerta de éxito */
     -fx-border-color: #4CAF50;
     -fx-border-width: 2;
     -fx-border-radius: 6;
 }
 
-/* Alerta de error */
-.alerta-error .content {
-    -fx-text-fill: #F44336; /* Rojo */
+.alerta-error .content { /* Alerta de error */
+    -fx-text-fill: #F44336; 
 }
+
 .alerta-error .header-panel,
-.alerta-error .content {
+.alerta-error .content { /* Estilo para el encabezado y contenido de la alerta de error */
     -fx-font-size: 14px;
 }
-.alerta-error .dialog-pane {
+
+.alerta-error .dialog-pane { /* Estilo para el diálogo de alerta de error */
     -fx-border-color: #F44336;
     -fx-border-width: 2;
     -fx-border-radius: 6;
