@@ -18,8 +18,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.backend.indicadores.RSIUtil;
 import com.tracker.backend.mvc.model.dao.ICriptomonedaDAO;
+import com.tracker.backend.mvc.model.dao.IPortafolioDAO;
 import com.tracker.common.dto.CryptoMarketDTO;
 import com.tracker.backend.mvc.model.entity.Criptomoneda;
+import com.tracker.backend.mvc.model.entity.Portafolio;
 import com.tracker.backend.mvc.model.exceptions.CriptomonedaNoEncontradaException;
 import com.tracker.backend.mvc.model.services.ICriptomonedaService;
 import jakarta.annotation.PostConstruct;
@@ -43,8 +45,12 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	private final RestTemplate restTemplate = new RestTemplate();
 
 	private final Map<String, CachedPrice> cache = new HashMap<>();
+	
 	@Autowired
 	private ICriptomonedaDAO cryptoDAO;
+	
+	@Autowired
+	private IPortafolioDAO portafolioDAO;
 
 	@Value("${coingecko.api.key}")
 	private String apiKey;
@@ -387,9 +393,21 @@ public class CriptomonedaServiceImpl implements ICriptomonedaService {
 	}
 
 	@Override
-	public double obtenerPrecioActual(String simbolo) {
-		// TODO Auto-generated method stub
-		return 0;
+	public double calcularValorActualEnCriptos(String usuarioId) {
+	    Portafolio portafolio = portafolioDAO.findByUsuarioId(usuarioId)
+	        .orElseThrow(() -> new RuntimeException("Portafolio no encontrado"));
+
+	    double valorCriptos = 0.0;
+
+	    for (Map.Entry<String, Double> entry : portafolio.getCriptomonedas().entrySet()) {
+	        String simbolo = entry.getKey();
+	        double cantidad = entry.getValue();
+	        double precio = getPrecioActual(simbolo);
+	        valorCriptos += cantidad * precio;
+	    }
+
+	    return valorCriptos;
 	}
+
 
 }

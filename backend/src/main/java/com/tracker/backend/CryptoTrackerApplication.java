@@ -16,9 +16,9 @@ public class CryptoTrackerApplication {
         SpringApplication.run(CryptoTrackerApplication.class, args);
     }
 
-    @PostConstruct
-    public void testMongo() {
-        System.out.println("📁 Colecciones en Atlas:");
-        mongoTemplate.getDb().listCollectionNames().forEach(System.out::println);
-    }
+    // @PostConstruct
+    // public void testMongo() {
+    //     System.out.println("📁 Colecciones en Atlas:");
+    //     mongoTemplate.getDb().listCollectionNames().forEach(System.out::println);
+    // }
 }

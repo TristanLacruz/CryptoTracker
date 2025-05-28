@@ -74,7 +74,7 @@ public class AnimatedBackgroundView extends Pane {
 
 	            gc.restore();
 
-	            angle += 0.02;
+	            angle += 0.01;
 	        }
 	    }.start();
 	}

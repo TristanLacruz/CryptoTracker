@@ -108,17 +108,15 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 	@Override
 	public Portafolio getPortafolioDeUsuarioId(String usuarioId) {
-		return portafolioDAO.findByUsuarioId(usuarioId)
-				.orElseGet(() -> {
-					Portafolio nuevo = new Portafolio();
-					nuevo.setUsuarioId(usuarioId);
-					nuevo.setSaldo(10000.0);
-					nuevo.setCriptomonedas(new HashMap<>());
-					portafolioDAO.save(nuevo);
-					System.out.println(
-							"📦 Nuevo portafolio creado para UID: " + usuarioId + " con saldo inicial de 10.000 €");
-					return nuevo;
-				});
+		return portafolioDAO.findByUsuarioId(usuarioId).orElseGet(() -> {
+			Portafolio nuevo = new Portafolio();
+			nuevo.setUsuarioId(usuarioId);
+			nuevo.setSaldo(10000.0);
+			nuevo.setCriptomonedas(new HashMap<>());
+			portafolioDAO.save(nuevo);
+			System.out.println("📦 Nuevo portafolio creado para UID: " + usuarioId + " con saldo inicial de 10.000 €");
+			return nuevo;
+		});
 	}
 
 	@Override
@@ -201,14 +199,13 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 	@Override
 	public void actualizarPortafolio(String uid, String cryptoId, double cantidad, double precioCompra) {
-		Portafolio portafolio = portafolioDAO.findByUsuarioId(uid)
-				.orElseGet(() -> {
-					Portafolio nuevo = new Portafolio();
-					nuevo.setUsuarioId(uid);
-					nuevo.setCriptomonedas(new HashMap<>());
-					nuevo.setSaldo(10000);
-					return nuevo;
-				});
+		Portafolio portafolio = portafolioDAO.findByUsuarioId(uid).orElseGet(() -> {
+			Portafolio nuevo = new Portafolio();
+			nuevo.setUsuarioId(uid);
+			nuevo.setCriptomonedas(new HashMap<>());
+			nuevo.setSaldo(10000);
+			return nuevo;
+		});
 
 		Map<String, Double> criptos = portafolio.getCriptomonedas();
 		criptos.put(cryptoId, criptos.getOrDefault(cryptoId, 0.0) + cantidad);
@@ -300,26 +297,6 @@ public class PortafolioServiceImpl implements IPortafolioService {
 
 		for (LocalDate fecha = inicio; !fecha.isAfter(fin); fecha = fecha.plusDays(1)) {
 
-			// 🧮 Calcula valorCriptos ANTES de aplicar movimientos del día
-			double valorCriptos = 0;
-			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
-				double cantidad = entry.getValue();
-				if (cantidad <= 0)
-					continue;
-
-				try {
-					double precio = cryptoService.getPrecioEnFecha(entry.getKey(), fecha);
-					valorCriptos += cantidad * precio;
-				} catch (Exception e) {
-					System.err.println("❌ No se pudo obtener precio de " + entry.getKey() + " para " + fecha);
-				}
-			}
-
-			double total = saldoDisponible + valorCriptos;
-			int dia = (int) ChronoUnit.DAYS.between(inicio, fecha);
-			evolucion.add(new EvolucionCompletaDTO(dia, total, saldoDisponible, valorCriptos));
-
-			// 🔁 Aplica transacciones DESPUÉS
 			for (Transaccion tx : transacciones) {
 				if (tx.getFechaTransaccion().toLocalDate().equals(fecha)) {
 					String cripto = tx.getCryptoId();
@@ -336,6 +313,46 @@ public class PortafolioServiceImpl implements IPortafolioService {
 					}
 				}
 			}
+
+			double valorCriptos = 0;
+			for (Map.Entry<String, Double> entry : cantidades.entrySet()) {
+				double cantidad = entry.getValue();
+				if (cantidad <= 0)
+					continue;
+
+				double precio;
+				try {
+					precio = cryptoService.getPrecioEnFecha(entry.getKey(), fecha);
+					if (precio <= 0)
+						throw new RuntimeException("Precio no válido");
+				} catch (Exception e) {
+					System.err.println("❌ Precio histórico no disponible para " + entry.getKey() + " el " + fecha
+							+ ". Usando precio actual.");
+					precio = cryptoService.getPrecioActual(entry.getKey());
+				}
+
+				double subtotal = cantidad * precio;
+
+				// 🔍 Debug opcional para confirmar que el precio actual realmente se usa
+				System.out.printf("🧮 [%s] Cantidad: %.6f | Precio: %.2f | Subtotal: %.2f\n", entry.getKey(), cantidad,
+						precio, subtotal);
+
+				valorCriptos += subtotal;
+
+			}
+
+			double total = saldoDisponible + valorCriptos;
+			int dia = (int) ChronoUnit.DAYS.between(inicio, fecha);
+			evolucion.add(new EvolucionCompletaDTO(dia, total, saldoDisponible, valorCriptos));
+		}
+
+		if (!fin.isEqual(LocalDate.now())) {
+			double saldoActual = this.obtenerSaldo(usuarioId);
+			double valorActual = cryptoService.calcularValorActualEnCriptos(usuarioId);
+			double balanceActual = saldoActual + valorActual;
+			int diaActual = (int) ChronoUnit.DAYS.between(inicio, LocalDate.now());
+
+			evolucion.add(new EvolucionCompletaDTO(diaActual, balanceActual, saldoActual, valorActual));
 		}
 
 		return evolucion;
@@ -367,4 +384,10 @@ public class PortafolioServiceImpl implements IPortafolioService {
 		return portafolioDAO.findByUsuarioId(usuarioId)
 				.orElseThrow(() -> new RuntimeException("Portafolio no encontrado para el usuario: " + usuarioId));
 	}
+
+	@Override
+	public double obtenerSaldo(String usuarioId) {
+		return getPortafolioDeUsuarioId(usuarioId).getSaldo();
+	}
+
 }

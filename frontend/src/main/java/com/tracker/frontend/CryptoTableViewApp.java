@@ -296,7 +296,11 @@ public class CryptoTableViewApp extends Application {
 		});
 
 		Button verPortafolioBtn = new Button("Ver mi Portafolio");
-		verPortafolioBtn.setOnAction(e -> new PortfolioView(usuarioId).mostrar());
+		verPortafolioBtn.setOnAction(e -> {
+			Stage nuevaVentana = new Stage();
+			new PortfolioView(usuarioId).mostrar();
+			primaryStage.close();
+		});
 
 		Button btnCerrarSesion = new Button("Cerrar sesión");
 		btnCerrarSesion.setOnAction(e -> {

@@ -19,7 +19,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.common.dto.CriptoPosesionDTO;
+import com.tracker.frontend.CryptoTableViewApp;
 import com.tracker.frontend.session.Session;
+import com.tracker.frontend.util.InactivityTimer;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -90,6 +92,12 @@ public class PortfolioView {
         Label totalLabel = new Label("Total del portafolio: €0.00");
         Button btnGenerarReporte = new Button("Generar Reporte");
         btnGenerarReporte.setOnAction(e -> generarReporteExcel());
+
+        Button btnVolver = new Button("Volver");
+        btnVolver.setOnAction(e -> {
+            new CryptoTableViewApp().mostrarAppPrincipal(new Stage()); // Muestra CryptoTableViewApp
+            stage.close(); // Cierra la ventana actual (PortfolioView)
+        });
 
         TableColumn<CriptoPosesionDTO, String> simboloCol = new TableColumn<>("Criptomoneda");
         simboloCol.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("simbolo"));
@@ -199,7 +207,8 @@ public class PortfolioView {
                 saldoLabel,
                 balanceLabel,
                 totalLabel,
-                btnGenerarReporte);
+                btnGenerarReporte,
+                btnVolver);
         infoContent.setAlignment(Pos.TOP_LEFT);
         infoContent.setPadding(new Insets(15));
         infoContent.setStyle(
@@ -227,6 +236,15 @@ public class PortfolioView {
 
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
+
+        // Si existe inactividad, cerrar sesión y volver al login
+        InactivityTimer timer = new InactivityTimer(stage, () -> {
+            Session.idToken = null;
+            stage.close();
+            new LoginFormView().mostrar(new Stage());
+        });
+
+        timer.attachToScene(scene);
 
         stage.setScene(scene);
         stage.setMaximized(true);
@@ -341,11 +359,15 @@ public class PortfolioView {
 
                     for (JsonNode punto : evolucion) {
                         System.out.println("➡ Punto recibido: " + punto.toPrettyString());
-
                         int dia = punto.get("dia").asInt();
                         double saldo = punto.get("saldoEuros").asDouble();
                         double valorTotal = punto.get("valorTotal").asDouble();
-                       
+
+                        System.out.printf("📈 GRAFICO >> Día: %d | Saldo: %.2f | Balance: %.2f%n", dia, saldo,
+                                valorTotal);
+                        System.out.printf("📊 LABELS >> Saldo: %.2f | Criptos: %.2f | Balance: %.2f%n",
+                                saldoEuros, valorCriptos, valorActual);
+
                         saldoSeries.getData().add(new XYChart.Data<>(dia, saldo));
                         balanceSeries.getData().add(new XYChart.Data<>(dia, valorTotal));
                     }
@@ -447,7 +469,6 @@ public class PortfolioView {
     private Node createColorDot(Color color) {
         Circle circle = new Circle(6);
         circle.setFill(color);
-        // circle.setStroke(Color.BLACK);
         circle.setStrokeWidth(1);
         return circle;
     }

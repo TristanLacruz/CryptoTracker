@@ -28,7 +28,8 @@ public class RegisterFormView {
     /**
      * Muestra la vista del formulario de registro.
      *
-     * @param parentStage La ventana principal desde la cual se abre el formulario de registro.
+     * @param parentStage La ventana principal desde la cual se abre el formulario
+     *                    de registro.
      */
     public void mostrar(Stage parentStage) {
         Stage stage = new Stage();
@@ -63,13 +64,12 @@ public class RegisterFormView {
         Label mensaje = new Label();
 
         VBox content = new VBox(10,
-            new Label("Nombre de usuario:"), nombreUsuario,
-            new Label("Correo electrónico:"), email,
-            new Label("Nombre:"), nombre,
-            new Label("Apellido:"), apellido,
-            new Label("Contraseña:"), password,
-            btnRegistrar, btnVolver, mensaje
-        );
+                new Label("Nombre de usuario:"), nombreUsuario,
+                new Label("Correo electrónico:"), email,
+                new Label("Nombre:"), nombre,
+                new Label("Apellido:"), apellido,
+                new Label("Contraseña:"), password,
+                btnRegistrar, btnVolver, mensaje);
         content.setPadding(new Insets(20));
         content.setAlignment(Pos.CENTER);
 
@@ -85,7 +85,7 @@ public class RegisterFormView {
                 ex.printStackTrace();
             }
         });
-        
+
         btnRegistrar.setOnAction(e -> {
             try {
                 Map<String, String> datos = new HashMap<>();
@@ -100,68 +100,78 @@ public class RegisterFormView {
                 String json = mapper.writeValueAsString(datos);
 
                 HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("http://localhost:8080/api/usuarios"))
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
-                    .build();
+                        .uri(URI.create("http://localhost:8080/api/usuarios"))
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                        .build();
 
                 HttpClient client = HttpClient.newHttpClient();
                 client.sendAsync(request, BodyHandlers.ofString())
-                    .thenApply(response -> {
-                        int status = response.statusCode();
-                        String body = response.body();
+                        .thenApply(response -> {
+                            int status = response.statusCode();
+                            String body = response.body();
 
-                        if (status >= 200 && status < 300) {
-                            Platform.runLater(() -> {
-                                mensaje.setText("Usuario registrado correctamente.");
-                                stage.close();
-                                try {
-                                	new CryptoTableViewApp().mostrarAppPrincipal(new Stage());
-                                } catch (Exception ex) {
-                                    ex.printStackTrace();
-                                    mensaje.setText("No se pudo abrir la ventana principal.");
-                                }
-                            });
-                        } else {
-                            Platform.runLater(() -> {
-                                String mensajePersonalizado = "Error desconocido al registrar el usuario.";
-                                try {
-                                    ObjectMapper mapperError = new ObjectMapper();
-                                    Map<String, Object> errorJson = mapperError.readValue(body, Map.class);
+                            if (status >= 200 && status < 300) {
+                                Platform.runLater(() -> {
+                                    Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+                                    alerta.setTitle("Registro Exitoso");
+                                    alerta.setHeaderText(null);
+                                    alerta.setContentText("Usuario registrado correctamente.");
+                                    alerta.showAndWait();
 
-                                    Object mensajeRaw = errorJson.get("message");
-                                    if (mensajeRaw != null) {
-                                        String mensajeBackend = mensajeRaw.toString();
-
-                                        switch (mensajeBackend) {
-                                            case "EMAIL_EXISTS":
-                                                mensajePersonalizado = "Ya existe una cuenta con este correo electrónico.";
-                                                break;
-                                            case "WEAK_PASSWORD":
-                                                mensajePersonalizado = "La contraseña debe tener al menos 6 caracteres.";
-                                                break;
-                                            case "INVALID_EMAIL":
-                                                mensajePersonalizado = "El formato del correo es inválido.";
-                                                break;
-                                            default:
-                                                mensajePersonalizado = "Error: " + mensajeBackend;
-                                                break;
-                                        }
+                                    stage.close();
+                                    try {
+                                        new MainMenuView().mostrar(new Stage());
+                                    } catch (Exception ex) {
+                                        ex.printStackTrace();
+                                        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                                        errorAlert.setTitle("Error");
+                                        errorAlert.setHeaderText("No se pudo abrir el menú principal");
+                                        errorAlert.setContentText(ex.getMessage());
+                                        errorAlert.showAndWait();
                                     }
-                                } catch (Exception ex) {
-                                    System.err.println("No se pudo leer el mensaje de error: " + ex.getMessage());
-                                }
+                                });
 
-                                mensaje.setText(mensajePersonalizado);
-                            });
-                        }
-                        return null;
-                    })
-                    .exceptionally(error -> {
-                        Platform.runLater(() -> mensaje.setText("Error de conexión: " + error.getMessage()));
-                        error.printStackTrace();
-                        return null;
-                    });
+                            } else {
+                                Platform.runLater(() -> {
+                                    String mensajePersonalizado = "Error desconocido al registrar el usuario.";
+                                    try {
+                                        ObjectMapper mapperError = new ObjectMapper();
+                                        Map<String, Object> errorJson = mapperError.readValue(body, Map.class);
+
+                                        Object mensajeRaw = errorJson.get("message");
+                                        if (mensajeRaw != null) {
+                                            String mensajeBackend = mensajeRaw.toString();
+
+                                            switch (mensajeBackend) {
+                                                case "EMAIL_EXISTS":
+                                                    mensajePersonalizado = "Ya existe una cuenta con este correo electrónico.";
+                                                    break;
+                                                case "WEAK_PASSWORD":
+                                                    mensajePersonalizado = "La contraseña debe tener al menos 6 caracteres.";
+                                                    break;
+                                                case "INVALID_EMAIL":
+                                                    mensajePersonalizado = "El formato del correo es inválido.";
+                                                    break;
+                                                default:
+                                                    mensajePersonalizado = "Error: " + mensajeBackend;
+                                                    break;
+                                            }
+                                        }
+                                    } catch (Exception ex) {
+                                        System.err.println("No se pudo leer el mensaje de error: " + ex.getMessage());
+                                    }
+
+                                    mensaje.setText(mensajePersonalizado);
+                                });
+                            }
+                            return null;
+                        })
+                        .exceptionally(error -> {
+                            Platform.runLater(() -> mensaje.setText("Error de conexión: " + error.getMessage()));
+                            error.printStackTrace();
+                            return null;
+                        });
 
             } catch (Exception ex) {
                 mensaje.setText("Error interno.");
