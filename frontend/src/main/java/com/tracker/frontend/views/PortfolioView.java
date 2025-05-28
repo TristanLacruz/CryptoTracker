@@ -86,6 +86,13 @@ public class PortfolioView {
         Stage stage = new Stage();
         stage.setTitle("Mi Portafolio");
 
+        Label tituloActivos = new Label("Mis activos:");
+        tituloActivos.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: lime;");
+        HBox contenedorTituloActivos = new HBox(tituloActivos);
+        contenedorTituloActivos.setAlignment(Pos.CENTER);
+        contenedorTituloActivos.setPadding(new Insets(5));
+        contenedorTituloActivos.setStyle("-fx-background-color: #111111; -fx-background-radius: 10;");
+
         TableView<CriptoPosesionDTO> tableView = new TableView<>();
         ObservableList<CriptoPosesionDTO> data = FXCollections.observableArrayList();
 
@@ -133,7 +140,7 @@ public class PortfolioView {
         final NumberAxis xAxis = new NumberAxis();
         final NumberAxis yAxis = new NumberAxis();
         xAxis.setLabel("Días");
-        yAxis.setLabel("Saldo (€)");
+        yAxis.setLabel("Capital (€)");
 
         final LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setTitle("Evolución del saldo");
@@ -197,10 +204,21 @@ public class PortfolioView {
             balanceLine.setStyle("-fx-stroke: #FF00FF; -fx-stroke-width: 2px;"); // fucsia
         }
 
-        // Contenedor izquierdo (tabla)
-        StackPane contenedorTabla = new StackPane(tableView);
-        contenedorTabla.setPrefWidth(400); // Ocupa 50% aprox (ajusta según tamaño ventana)
+        VBox contenedorTabla = new VBox(10, contenedorTituloActivos, tableView);
+        contenedorTabla.setAlignment(Pos.TOP_CENTER);
+        contenedorTabla.setPrefWidth(400);
+        contenedorTabla.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(contenedorTabla, Priority.ALWAYS); // Esto en vez de tableView
+
+        contenedorTabla.setPrefWidth(400);
         contenedorTabla.setAlignment(Pos.CENTER_LEFT);
+
+        Label tituloResumen = new Label("Resumen:");
+        tituloResumen.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: lime;");
+        HBox contenedorTituloResumen = new HBox(tituloResumen);
+        contenedorTituloResumen.setAlignment(Pos.CENTER);
+        contenedorTituloResumen.setPadding(new Insets(5));
+        contenedorTituloResumen.setStyle("-fx-background-color: #111111; -fx-background-radius: 10;");
 
         VBox infoContent = new VBox(10,
                 nombreUsuarioLabel,
@@ -214,7 +232,9 @@ public class PortfolioView {
         infoContent.setStyle(
                 "-fx-background-color: #111111; -fx-background-radius: 10; -fx-border-color: #00FF00; -fx-border-width: 2; -fx-border-radius: 10;");
 
-        VBox infoBox = new VBox(infoContent);
+        VBox infoBox = new VBox(10, contenedorTituloResumen, infoContent);
+        infoBox.setAlignment(Pos.TOP_CENTER);
+        infoBox.setMaxWidth(Double.MAX_VALUE);
         infoBox.setAlignment(Pos.CENTER_LEFT);
         infoBox.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(infoBox, Priority.ALWAYS);
@@ -222,7 +242,7 @@ public class PortfolioView {
         tableView.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(tableView, Priority.ALWAYS);
 
-        HBox contenidoInferior = new HBox(20, tableView, infoBox);
+        HBox contenidoInferior = new HBox(20, contenedorTabla, infoBox);
         contenidoInferior.setPadding(new Insets(10));
         contenidoInferior.setAlignment(Pos.CENTER);
 

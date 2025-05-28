@@ -4,26 +4,29 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Clase para manejar el almacenamiento de favoritos en un archivo JSON.
  */
 public class FavoritosStorage {
-    private static final String FILE_PATH = "favoritos.json";
+    private static final String FILE_PATH = "src/main/resources/favoritos.json";
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
-     * Carga los favoritos desde un archivo JSON.
-     *
-     * @return Un conjunto de cadenas que representan los favoritos.
+     * Carga los favoritos de un usuario desde el archivo.
      */
-    public static Set<String> cargarFavoritos() {
+    public static Set<String> cargarFavoritos(String usuarioId) {
         try {
             File file = new File(FILE_PATH);
-            if (!file.exists()) return new HashSet<>();
-            return mapper.readValue(file, new TypeReference<Set<String>>() {});
+            if (!file.exists())
+                return new HashSet<>();
+            Map<String, Set<String>> map = mapper.readValue(file, new TypeReference<Map<String, Set<String>>>() {
+            });
+            return map.getOrDefault(usuarioId, new HashSet<>());
         } catch (Exception e) {
             System.err.println("Error al leer favoritos: " + e.getMessage());
             return new HashSet<>();
@@ -31,13 +34,22 @@ public class FavoritosStorage {
     }
 
     /**
-     * Guarda los favoritos en un archivo JSON.
-     *
-     * @param favoritos Un conjunto de cadenas que representan los favoritos.
+     * Guarda los favoritos de un usuario en el archivo.
      */
-    public static void guardarFavoritos(Set<String> favoritos) {
+    public static void guardarFavoritos(String usuarioId, Set<String> favoritos) {
         try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(new File(FILE_PATH), favoritos);
+            File file = new File(FILE_PATH);
+            Map<String, Set<String>> map;
+
+            if (file.exists()) {
+                map = mapper.readValue(file, new TypeReference<Map<String, Set<String>>>() {
+                });
+            } else {
+                map = new HashMap<>();
+            }
+
+            map.put(usuarioId, favoritos);
+            mapper.writerWithDefaultPrettyPrinter().writeValue(file, map);
         } catch (Exception e) {
             System.err.println("Error al guardar favoritos: " + e.getMessage());
         }

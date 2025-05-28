@@ -73,7 +73,7 @@ public class CryptoTableViewApp extends Application {
 	private final TableView<CryptoMarketDTO> tableView = new TableView<>();
 	private final ObservableList<CryptoMarketDTO> cryptoList = FXCollections.observableArrayList();
 	private ScheduledExecutorService scheduler;
-	private final Set<String> favoritosGuardados = FavoritosStorage.cargarFavoritos();
+	private Set<String> favoritosGuardados;
 
 	String url = "http://localhost:8080/api/cryptos/market";
 
@@ -96,6 +96,7 @@ public class CryptoTableViewApp extends Application {
 	 */
 	public void mostrarAppPrincipal(Stage primaryStage) {
 		String usuarioId = AuthContext.getInstance().getUsuarioId();
+		favoritosGuardados = FavoritosStorage.cargarFavoritos(usuarioId);
 
 		TableColumn<CryptoMarketDTO, String> nameCol = new TableColumn<>("Nombre");
 		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
@@ -148,7 +149,7 @@ public class CryptoTableViewApp extends Application {
 									} else {
 										favoritosGuardados.remove(crypto.getId());
 									}
-									FavoritosStorage.guardarFavoritos(favoritosGuardados);
+									FavoritosStorage.guardarFavoritos(usuarioId, favoritosGuardados);
 								});
 							}
 
@@ -170,7 +171,7 @@ public class CryptoTableViewApp extends Application {
 					}
 				});
 
-		TableColumn<CryptoMarketDTO, String> imageCol = new TableColumn<>("Img");
+		TableColumn<CryptoMarketDTO, String> imageCol = new TableColumn<>("");
 		imageCol.setPrefWidth(60);
 		imageCol.setMinWidth(60);
 		imageCol.setMaxWidth(60);
@@ -313,7 +314,18 @@ public class CryptoTableViewApp extends Application {
 		topBar.setAlignment(Pos.CENTER_LEFT);
 		topBar.setPadding(new Insets(10));
 
-		VBox topContent = new VBox(10, topBar, buscador);
+		Label tituloLabel = new Label("Lista de Criptomonedas");
+		tituloLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: lime;");
+
+		HBox tituloWrapper = new HBox(tituloLabel);
+		tituloWrapper.setAlignment(Pos.CENTER);
+		tituloWrapper.setPadding(new Insets(10));
+		tituloWrapper.setStyle("-fx-background-color: #111111; -fx-background-radius: 10;");
+
+		VBox.setMargin(tituloWrapper, new Insets(10, 0, 0, 0)); // Espacio superior
+
+		VBox topContent = new VBox(10, topBar, tituloWrapper, buscador);
+
 		topContent.setPadding(new Insets(10));
 		topContent.setFillWidth(true);
 
