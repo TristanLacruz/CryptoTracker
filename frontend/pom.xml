@@ -82,6 +82,9 @@
 				<version>0.0.8</version>
 				<configuration>
 					<mainClass>com.tracker.frontend.DesktopLauncher</mainClass>
+					<jvmArgs>
+						<jvmArg>-Dprism.allowhidpi=false</jvmArg>
+					</jvmArgs>
 				</configuration>
 			</plugin>
 

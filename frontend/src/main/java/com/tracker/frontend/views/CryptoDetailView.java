@@ -54,6 +54,10 @@ public class CryptoDetailView {
 		layout.setPadding(new Insets(10));
 		layout.setStyle("-fx-background-color: transparent;");
 
+		// AÑADIR ESTO:
+		VBox.setVgrow(panelGraficos, javafx.scene.layout.Priority.ALWAYS);
+		VBox.setVgrow(panelOperacion, javafx.scene.layout.Priority.ALWAYS);
+
 		AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
 		StackPane root = new StackPane(fondo, layout);
 

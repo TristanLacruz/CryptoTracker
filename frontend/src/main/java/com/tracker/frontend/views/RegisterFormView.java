@@ -116,7 +116,7 @@ public class RegisterFormView {
                                     Alert alerta = new Alert(Alert.AlertType.INFORMATION);
                                     alerta.setTitle("Registro Exitoso");
                                     alerta.setHeaderText(null);
-                                    alerta.setContentText("Usuario registrado correctamente.");
+                                    alerta.setContentText("Usuario registrado correctamente. Ahora puedes iniciar sesión.");
                                     alerta.showAndWait();
 
                                     stage.close();
