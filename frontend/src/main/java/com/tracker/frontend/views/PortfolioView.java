@@ -4,23 +4,36 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.t;
+
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tracker.common.dto.CriptoPosesionDTO;
 import com.tracker.frontend.session.Session;
+
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 
 import java.io.File;
@@ -34,6 +47,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 
 public class PortfolioView {
@@ -45,6 +59,25 @@ public class PortfolioView {
     }
 
     public void mostrar() {
+        Circle puntoSaldo = new Circle(6, Color.LIME);
+        Label textoSaldo = new Label("Saldo disponible (€)");
+        textoSaldo.setTextFill(Color.WHITE);
+        HBox leyendaSaldo = new HBox(5, puntoSaldo, textoSaldo);
+        leyendaSaldo.setAlignment(Pos.CENTER_LEFT);
+
+        Circle puntoBalance = new Circle(6, Color.MAGENTA);
+        Label textoBalance = new Label("Balance total (€)");
+        textoBalance.setTextFill(Color.WHITE);
+        HBox leyendaBalance = new HBox(5, puntoBalance, textoBalance);
+        leyendaBalance.setAlignment(Pos.CENTER_LEFT);
+
+        VBox leyendaPersonalizada = new VBox(leyendaSaldo, leyendaBalance);
+        leyendaPersonalizada.setSpacing(5);
+        leyendaPersonalizada.setPadding(new Insets(5, 0, 0, 10));
+
+        Label saldoLabel = new Label("💶 Saldo disponible: €0.00");
+        Label balanceLabel = new Label("📊 Balance total: €0.00");
+
         Label nombreUsuarioLabel = new Label("Cargando nombre del usuario...");
         nombreUsuarioLabel.getStyleClass().add("label");
 
@@ -96,27 +129,107 @@ public class PortfolioView {
 
         final LineChart<Number, Number> lineChart = new LineChart<>(xAxis, yAxis);
         lineChart.setTitle("Evolución del saldo");
+        lineChart.setLegendVisible(true);
+        lineChart.setLegendSide(Side.BOTTOM);
+        System.out.println("¿Leyenda visible?: " + lineChart.isLegendVisible());
 
-        XYChart.Series<Number, Number> series = new XYChart.Series<>();
-        series.setName("Saldo en €");
-        lineChart.getData().add(series);
+        XYChart.Series<Number, Number> saldoSeries = new XYChart.Series<>();
 
-        VBox vbox = new VBox(10,
+        XYChart.Series<Number, Number> balanceSeries = new XYChart.Series<>();
+        balanceSeries.setName("Balance total");
+
+        saldoSeries.setName("Saldo disponible (€)");
+        balanceSeries.setName("Balance total (€)");
+        lineChart.getData().addAll(saldoSeries, balanceSeries);
+
+        PauseTransition delay = new PauseTransition(Duration.millis(500));
+        delay.setOnFinished(event -> {
+            lineChart.applyCss();
+            lineChart.layout();
+
+            Node legend = lineChart.lookup(".chart-legend");
+            if (legend != null && legend instanceof VBox) {
+                VBox legendBox = (VBox) legend;
+                for (Node child : legendBox.getChildren()) {
+                    if (child instanceof Label) {
+                        Label label = (Label) child;
+
+                        String text = label.getText();
+                        Color color;
+
+                        if (text.contains("Saldo")) {
+                            color = Color.LIME;
+                        } else if (text.contains("Balance")) {
+                            color = Color.MAGENTA;
+                        } else {
+                            continue;
+                        }
+
+                        Circle dot = new Circle(6, color);
+                        Label textLabel = new Label(text);
+                        textLabel.setTextFill(Color.WHITE);
+                        HBox hbox = new HBox(5, dot, textLabel);
+                        hbox.setAlignment(Pos.CENTER_LEFT);
+
+                        int index = legendBox.getChildren().indexOf(label);
+                        legendBox.getChildren().set(index, hbox);
+                    }
+                }
+            }
+        });
+        delay.play();
+
+        Node saldoLine = saldoSeries.getNode().lookup(".chart-series-line");
+        if (saldoLine != null) {
+            saldoLine.setStyle("-fx-stroke: #00FF00; -fx-stroke-width: 2px;"); // verde brillante
+        }
+
+        Node balanceLine = balanceSeries.getNode().lookup(".chart-series-line");
+        if (balanceLine != null) {
+            balanceLine.setStyle("-fx-stroke: #FF00FF; -fx-stroke-width: 2px;"); // fucsia
+        }
+
+        // Contenedor izquierdo (tabla)
+        StackPane contenedorTabla = new StackPane(tableView);
+        contenedorTabla.setPrefWidth(400); // Ocupa 50% aprox (ajusta según tamaño ventana)
+        contenedorTabla.setAlignment(Pos.CENTER_LEFT);
+
+        VBox infoContent = new VBox(10,
                 nombreUsuarioLabel,
-                tableView,
+                saldoLabel,
+                balanceLabel,
                 totalLabel,
-                btnGenerarReporte,
-                lineChart);
-        vbox.setPadding(new Insets(10));
-        vbox.setStyle("-fx-background-color: transparent;");
+                btnGenerarReporte);
+        infoContent.setAlignment(Pos.TOP_LEFT);
+        infoContent.setPadding(new Insets(15));
+        infoContent.setStyle(
+                "-fx-background-color: #111111; -fx-background-radius: 10; -fx-border-color: #00FF00; -fx-border-width: 2; -fx-border-radius: 10;");
+
+        VBox infoBox = new VBox(infoContent);
+        infoBox.setAlignment(Pos.CENTER_LEFT);
+        infoBox.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(infoBox, Priority.ALWAYS);
+
+        tableView.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(tableView, Priority.ALWAYS);
+
+        HBox contenidoInferior = new HBox(20, tableView, infoBox);
+        contenidoInferior.setPadding(new Insets(10));
+        contenidoInferior.setAlignment(Pos.CENTER);
+
+        // Contenedor final con el gráfico arriba y el resto abajo
+        VBox rootContent = new VBox(10, lineChart, leyendaPersonalizada, contenidoInferior);
+        rootContent.setPadding(new Insets(10));
+        rootContent.setStyle("-fx-background-color: transparent;");
 
         AnimatedBackgroundView fondo = new AnimatedBackgroundView("/images/fondo.jpg");
-        StackPane root = new StackPane(fondo, vbox);
+        StackPane root = new StackPane(fondo, rootContent);
 
         Scene scene = new Scene(root, 800, 600);
         scene.getStylesheets().add(getClass().getResource("/css/estilos.css").toExternalForm());
 
         stage.setScene(scene);
+        stage.setMaximized(true);
         stage.show();
 
         new Thread(() -> {
@@ -143,48 +256,77 @@ public class PortfolioView {
                 String nombreFinal = (nombre != null) ? nombre : "Nombre no disponible";
                 String textoFinal = "Portafolio de: " + nombreFinal;
 
+                // 🔁 Obtener saldo en euros del portafolio
+                String urlSaldo = "http://localhost:8080/api/portafolio/" + usuarioId + "/saldo";
+                HttpRequest saldoRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(urlSaldo))
+                        .header("Authorization", "Bearer " + Session.idToken)
+                        .GET()
+                        .build();
+                HttpResponse<String> saldoResponse = client.send(saldoRequest, HttpResponse.BodyHandlers.ofString());
+                double saldoEuros = Double.parseDouble(saldoResponse.body());
+
                 Platform.runLater(() -> {
                     nombreUsuarioLabel.setText(textoFinal);
                 });
 
-                // 🔁 Obtener resumen de criptomonedas
-                String url = "http://localhost:8080/api/transacciones/" + usuarioId + "/activos";
+                // 🔁 Obtener transacciones completas del usuario
+                String urlTransacciones = "http://localhost:8080/api/transacciones/usuario?usuarioId=" + usuarioId;
+                HttpRequest transaccionesRequest = HttpRequest.newBuilder()
+                        .uri(URI.create(urlTransacciones))
+                        .header("Authorization", "Bearer " + Session.idToken)
+                        .GET()
+                        .build();
+                HttpResponse<String> transaccionesResponse = client.send(transaccionesRequest,
+                        HttpResponse.BodyHandlers.ofString());
+                List<JsonNode> transacciones = mapper.readValue(transaccionesResponse.body(),
+                        new TypeReference<List<JsonNode>>() {
+                        });
+
+                // 🔁 Obtener valor actual en criptos
+                String urlActivos = "http://localhost:8080/api/transacciones/" + usuarioId + "/activos";
                 HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(url))
+                        .uri(URI.create(urlActivos))
                         .header("Authorization", "Bearer " + Session.idToken)
                         .GET()
                         .build();
                 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-                System.out.println("Respuesta de /activos: " + response.body());
 
                 List<CriptoPosesionDTO> lista = mapper.readValue(response.body(),
                         new TypeReference<List<CriptoPosesionDTO>>() {
                         });
+                double valorCriptos = lista.stream().mapToDouble(CriptoPosesionDTO::getValorTotal).sum();
 
-                // 🔁 Obtener cantidad invertida
-                String urlInversion = "http://localhost:8080/api/transacciones/invertido/" + usuarioId;
-                HttpRequest invRequest = HttpRequest.newBuilder()
-                        .uri(URI.create(urlInversion))
-                        .header("Authorization", "Bearer " + Session.idToken)
-                        .GET()
-                        .build();
-                HttpResponse<String> invResponse = client.send(invRequest, HttpResponse.BodyHandlers.ofString());
+                double compras = transacciones.stream()
+                        .filter(t -> t.get("tipoTransaccion").asText().equalsIgnoreCase("COMPRAR"))
+                        .mapToDouble(t -> t.get("valorTotal").asDouble())
+                        .sum();
 
-                double invertido = Double.parseDouble(invResponse.body());
-                double total = lista.stream().mapToDouble(CriptoPosesionDTO::getValorTotal).sum();
-                double diferencia = total - invertido;
-                double rendimiento = invertido == 0 ? 0 : (diferencia / invertido) * 100;
+                double ventas = transacciones.stream()
+                        .filter(t -> t.get("tipoTransaccion").asText().equalsIgnoreCase("VENDER"))
+                        .mapToDouble(t -> t.get("valorTotal").asDouble())
+                        .sum();
 
-                String resumen = String.format("Total del portafolio: €%,.2f\nRendimiento: %+.2f € (%.2f%%)", total,
-                        diferencia, rendimiento);
+                double valorActual = saldoEuros + valorCriptos;
+                double capitalInicial = 10_000.00;
+                double beneficioNeto = valorActual - capitalInicial;
+                double rendimientoPct = (beneficioNeto / capitalInicial) * 100;
+
+                String resumen = String.format(
+                        "Valor en criptomonedas: €%,.2f\n" +
+                                "Rendimiento: %+.2f € (%.2f%%)\n",
+                        valorCriptos, beneficioNeto, rendimientoPct);
 
                 Platform.runLater(() -> {
+                    data.clear();
                     data.addAll(lista);
+                    nombreUsuarioLabel.setText("Portafolio de: " + usuarioId);
+                    saldoLabel.setText(String.format("Saldo disponible: €%,.2f", saldoEuros));
+                    balanceLabel.setText(String.format("Balance total: €%,.2f", valorActual));
                     totalLabel.setText(resumen);
                 });
 
-                // 🔁 Obtener evolución del saldo
-                String urlEvolucion = "http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion";
+                String urlEvolucion = "http://localhost:8080/api/portafolio/" + usuarioId + "/evolucion-completa";
                 HttpRequest evRequest = HttpRequest.newBuilder()
                         .uri(URI.create(urlEvolucion))
                         .header("Authorization", "Bearer " + Session.idToken)
@@ -194,47 +336,18 @@ public class PortfolioView {
                 JsonNode evolucion = mapper.readTree(evResponse.body());
 
                 Platform.runLater(() -> {
-                    data.clear();
-                    data.addAll(lista);
-                    if (evolucion.size() > 0) {
-                        // Busca la primera fecha válida
-                        Optional<LocalDate> inicioOpt = StreamSupport.stream(evolucion.spliterator(), false)
-                                .map(p -> p.get("fecha"))
-                                .filter(f -> f != null && !f.isNull() && !"null".equals(f.asText()))
-                                .map(f -> {
-                                    try {
-                                        return LocalDate.parse(f.asText());
-                                    } catch (Exception ex) {
-                                        return null;
-                                    }
-                                })
-                                .filter(Objects::nonNull)
-                                .findFirst();
+                    saldoSeries.getData().clear();
+                    balanceSeries.getData().clear();
 
-                        if (!inicioOpt.isPresent()) {
-                            System.err.println("❌ No hay fechas válidas en evolución.");
-                            return;
-                        }
+                    for (JsonNode punto : evolucion) {
+                        System.out.println("➡ Punto recibido: " + punto.toPrettyString());
 
-                        LocalDate inicio = inicioOpt.get();
-                        for (JsonNode punto : evolucion) {
-                            JsonNode fechaNode = punto.get("fecha");
-                            JsonNode saldoNode = punto.get("saldoTotal");
-
-                            if (fechaNode != null && !fechaNode.isNull() && !"null".equals(fechaNode.asText())
-                                    && saldoNode != null && !saldoNode.isNull()) {
-                                try {
-                                    LocalDate fecha = LocalDate.parse(fechaNode.asText());
-                                    double saldo = saldoNode.asDouble();
-                                    System.out.println("✅ Fecha: " + fecha + ", Saldo: " + saldo);
-
-                                    long dias = ChronoUnit.DAYS.between(inicio, fecha);
-                                    series.getData().add(new XYChart.Data<>(dias, saldo));
-                                } catch (Exception ex) {
-                                    System.err.println("❌ Error al procesar punto de evolución: " + punto);
-                                }
-                            }
-                        }
+                        int dia = punto.get("dia").asInt();
+                        double saldo = punto.get("saldoEuros").asDouble();
+                        double valorTotal = punto.get("valorTotal").asDouble();
+                       
+                        saldoSeries.getData().add(new XYChart.Data<>(dia, saldo));
+                        balanceSeries.getData().add(new XYChart.Data<>(dia, valorTotal));
                     }
                 });
 
@@ -291,12 +404,17 @@ public class PortfolioView {
                     for (JsonNode t : transacciones) {
                         System.out.println("Transacción JSON: " + t.toPrettyString());
                         Row row = sheet.createRow(rowIdx++);
-                        row.createCell(0).setCellValue(t.hasNonNull("fechaTransaccion") ? t.get("fechaTransaccion").asText() : "");
+                        row.createCell(0).setCellValue(
+                                t.hasNonNull("fechaTransaccion") ? t.get("fechaTransaccion").asText() : "");
                         row.createCell(1).setCellValue(t.hasNonNull("cryptoId") ? t.get("cryptoId").asText() : "");
-                        row.createCell(2).setCellValue(t.hasNonNull("cantidadCrypto") ? t.get("cantidadCrypto").asDouble() : 0.0);
-                        row.createCell(3).setCellValue(t.hasNonNull("precioTransaccion") ? t.get("precioTransaccion").asDouble() : 0.0);
-                        row.createCell(4).setCellValue(t.hasNonNull("valorTotal") ? t.get("valorTotal").asDouble() : 0.0);
-                        row.createCell(5).setCellValue(t.hasNonNull("tipoTransaccion") ? t.get("tipoTransaccion").asText() : "");
+                        row.createCell(2).setCellValue(
+                                t.hasNonNull("cantidadCrypto") ? t.get("cantidadCrypto").asDouble() : 0.0);
+                        row.createCell(3).setCellValue(
+                                t.hasNonNull("precioTransaccion") ? t.get("precioTransaccion").asDouble() : 0.0);
+                        row.createCell(4)
+                                .setCellValue(t.hasNonNull("valorTotal") ? t.get("valorTotal").asDouble() : 0.0);
+                        row.createCell(5)
+                                .setCellValue(t.hasNonNull("tipoTransaccion") ? t.get("tipoTransaccion").asText() : "");
 
                     }
 
@@ -324,6 +442,14 @@ public class PortfolioView {
                 ex.printStackTrace();
             }
         }).start();
+    }
+
+    private Node createColorDot(Color color) {
+        Circle circle = new Circle(6);
+        circle.setFill(color);
+        // circle.setStroke(Color.BLACK);
+        circle.setStrokeWidth(1);
+        return circle;
     }
 
 }

@@ -11,8 +11,14 @@ target/
 *.pem
 *.key
 .env
+application.properties
 
-# Ignorar archivos de configuración local (opcional)
+# Ignorar archivos de configuración local (IDE)
 *.iml
 .idea/
+.vscode/
 *.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db

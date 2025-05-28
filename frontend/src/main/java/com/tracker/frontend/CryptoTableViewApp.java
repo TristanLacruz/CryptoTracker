@@ -348,7 +348,7 @@ public class CryptoTableViewApp extends Application {
 		scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler.scheduleAtFixedRate(() -> {
 			javafx.application.Platform.runLater(this::fetchCryptoData);
-		}, 20, 20, TimeUnit.SECONDS); // espera 20s y luego repite cada 20s
+		}, 30, 30, TimeUnit.SECONDS); // espera 30s y luego repite cada 30s
 		// NO ELIMNAR EL SCHEDULER, SOLO COMENTAR
 
 		fetchCryptoData();
